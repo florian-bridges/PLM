@@ -17,7 +17,7 @@ plm.yaml                      repository settings
 <ID>-<title>/...              the item's artifacts
 tests/<ID>-<title>/           test cases
 runs/<ID>-<title>/            test runs with their logs
-meta/<ID>.yaml                owner, status, revision, links
+meta/<ID>.yaml                owner, status, links
 configurations/*.yaml         product variants
 ```
 
@@ -30,14 +30,13 @@ configurations/*.yaml         product variants
 ## Traceability engine
 
 * An item's **version** is a hash of its folder's **Git tree hash**, covering nested items, and the versions of items it uses. Changes propagate to all ancestors.
-* Confirming a link stores the target's version with the link (CR-07). Links, owner and status live in `meta/`, outside item directories, so confirming, releasing or reassigning changes no version.
+* Confirming a link stores the target's version with the link (CR-07). Links, owner and status live in `meta/`, outside item directories, so confirming, changing status or reassigning changes no version.
 * A link is **suspect** when the target's version has changed; `git diff` shows what changed. Any change, even a typo fix, raises suspects; re-confirmation is part of review (CR-09).
 * Protected branches forbid history rewriting, so stored hashes stay resolvable.
-* Released revisions (A, B, …) and baselines are annotated Git tags (CR-12).
+* A **release** is a reviewed merge into the protected branch (CR-12, CR-14). An item's released versions are its versions on that branch; earlier ones are retrieved by commit. Nothing is frozen: items evolve independently.
 
 ## Configurations, change and verification
 
-* **Baselines** are Git tags (CR-11).
 * **Variants** are configuration files selecting items.
 * **Change requests** use the host's issues and merge requests; the host provides permissions and approvals (CR-13, CR-14, CR-17).
 * **Test runs** record SUT version, result and logs. Test cases and runs live outside item folders, so adding them changes no product version. Tests execute externally (CI, HIL rigs) and report via the CLI; manual results are entered in VS Code.

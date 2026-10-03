@@ -50,9 +50,6 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **CL-03** The CLI shall record test runs with SUT version, result and logs. (CR-09; US-5)
 *Rationale:* Automated tests run on CI and HIL rigs without an editor and must report their results directly.
 
-**CL-04** The CLI shall release item revisions and baselines. (CR-11, CR-12; US-2, US-7)
-*Rationale:* Releases must be reproducible; one command creates revision and baseline tags consistently.
-
 **CL-05** The CLI shall offer machine-readable output and fail with non-zero exit codes. (CR-19; US-5)
 *Rationale:* Scripts and CI need parseable results and reliable failure signals.
 
@@ -78,7 +75,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 ## CI integration (CI)
 
-**CI-01** CI shall validate each merge request and block merging on errors or unconfirmed suspect links. (CR-09, CR-14; US-7)
+**CI-01** CI shall validate each merge request and block merging on errors or unconfirmed suspect links. (CR-09, CR-12, CR-14; US-7)
 *Rationale:* Checking in CI keeps errors and unconfirmed suspects out of protected branches, whatever tools users run locally.
 
 **CI-02** CI shall post the impact analysis on each merge request and request review from owners of affected items. (CR-13, CR-14, CR-18; US-7)
@@ -87,8 +84,8 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **CI-03** CI shall derive viewable glTF from CAD artifacts. (CR-05; US-2, US-6)
 *Rationale:* Native CAD files are large and need licensed tools; glTF loads quickly in VS Code and browsers.
 
-**CI-04** CI shall publish the static site for each branch and tag. (CR-05, CR-10; US-6)
-*Rationale:* Publishing per branch and tag gives every state, including baselines, a stable read-only view.
+**CI-04** CI shall publish the static site for each branch and release. (CR-05, CR-10; US-6)
+*Rationale:* Publishing per branch and release gives every state a stable read-only view.
 
 ## Static site (SI)
 
@@ -98,8 +95,8 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **SI-02** The site shall show traceability, coverage and compliance matrices for a configuration. (CR-10, CR-11; US-6)
 *Rationale:* Matrices are the established evidence format for coverage and compliance reviews.
 
-**SI-03** The site shall compare two baselines. (CR-11; US-6)
-*Rationale:* Baseline comparisons show what changed between deliveries or certification steps.
+**SI-03** The site shall compare two releases. (CR-11; US-6)
+*Rationale:* Comparisons show what changed between deliveries or certification steps.
 
 **SI-04** The site shall be accessible only to users authorized on the Git host. (CR-17; US-7)
 *Rationale:* The site exposes the full definition, so it must respect the same permissions as the repository.

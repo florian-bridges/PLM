@@ -14,7 +14,7 @@ The tool shall collect development artifacts (CAD, software, documents, analyses
 
 **CR-04 — Authoring**
 The tool shall let users create, edit and retire items, artifacts and relationships.
-*Rationale:* Engineers maintain the definition throughout development. Retiring instead of deleting keeps historic links and baselines valid.
+*Rationale:* Engineers maintain the definition throughout development. Retiring instead of deleting keeps links in earlier releases valid.
 
 **CR-05 — Search and navigation**
 The tool shall let users find, browse and view items, artifacts and their relationships.
@@ -41,12 +41,12 @@ The tool shall report traceability, verification coverage and compliance status 
 *Rationale:* Program reviews and certification authorities assess status per configuration: what is traced, verified and shown compliant.
 
 **CR-11 — Configurations**
-The tool shall represent multiple valid product configurations and their item versions, and compare them.
-*Rationale:* Aircraft are built in variants and evolve through baselines. Comparing configurations shows what changed between deliveries or certification steps.
+The tool shall represent multiple valid product configurations and their item versions, and compare them between releases.
+*Rationale:* Aircraft are built in variants and evolve through releases. Comparing configurations shows what changed between deliveries or certification steps.
 
 **CR-12 — Release**
-The tool shall release item revisions, track item maturity and retrieve any earlier released definition.
-*Rationale:* Released definitions are the agreed reference for partners and certification. Maturity tells users whether an item may be relied upon.
+The tool shall release changes by merging them into a protected branch, track item maturity and retrieve any earlier released definition.
+*Rationale:* Each merge is a reviewed, immutable reference for partners and certification, without freezing items while the rest of the product evolves. Maturity tells users whether an item may be relied upon.
 
 **CR-13 — Change management**
 The tool shall support issues and change requests and identify affected items, artifacts, requirements and verification evidence.

@@ -7,7 +7,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<ID>-<title>/item.yaml` with their `requirements/<ID>-<title>.yaml`, test cases `tests/<ID>-<title>/item.yaml`, test runs `runs/<ID>-<title>/item.yaml`, `meta/<ID>.yaml` and `configurations/<name>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
 *Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files.
 
-**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `external_ids`. `meta/<ID>.yaml` shall hold `owner`, `status`, `revision` and `links`.
+**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `external_ids`. `meta/<ID>.yaml` shall hold `owner`, `status` and `links`.
 *Rationale:* Separating content from administrative data keeps versions stable when links, ownership or status change (TE-01.1).
 
 **CO-01.3** The core shall list artifacts as file paths without reading their contents, and detect Git LFS pointers that are not fetched.
@@ -41,7 +41,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Optional items express variants in the composition itself, so a configuration lists only what differs.
 
 **CO-04.2** Resolution shall walk the composition from the root and return each selected item with its version, reporting listed items that are unreachable.
-*Rationale:* Reports and baselines need exact versions; unreachable entries reveal configuration errors.
+*Rationale:* Reports and comparisons need exact versions; unreachable entries reveal configuration errors.
 
 **CO-05.1** Import shall map SPEC-OBJECTs to requirement items, a SPECIFICATION to the `requirements/` folder of an item chosen at import, and SPEC-RELATIONs to unconfirmed links.
 *Rationale:* These are ReqIF's equivalents of requirements, documents and links. Imported links start unconfirmed because ReqIF carries no versions.
@@ -87,8 +87,11 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-04.2** The engine shall fetch aliased repositories into `.plm/repos/` and use the Git object hash of `<path>` at the pinned commit as the version, or the item version if the alias is a PLM repository.
 *Rationale:* Software repositories are usually not PLM repositories; object hashes give them versions without imposing the item model.
 
-**TE-05.1** Given two commits, the engine shall list changed items, their ancestors, links that became suspect, affected configurations and test runs whose evidence is no longer current.
+**TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links that became suspect, test runs whose evidence is no longer current, and affected configurations.
 *Rationale:* These are the questions a change board asks before approval.
+
+**TE-05.2** A link shall have become suspect when its confirmed version equals the target's version at base but not at head.
+*Rationale:* Links already suspect at base are not caused by the change.
 
 **TE-06.1** A requirement shall count as verified when a test case `verifies` it through a current link and that test case's latest run, by date, with current `executes` and `tests` links has result `pass`.
 *Rationale:* Evidence counts only for the versions tested and the latest result; reusing the suspect mechanism avoids a second staleness check.
@@ -98,7 +101,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>..<head>` and `report trace|coverage|compliance`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>[..<head>]` and `report trace|coverage|compliance`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Commander is the established Node.js CLI library.
 
 **CL-01.2** `confirm` shall accept a source item and optionally a link type and target, confirming all links of the source by default.
@@ -111,7 +114,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
 
 **CL-02.3** `plm retire <ID>` shall set `status: retired`; validation shall warn about links to retired items.
-*Rationale:* Retired items may still be referenced by baselines; warnings show links that need attention.
+*Rationale:* Retired items may still be referenced by earlier releases; warnings show links that need attention.
 
 **CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types.
 *Rationale:* Users can create items right away.
@@ -124,15 +127,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **CL-03.3** Recording shall be refused while the system under test or test case differs from that commit.
 *Rationale:* Uncommitted states cannot be reproduced and so cannot serve as evidence.
-
-**CL-04.1** `plm release <ID>` shall set `status: released` and the next revision letter, skipping I, O, Q, S, X and Z (ASME Y14.35).
-*Rationale:* ASME Y14.35 omits letters easily confused with digits.
-
-**CL-04.2** Release shall be refused if the item or its subtree has validation errors, suspect or unconfirmed links, or unreleased nested or used items.
-*Rationale:* A released item must be consistent and built only from released parts.
-
-**CL-04.3** `plm tag` shall create annotated tags `rev/<ID>/<revision>` for newly released items and `baseline/<name>` for configurations, recording versions in the tag message.
-*Rationale:* Tags make revisions and baselines immutable and retrievable; recorded versions allow checks without recomputation.
 
 **CL-05.1** Every command shall accept `--format json`, with the JSON output schema versioned.
 *Rationale:* Versioned JSON lets scripts and CI rely on the output across tool updates.
@@ -189,9 +183,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CI-01.3** Findings shall appear as merge request annotations: GitHub check annotations or a GitLab Code Quality report.
 *Rationale:* Annotations show findings at the affected lines, where reviewers look.
 
-**CI-01.5** After merges into protected branches CI shall run `plm tag`.
-*Rationale:* Tags are created only from reviewed states on protected branches.
-
 **CI-02.1** CI shall post the output of `plm impact` as one merge request comment, updated on each push and linking a full report when it exceeds the host's comment size limit.
 *Rationale:* One updated comment avoids noise; large changes still show a summary.
 
@@ -204,8 +195,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CI-03.2** Converted models shall not be committed but cached by the STEP file's blob hash and published with the site.
 *Rationale:* Derived files are reproducible, so committing them would only bloat the repository.
 
-**CI-04.1** CI shall build the site on every push to a branch or tag and deploy it under `<site>/<ref>/`, removing sites of deleted branches and keeping those of tags.
-*Rationale:* Every branch can be reviewed in the browser; tag sites preserve released states.
+**CI-04.1** CI shall build the site on every push and deploy it under `<site>/<branch>/`, removing sites of deleted branches, and under `<site>/<commit>/` for each release, keeping those.
+*Rationale:* Every branch can be reviewed in the browser; release sites preserve released states.
 
 ## Static site
 
@@ -228,7 +219,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* A small published file per site enables comparisons without a server.
 
 **SI-03.2** A compare page shall load two published `versions.json` files in the browser and list added, removed and changed items.
-*Rationale:* Comparing in the browser supports any pair of baselines without precomputing all combinations.
+*Rationale:* Comparing in the browser supports any pair of releases without precomputing all combinations.
 
 **SI-04.1** CI shall deploy only to targets enforcing host login: GitLab Pages access control, or a reverse proxy with the host's OAuth such as oauth2-proxy.
 *Rationale:* Static sites have no login of their own; the host login reuses existing permissions.

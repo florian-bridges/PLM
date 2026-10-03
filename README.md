@@ -44,7 +44,9 @@ Manufacturing and service management are out of scope.
 
 Proof of concept: a `plm` CLI with the core library and traceability engine. Item versions are derived from Git, links record the version they were confirmed against, and changed targets make links suspect.
 
-Not yet implemented: releases, configurations, impact analysis, search, ReqIF, VS Code extension, static site and CI.
+A release is a reviewed merge into the protected `main` branch; there are no revisions or baselines, and an item's earlier released versions are its states at earlier commits of `main`.
+
+Not yet implemented: configurations, impact analysis, search, ReqIF, VS Code extension, static site and CI.
 
 ## Getting started
 

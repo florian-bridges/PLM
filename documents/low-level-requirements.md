@@ -110,6 +110,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-05.2** Exit codes shall be 0 for success, 1 for findings, 2 for usage errors and 3 for internal errors.
 *Rationale:* Separating findings from failures lets CI tell rejected changes from broken tooling.
 
+**CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. In JSON, IDs listed alone shall become `{id, title}` objects, and link states and coverage rows shall gain the `title` of their source or requirement and, for link targets, `targetTitle`.
+*Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up.
+
 ## VS Code extension
 
 **VS-01.1** The extension shall reuse the core library and run in the extension host without a separate server.

@@ -90,6 +90,10 @@ export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
 export const childrenOf = (entry?: Entry): string[] => [...(entry?.nested ?? []), ...usesOf(entry)];
 export const linksOf = (entry: Entry): Link[] => list(entry.meta.data.links);
 
+// CL-05.3: an item as reports show it.
+export interface Named { id: string; title: string }
+export const named = (repo: Repo, id: string): Named => ({ id, title: String(repo.entries.get(id)?.item.data.title ?? '') });
+
 export function entry(repo: Repo, id: string): Entry {
   const found = repo.entries.get(id);
   if (!found) throw new UsageError(`Unknown item ${id}`);

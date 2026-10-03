@@ -1,17 +1,19 @@
 // TE-02, TE-03, TE-06: link confirmation, suspect links and verification coverage.
-import { entry, linksOf, Refused, selection, subtree, writeYaml, type Entry, type Link, type Repo } from './repo.ts';
+import { entry, linksOf, named, Refused, selection, subtree, writeYaml, type Entry, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { git, versionAt } from './version.ts';
 
-export interface LinkState { source: string; link: Link; state: 'current' | 'suspect' | 'unconfirmed' }
+export interface LinkState { source: string; title: string; link: Link; targetTitle: string; state: 'current' | 'suspect' | 'unconfirmed' }
 
-// TE-03.1
+// TE-03.1, CL-05.3
 export function linkStates(repo: Repo, versions: Map<string, string>): LinkState[] {
   const stateOf = (link: Link): LinkState['state'] => {
     if (!link.version) return 'unconfirmed';
     return link.version === versions.get(link.target) ? 'current' : 'suspect';
   };
-  return [...repo.entries.values()].flatMap((source) => linksOf(source).map((link) => ({ source: source.id, link, state: stateOf(link) })));
+  return [...repo.entries.values()].flatMap((source) => linksOf(source).map((link) => ({
+    source: source.id, title: named(repo, source.id).title, link, targetTitle: named(repo, link.target).title, state: stateOf(link),
+  })));
 }
 
 // TE-03.1: links from test runs are evidence, not links to review.
@@ -56,9 +58,9 @@ export function changeSince(repo: Repo, link: Link): { commit?: string; diff: st
   return { commit, diff: git(repo.root, ['diff', commit, '--', ...paths]) };
 }
 
-export interface Coverage { requirement: string; state: 'verified' | 'pending' | 'unverified'; run?: string; outdated?: string[] }
+export interface Coverage { requirement: string; title: string; state: 'verified' | 'pending' | 'unverified'; run?: Named; outdated?: Named[] }
 
-// TE-06.1, TE-06.2
+// TE-06.1, TE-06.2, CL-05.3
 export function coverage(repo: Repo, states: LinkState[], root?: string): Coverage[] {
   const linksOfType = (type: string) => states.filter((state) => state.link.type === type);
   const isCurrent = (state: LinkState) => state.state === 'current';
@@ -87,9 +89,10 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
     const passingRun = verifies.filter(isCurrent)
       .map((state) => latestCurrentRun.get(state.source))
       .find((run) => run?.item.data.result === 'pass');
-    if (passingRun) return { requirement: requirement.id, state: 'verified', run: passingRun.id };
-    if (!verifies.length) return { requirement: requirement.id, state: 'unverified' };
+    const row = { requirement: requirement.id, title: named(repo, requirement.id).title };
+    if (passingRun) return { ...row, state: 'verified', run: named(repo, passingRun.id) };
+    if (!verifies.length) return { ...row, state: 'unverified' };
     const outdated = verifies.map((state) => latestRun.get(state.source)?.id).filter((id) => id && outdatedRuns.has(id)) as string[];
-    return { requirement: requirement.id, state: 'pending', ...(outdated.length && { outdated }) };
+    return { ...row, state: 'pending', ...(outdated.length && { outdated: outdated.map((id) => named(repo, id)) }) };
   });
 }

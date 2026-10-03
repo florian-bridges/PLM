@@ -1,8 +1,9 @@
 // TE-05: impact of a change between a base commit and a head commit or the working tree.
 import { fromRun, linkStates, type LinkState } from './links.ts';
+import { named, type Named } from './repo.ts';
 import { git, type Snapshot } from './version.ts';
 
-export interface Impact { changed: string[]; propagated: string[]; suspects: LinkState[]; runs: string[] }
+export interface Impact { changed: Named[]; propagated: Named[]; suspects: LinkState[]; runs: Named[] }
 
 // TE-05.1: files changed from the base, including untracked files when the head is the working tree.
 export function changedFiles(root: string, base: string, head?: string): string[] {
@@ -11,7 +12,7 @@ export function changedFiles(root: string, base: string, head?: string): string[
   return `${diff}\n${untracked}`.split('\n').filter(Boolean);
 }
 
-// TE-05.1
+// TE-05.1, CL-05.3
 export function impact(base: Snapshot, head: Snapshot, files: string[]): Impact {
   const innermostOwner = ({ repo }: Snapshot, file: string) => [...repo.entries.values()]
     .filter((entry) => file === entry.path || file.startsWith(`${entry.path}/`))
@@ -24,10 +25,11 @@ export function impact(base: Snapshot, head: Snapshot, files: string[]): Impact 
   const becameSuspect = (state: LinkState) => state.state === 'suspect' && state.link.version === base.versions.get(state.link.target);
   const becameSuspects = linkStates(head.repo, head.versions).filter(becameSuspect);
 
+  const name = (id: string) => named(head.repo.entries.has(id) ? head.repo : base.repo, id);
   return {
-    changed: changedIds.filter((id) => ownersOfChangedFiles.has(id)),
-    propagated: changedIds.filter((id) => !ownersOfChangedFiles.has(id)),
+    changed: changedIds.filter((id) => ownersOfChangedFiles.has(id)).map(name),
+    propagated: changedIds.filter((id) => !ownersOfChangedFiles.has(id)).map(name),
     suspects: becameSuspects.filter((state) => !fromRun(head.repo, state)),
-    runs: [...new Set(becameSuspects.filter((state) => fromRun(head.repo, state)).map((state) => state.source))],
+    runs: [...new Set(becameSuspects.filter((state) => fromRun(head.repo, state)).map((state) => state.source))].map(name),
   };
 }

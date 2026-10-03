@@ -6,8 +6,8 @@ import { basename, join, relative, resolve } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { Document, parseDocument, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { changeSince, confirm, confirmation, coverage, fromRun, linkStates } from './links.ts';
-import { entry, homeFolders, isRequirementFile, loadRepo, readYaml, Refused, UsageError, writeYaml, type Repo } from './repo.ts';
+import { changeSince, confirm, confirmation, coverage, fromRun, linkStates, type LinkState } from './links.ts';
+import { entry, homeFolders, isRequirementFile, loadRepo, readYaml, Refused, UsageError, writeYaml, type Named, type Repo } from './repo.ts';
 import { results } from './schemas.ts';
 import { validate } from './validate.ts';
 import { currentVersions, git, snapshotAt, versionAt } from './version.ts';
@@ -22,8 +22,12 @@ const openRepo = () => loadRepo(workingFolder());
 // CL-05.1: JSON output carries a schema version.
 function output(text: string, data: unknown) {
   const json = program.opts().format === 'json';
-  console.log(json ? JSON.stringify({ schema: 1, data }, null, 2) : text);
+  console.log(json ? JSON.stringify({ schema: 2, data }, null, 2) : text);
 }
+
+// CL-05.3
+const label = ({ id, title }: Named) => (title ? `${id} (${title})` : id);
+const linkLabel = (state: LinkState) => `${label({ id: state.source, title: state.title })} ${state.link.type} ${label({ id: state.link.target, title: state.targetTitle })}`;
 
 // CL-05.2
 let exitCode = 0;
@@ -73,7 +77,7 @@ program.command('suspects').description('list suspect and unconfirmed links').op
     .map((state) => (diff && state.state === 'suspect' ? { ...state, ...changeSince(repo, state.link) } : state));
   const lines = states.map((state) => {
     const change = 'diff' in state && state.diff ? `\n${state.diff}` : '';
-    return `${state.state} ${state.source} ${state.link.type} ${state.link.target}${change}`;
+    return `${state.state} ${linkLabel(state)}${change}`;
   });
   output(lines.join('\n'), states);
   if (states.length) exitCode = 1;
@@ -86,10 +90,10 @@ program.command('impact <range>').description('list items, links and test runs a
   const headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) };
   const result = impact(snapshotAt(repo.root, base), headSnapshot, changedFiles(repo.root, base, head));
   const lines = [
-    ...result.changed.map((id) => `changed ${id}`),
-    ...result.propagated.map((id) => `propagated ${id}`),
-    ...result.suspects.map((state) => `suspect ${state.source} ${state.link.type} ${state.link.target}`),
-    ...result.runs.map((id) => `outdated run ${id}`),
+    ...result.changed.map((item) => `changed ${label(item)}`),
+    ...result.propagated.map((item) => `propagated ${label(item)}`),
+    ...result.suspects.map((state) => `suspect ${linkLabel(state)}`),
+    ...result.runs.map((run) => `outdated run ${label(run)}`),
   ];
   output(lines.join('\n'), result);
 });
@@ -160,7 +164,8 @@ program.command('report').command('coverage [item]').description('report require
     const repo = openRepo();
     const root = item ? entry(repo, item).id : undefined;
     const rows = coverage(repo, linkStates(repo, currentVersions(repo)), root);
-    output(rows.map((row) => [row.state, row.requirement, row.run, ...(row.outdated ? ['outdated', ...row.outdated] : [])].filter(Boolean).join(' ')).join('\n'), rows);
+        const line = (row: (typeof rows)[number]) => [row.state, label({ id: row.requirement, title: row.title }), row.run && label(row.run), ...(row.outdated ? ['outdated', ...row.outdated.map(label)] : [])];
+    output(rows.map((row) => line(row).filter(Boolean).join(' ')).join('\n'), rows);
     if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
   });
 

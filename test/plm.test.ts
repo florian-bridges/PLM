@@ -120,8 +120,17 @@ test('CL-05.1, CL-05.2: JSON output and exit codes', () => {
   expect(plm(root, 'validate').status).toBe(0);
   const suspects = plm(root, '--format', 'json', 'suspects');
   expect(suspects.status).toBe(1);
-  expect(JSON.parse(suspects.stdout)).toMatchObject({ schema: 1, data: [{ state: 'unconfirmed' }] });
+  expect(JSON.parse(suspects.stdout)).toMatchObject({ schema: 2, data: [{ state: 'unconfirmed' }] });
   expect(plm(root, 'nonsense').status).toBe(2);
+});
+
+test('CL-05.3: reports show titles next to IDs', () => {
+  const root = fixture();
+  expect(plm(root, 'suspects').stdout).toBe('unconfirmed P (Spar) satisfies R (Load)\n');
+  expect(JSON.parse(plm(root, '--format', 'json', 'suspects').stdout).data[0]).toMatchObject({ source: 'P', title: 'Spar', targetTitle: 'Load' });
+  expect(plm(root, 'report', 'coverage').stdout).toBe('unverified R (Load)\n');
+  write(root, { 'A-wing/requirements/R-load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
+  expect(plm(root, 'impact', 'HEAD').stdout).toBe('changed R (Load)\npropagated A (Wing)\n');
 });
 
 test('CO-01.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verify requirements until the SUT changes', () => {
@@ -148,7 +157,7 @@ test('CO-01.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verif
   expect(validate(loadRepo(root))).toEqual([]);
   expect(coverage()).toBe('verified');
   write(root, { 'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\n' });
-  expect(JSON.parse(plm(root, '--format', 'json', 'report', 'coverage', 'A').stdout).data[0]).toEqual({ requirement: 'R', state: 'pending', outdated: [run] });
+  expect(JSON.parse(plm(root, '--format', 'json', 'report', 'coverage', 'A').stdout).data[0]).toEqual({ requirement: 'R', title: 'Load', state: 'pending', outdated: [{ id: run, title: 'T on A' }] });
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
 });
@@ -165,7 +174,7 @@ test('TE-05.1, TE-05.2: impact of a change on items, links and test runs', () =>
   commit(root);
   write(root, { 'A-wing/requirements/R-load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
   const impact = (range: string) => JSON.parse(plm(root, '--format', 'json', 'impact', range).stdout).data;
-  const expected = { changed: ['R'], propagated: ['A'], suspects: [], runs: ['X'] };
+  const expected = { changed: [{ id: 'R', title: 'Load' }], propagated: [{ id: 'A', title: 'Wing' }], suspects: [], runs: [{ id: 'X', title: 'Run' }] };
   expect(impact('HEAD')).toMatchObject(expected);
   expect(Object.keys(impact('HEAD'))).toEqual(Object.keys(expected));
   commit(root);

@@ -3,7 +3,7 @@ import { parseDocument } from 'yaml';
 import type { LinkState } from '../../src/links.ts';
 import type { Repo } from '../../src/repo.ts';
 import { baseSchema } from '../../src/schemas.ts';
-import { applyForm, changedPaths, formData, formFields, formHtml, linkRows, productTree, requirementsMarkdown } from '../src/logic.ts';
+import { applyForm, formData, formFields, formHtml, linkRows, productTree, requirementsMarkdown } from '../src/logic.ts';
 
 const fakeRepo = (...entries: { id: string; [field: string]: unknown }[]) => ({ entries: new Map(entries.map((found) => [found.id, {
   path: found.id, nested: [], requirements: [], item: { data: { title: found.id.toLowerCase(), text: `${found.id} text` } }, meta: { data: { status: 'draft' } }, ...found,
@@ -20,11 +20,6 @@ test('VS-04.1: outgoing and incoming links of an item', () => {
     ({ source, title: source.toLowerCase(), link: { type: 'satisfies', target }, targetTitle: target.toLowerCase(), state });
   const rows = linkRows([link('P', 'R', 'suspect'), link('A', 'P', 'current'), link('A', 'R', 'unconfirmed')], 'P');
   expect(rows.map((row) => [row.label, row.state.state])).toEqual([['→ satisfies R (r)', 'suspect'], ['← A (a) satisfies', 'current']]);
-});
-
-test('VS-04.2: changed files from the diff headers', () => {
-  const diff = 'diff --git a/A/x.yaml b/A/x.yaml\n--- a/A/x.yaml\n+++ b/A/x.yaml\n@@ -1 +1,2 @@\n+diff --git a/no b/no\ndiff --git a/B/y b/B/y\n';
-  expect(changedPaths(diff)).toEqual(['A/x.yaml', 'B/y']);
 });
 
 test('VS-03.1: requirements of the item, then its nested items, as numbered sections', () => {

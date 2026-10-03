@@ -81,6 +81,3 @@ export const linkRows = (states: LinkState[], id: string): LinkRow[] => states.f
   if (state.link.target === id) return [{ label: `← ${state.source} (${state.title}) ${state.link.type}`, state }];
   return [];
 });
-
-// VS-04.2
-export const changedPaths = (diff: string) => [...diff.matchAll(/^diff --git a\/.* b\/(.*)$/gm)].map((match) => match[1]);

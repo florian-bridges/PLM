@@ -1,5 +1,4 @@
 // VS-01–VS-06: VS Code glue; the logic is in logic.ts and the core.
-import { existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
 import { addLink, changeSince, confirm, linkStates, recordRun } from '../../src/links.ts';
@@ -7,8 +6,8 @@ import { childrenOf, entry, findRoot, innermostItem, loadRepo, writeYaml, type E
 import { allows, linkRules, results } from '../../src/schemas.ts';
 import { search } from '../../src/search.ts';
 import { itemSchema, validate } from '../../src/validate.ts';
-import { currentVersions, git } from '../../src/version.ts';
-import { applyForm, changedPaths, formData, formFields, formHtml, linkRows, productTree, requirementsMarkdown, type LinkRow } from './logic.ts';
+import { currentVersions } from '../../src/version.ts';
+import { applyForm, formData, formFields, formHtml, linkRows, productTree, requirementsMarkdown, type LinkRow } from './logic.ts';
 
 export function activate(context: vscode.ExtensionContext) {
   const folder = vscode.workspace.workspaceFolders?.[0];
@@ -70,19 +69,11 @@ export function activate(context: vscode.ExtensionContext) {
     },
   };
 
-  // VS-04.2: original files as of a commit, from `plm-git:/<path>?<commit>`.
-  const gitFiles: vscode.TextDocumentContentProvider = {
-    provideTextDocumentContent: (uri) => { try { return git(root, ['show', `${uri.query}:${uri.path.slice(1)}`]); } catch { return ''; } },
-  };
-  const showChange = (row: LinkRow) => {
+  // VS-04.2
+  const showChange = async (row: LinkRow) => {
     const { commit, diff } = changeSince(open(), row.state.link);
     if (!commit) return vscode.window.showWarningMessage(`No commit has the confirmed version of ${row.state.link.target}`);
-    const gitUri = (path: string, ref: string) => vscode.Uri.from({ scheme: 'plm-git', path: `/${path}`, query: ref });
-    const files = changedPaths(diff).map((path) => {
-      const current = existsSync(join(root, path)) ? fileUri(path) : gitUri(path, '');
-      return [fileUri(path), gitUri(path, commit), current];
-    });
-    return vscode.commands.executeCommand('vscode.changes', `${row.state.link.target} since ${commit}`, files);
+    return vscode.window.showTextDocument(await vscode.workspace.openTextDocument({ content: diff, language: 'diff' }));
   };
   const confirmItem = (row: LinkRow) => {
     const repo = open();
@@ -160,7 +151,6 @@ export function activate(context: vscode.ExtensionContext) {
     diagnostics,
     vscode.window.registerTreeDataProvider('plm.tree', tree),
     vscode.window.registerTreeDataProvider('plm.links', links),
-    vscode.workspace.registerTextDocumentContentProvider('plm-git', gitFiles),
     register('plm.editItem', editItem),
     register('plm.addLink', addLinkToActive),
     register('plm.showRequirements', showRequirements),

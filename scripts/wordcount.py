@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Count words in git-tracked files of the documents, source and test directories.
+"""Count words in git-tracked files of the documents, source, test and extension directories.
 
-Test words count toward the source limit.
+Test words count toward the source limit; the extension has its own limit.
 
 Words are whitespace-separated tokens containing a letter or digit, so
 punctuation-only tokens such as `{`, `});` or `|` do not count and line
@@ -67,8 +67,10 @@ def main():
     parser.add_argument("--docs-dir", default="documents")
     parser.add_argument("--src-dir", default="src")
     parser.add_argument("--test-dir", default="test")
+    parser.add_argument("--ext-dir", default="extension")
     parser.add_argument("--max-docs", type=int, help="word limit for the documents directory")
     parser.add_argument("--max-src", type=int, help="word limit for the source and test directories")
+    parser.add_argument("--max-ext", type=int, help="word limit for the extension directory")
     parser.add_argument("-u", "--include-untracked", action="store_true",
                         help="also count untracked files that are not git-ignored")
     parser.add_argument("-v", "--verbose", action="store_true", help="list per-file counts")
@@ -76,6 +78,7 @@ def main():
 
     ok = summarize([args.docs_dir], args.max_docs, args.include_untracked, args.verbose)
     ok &= summarize([args.src_dir, args.test_dir], args.max_src, args.include_untracked, args.verbose)
+    ok &= summarize([args.ext_dir], args.max_ext, args.include_untracked, args.verbose)
     sys.exit(0 if ok else 1)
 
 

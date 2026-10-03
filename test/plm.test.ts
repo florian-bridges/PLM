@@ -3,8 +3,9 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, expect, test } from 'vitest';
-import { changeSince, confirm, linkStates, recordRun } from '../src/links.ts';
-import { loadRepo, Refused } from '../src/repo.ts';
+import { addLink, changeSince, confirm, linkStates, recordRun } from '../src/links.ts';
+import { linksOf, loadRepo, Refused } from '../src/repo.ts';
+import { search } from '../src/search.ts';
 import { validate } from '../src/validate.ts';
 import { currentVersions, git, versionAt } from '../src/version.ts';
 
@@ -197,4 +198,18 @@ test('TE-01.1, TE-01.2: a nested repository counts by its commit, without warnin
   expect(currentVersions(loadRepo(root)).get('P')).not.toBe(before);
   commit(root);
   expect(JSON.parse(plm(root, '--format', 'json', 'impact', 'HEAD').stdout).data).toMatchObject({ changed: [], propagated: [] });
+});
+
+test('CO-03.1, CO-03.2, CL-01.1: search all words by prefix with filters, then link to a result', () => {
+  const root = fixture();
+  write(root, { 'meta/A.yaml': 'owner: ana\nstatus: draft\n' });
+  const repo = loadRepo(root);
+  expect(search(repo, 'spa')).toEqual([{ id: 'P', title: 'Spar' }]);
+  expect(search(repo, 'carry 3')).toEqual([{ id: 'R', title: 'Load' }]);
+  expect(search(repo, 'carry spar')).toEqual([]);
+  expect(search(repo, 'owner:ana status:draft')).toEqual([{ id: 'A', title: 'Wing' }]);
+  expect(search(repo, 'type:part').map((found) => found.id).sort()).toEqual(['L', 'P']);
+  expect(plm(root, 'search', 'bo').stdout).toBe('L (Bolt)\n');
+  addLink(repo, 'L', 'satisfies', 'R');
+  expect(linksOf(loadRepo(root).entries.get('L')!)).toEqual([{ type: 'satisfies', target: 'R' }]);
 });

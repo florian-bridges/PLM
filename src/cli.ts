@@ -5,9 +5,10 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { parseDocument, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { changeSince, confirm, coverage, fromRun, linkStates, recordRun, type LinkState } from './links.ts';
+import { addLink, changeSince, confirm, coverage, fromRun, linkStates, recordRun, type LinkState } from './links.ts';
 import { entry, homeFolders, isRequirementFile, loadRepo, nameFor, newId, readYaml, Refused, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
+import { search } from './search.ts';
 import { validate } from './validate.ts';
 import { currentVersions, git, snapshotAt } from './version.ts';
 
@@ -54,12 +55,13 @@ program.command('show <id>').description('show an item, its version and links').
   output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
-program.command('link <source> <type> <target>').description('add an unconfirmed link').action((source: string, type: string, target: string) => {
-  const repo = openRepo();
-  const { meta } = entry(repo, source);
-  if (meta.doc.hasIn(['links'])) meta.doc.addIn(['links'], { type, target });
-  else meta.doc.setIn(['links'], [{ type, target }]);
-  writeYaml(repo.root, meta);
+program.command('link <source> <type> <target>').description('add an unconfirmed link')
+  .action((source: string, type: string, target: string) => addLink(openRepo(), source, type, target));
+
+// CO-03.2
+program.command('search <query...>').description('search items, e.g. spar type:part').action((query: string[]) => {
+  const found = search(openRepo(), query.join(' '));
+  output(found.map(label).join('\n'), found);
 });
 
 // CL-01.2

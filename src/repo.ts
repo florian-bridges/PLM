@@ -6,7 +6,7 @@ import { Document, LineCounter, parseDocument } from 'yaml';
 
 export interface Link { type: string; target: string; title?: string; version?: string; by?: string; on?: string; commit?: string }
 export interface Item { id: string; type: string; title: string; [attribute: string]: unknown }
-export interface Meta { links?: Link[]; status?: string }
+export interface Meta { links?: Link[]; status?: string; owner?: string }
 
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 // `path`: item folder or requirement file.

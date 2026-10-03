@@ -27,3 +27,4 @@ export const linkRules: Record<string, [string[], string[]]> = {
   executes: [['test-run'], ['test-case']],
   tests: [['test-run'], ['*']],
 };
+export const allows = (types: string[], candidate: string) => types.includes('*') || types.includes(candidate);

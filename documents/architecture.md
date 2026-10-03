@@ -47,6 +47,7 @@ Core library, traceability engine, CLI, VS Code extension, CI integration and st
 | Language | TypeScript (Node.js 22) |
 | Versioning | Git, Git LFS |
 | Data | YAML, JSON Schema (Ajv) |
+| Search | MiniSearch |
 | CLI | Commander |
 | VS Code extension | VS Code API, esbuild |
 | Static site | Astro |

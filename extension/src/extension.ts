@@ -2,9 +2,10 @@
 import { existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
-import { changeSince, confirm, linkStates, recordRun } from '../../src/links.ts';
-import { childrenOf, findRoot, innermostItem, loadRepo, type Entry } from '../../src/repo.ts';
-import { results } from '../../src/schemas.ts';
+import { addLink, changeSince, confirm, linkStates, recordRun } from '../../src/links.ts';
+import { childrenOf, entry, findRoot, innermostItem, loadRepo, type Entry, type Repo } from '../../src/repo.ts';
+import { allows, linkRules, results } from '../../src/schemas.ts';
+import { search } from '../../src/search.ts';
 import { validate } from '../../src/validate.ts';
 import { currentVersions, git } from '../../src/version.ts';
 import { changedPaths, linkRows, productTree, requirementsMarkdown, type LinkRow } from './logic.ts';
@@ -15,6 +16,11 @@ export function activate(context: vscode.ExtensionContext) {
   const root = findRoot(folder.uri.fsPath);
   const open = () => loadRepo(root);
   const fileUri = (path: string) => vscode.Uri.file(join(root, path));
+  // VS-01.4, VS-04.1
+  const activeItem = (repo: Repo) => {
+    const file = vscode.window.activeTextEditor?.document.uri.fsPath;
+    return file && innermostItem(repo, relative(root, file));
+  };
 
   // VS-01.3
   const diagnostics = vscode.languages.createDiagnosticCollection('plm');
@@ -52,9 +58,8 @@ export function activate(context: vscode.ExtensionContext) {
     onDidChangeTreeData: changed.event,
     getTreeItem: (row) => Object.assign(new vscode.TreeItem(row.label), { description: row.state.state, contextValue: row.state.state }),
     getChildren: () => {
-      const file = vscode.window.activeTextEditor?.document.uri.fsPath;
       const repo = open();
-      const id = file && innermostItem(repo, relative(root, file));
+      const id = activeItem(repo);
       return id ? linkRows(linkStates(repo, currentVersions(repo)), id) : [];
     },
   };
@@ -79,6 +84,31 @@ export function activate(context: vscode.ExtensionContext) {
     changed.fire();
   };
 
+  // VS-01.4: the quick pick shows the core search results unfiltered.
+  const addLinkToActive = async () => {
+    const repo = open();
+    const source = activeItem(repo);
+    if (!source) return;
+    const sourceType = entry(repo, source).item.data.type;
+    const type = await vscode.window.showQuickPick(Object.keys(linkRules).filter((rule) => allows(linkRules[rule][0], sourceType)), { placeHolder: 'Link type' });
+    if (!type) return;
+    const [targetType] = linkRules[type][1];
+    const picker = vscode.window.createQuickPick();
+    const update = () => {
+      const query = `${picker.value} ${targetType === '*' ? '' : `type:${targetType}`}`;
+      picker.items = search(repo, query).map(({ id, title }) => ({ label: id, description: title, alwaysShow: true }));
+    };
+    picker.placeholder = 'Search target';
+    picker.onDidChangeValue(update);
+    picker.onDidAccept(() => {
+      addLink(repo, source, type, picker.selectedItems[0].label);
+      picker.dispose();
+      changed.fire();
+    });
+    update();
+    picker.show();
+  };
+
   // VS-06.1
   const recordTestRun = async () => {
     const repo = open();
@@ -98,6 +128,7 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   context.subscriptions.push(
+    register('plm.addLink', addLinkToActive),
     register('plm.recordTestRun', recordTestRun),
     diagnostics,
     vscode.window.registerTreeDataProvider('plm.tree', tree),

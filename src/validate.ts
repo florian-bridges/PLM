@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
 import { childrenOf, homeFolders, linksOf, nameFor, nameMatches, usesOf, type Repo, type YamlFile } from './repo.ts';
-import { baseSchema, builtinTypes, linkRules } from './schemas.ts';
+import { allows, baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
 // CO-02.4
 export interface Finding { file: string; line: number; col: number; severity: 'error' | 'warning'; code: string; message: string }
@@ -70,7 +70,6 @@ export function validate(repo: Repo): Finding[] {
         return;
       }
       const [sourceTypes, targetTypes] = linkRules[link.type] ?? [[], []];
-      const allows = (types: string[], candidate: string) => types.includes('*') || types.includes(candidate);
       if (!allows(sourceTypes, type) || !allows(targetTypes, target.type)) {
         findings.push(finding(meta, ['links', index, 'type'], 'link-type', `${link.type} not allowed from ${type} to ${target.type}`));
       }

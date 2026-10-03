@@ -52,6 +52,14 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
   return selected.map(({ link }) => link);
 }
 
+// CL-01.1, VS-01.4: a new, unconfirmed link.
+export function addLink(repo: Repo, source: string, type: string, target: string): void {
+  const { meta } = entry(repo, source);
+  if (meta.doc.hasIn(['links'])) meta.doc.addIn(['links'], { type, target });
+  else meta.doc.setIn(['links'], [{ type, target }]);
+  writeYaml(repo.root, meta);
+}
+
 // CL-03.1, CL-03.2
 export function recordRun(repo: Repo, testCase: string, sut: string, result: string, logs: string[]): string {
   const current = currentVersions(repo);

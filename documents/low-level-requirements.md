@@ -37,8 +37,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.
 *Rationale:* One index format serves the CLI, VS Code and the browser without a search server.
 
-**CO-03.2** Queries shall combine free text with filters `type:`, `status:` and `owner:`.
-*Rationale:* Filters answer typical questions, such as all unreleased parts of an owner, faster than text alone.
+**CO-03.2** Queries shall combine free text, matching all words by prefix, with filters `type:`, `status:` and `owner:`.
+*Rationale:* Filters answer typical questions, such as all unreleased parts of an owner, faster than text alone. Prefix matching finds items while typing.
 
 ## Traceability engine
 
@@ -130,7 +130,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-01.3** Diagnostics shall be updated in the Problems panel within one second of saving a file.
 *Rationale:* Immediate feedback catches errors while the context is fresh. Validation reads files from disk, so unsaved edits are not seen.
 
-**VS-01.4** Link targets shall be selected through the core search.
+**VS-01.4** Adding a link to the active item shall offer the link types allowed from its type and select the target through the core search, filtered to the allowed target type.
 *Rationale:* Typing IDs by hand is error-prone; search finds targets by title or text.
 
 **VS-02.1** A tree view shall show composition, nested and used items, from the top-level items, with type icons and status badges; selecting an item opens its `item.yaml`.

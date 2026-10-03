@@ -52,7 +52,6 @@ Not yet implemented: `plm retire`, search, VS Code extension, static site and CI
 
 * **Build records.** Software items record the source commit, CI build and `sha256` of their binary as plain attributes; validation should check the hash against the binary.
 * **Requirement parameters.** Values live in requirement text; machine-readable values with units would need a schema extension and checks against design data.
-* **Renaming items.** Changing a title does not rename the item's folder or file.
 
 ## Getting started
 
@@ -251,6 +250,7 @@ plm report coverage $AC
 ## Reference
 
 * `plm` works from any folder inside the repository; `-C <dir>` runs it as if in another folder.
+* `plm rename <ID> <title>` changes an item's title and renames its folder or file; `plm validate` warns about names that no longer match their title.
 * To reuse an item, such as a standard part, list its ID under `uses:` in the `item.yaml` of the assembly using it.
 * `plm impact <base>[..<head>]` compares a commit with another commit or, by default, the working tree, e.g. `plm impact main..my-branch` before merging.
 * `plm report coverage [item]` reports the requirements of the repository or of an item's subtree as verified, pending or unverified.

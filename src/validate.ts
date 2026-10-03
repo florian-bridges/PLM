@@ -2,7 +2,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, homeFolders, linksOf, nameMatches, usesOf, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, homeFolders, linksOf, nameFor, nameMatches, usesOf, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
 // CO-02.4
@@ -46,6 +46,11 @@ export function validate(repo: Repo): Finding[] {
     // CO-02.2
     const name = basename(entry.path);
     if (!nameMatches(name, id)) findings.push(finding(item, ['id'], 'id-mismatch', `${name} does not start with id ${id}`));
+    // CO-02.7
+    const stem = name.replace(/\.yaml$/, '');
+    if (nameMatches(name, id) && stem !== id && stem !== nameFor(id, item.data.title)) {
+      findings.push({ ...finding(item, ['title'], 'stale-name', `${name} does not match the title; use plm rename`), severity: 'warning' });
+    }
 
     const folder = basename(dirname(entry.path));
     const home = homeFolders[type];

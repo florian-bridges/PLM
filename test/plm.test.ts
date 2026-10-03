@@ -58,7 +58,7 @@ test('TE-01.2: uncommitted and committed states yield identical versions', () =>
   expect(versionAt(root, 'HEAD', 'A')).toBe(working.get('A'));
 });
 
-test('CO-01.2, CO-02.1, CO-02.2, CO-02.4: findings with codes and positions', () => {
+test('CO-01.2, CO-02.1, CO-02.2, CO-02.4, CO-02.7: findings with codes and positions', () => {
   const root = fixture();
   write(root, {
     'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\n',
@@ -69,7 +69,8 @@ test('CO-01.2, CO-02.1, CO-02.2, CO-02.4: findings with codes and positions', ()
     'meta/P.yaml': 'links:\n  - type: verifies\n    target: R\n',
   });
   const findings = validate(loadRepo(root));
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'id-mismatch', 'link-type', 'misplaced', 'schema', 'schema']);
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'id-mismatch', 'link-type', 'misplaced', 'schema', 'schema', 'stale-name']);
+  expect(findings.find((f) => f.code === 'stale-name')).toMatchObject({ file: 'L-copy/item.yaml', severity: 'warning' });
   expect(findings.find((f) => f.code === 'schema')).toMatchObject({ file: 'A-wing/P-spar/item.yaml', line: 4, col: 9 });
 });
 
@@ -101,7 +102,7 @@ test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes th
   expect(() => confirm(repo, currentVersions(repo), validate(repo), 'P')).toThrow(Refused);
 });
 
-test('CL-02.1, CL-02.2, CL-02.4: init, then new items nest in the working folder', () => {
+test('CL-02.1, CL-02.2, CL-02.4, CL-02.5: init, new items nest in the working folder, rename', () => {
   const root = join(base, 'new');
   expect(plm(root, 'init').status).toBe(0);
   expect(plm(root, 'init').status).toBe(2);
@@ -114,6 +115,9 @@ test('CL-02.1, CL-02.2, CL-02.4: init, then new items nest in the working folder
   const tc = plm(dir, 'new', 'test-case', 'Load').stdout.trim();
   expect(existsSync(join(dir, `tests/${tc}-load/item.yaml`))).toBe(true);
   expect(plm(root, 'new', 'test-case', 'Load').status).toBe(2);
+  plm(root, 'rename', part, 'Rear spar');
+  plm(root, 'rename', req, 'Carry 4g');
+  expect(existsSync(join(dir, `${part}-rear-spar/item.yaml`)) && existsSync(join(dir, `requirements/${req}-carry-4g.yaml`))).toBe(true);
   expect(validate(loadRepo(root))).toEqual([]);
 });
 
@@ -139,7 +143,7 @@ test('CO-01.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verif
   const wing = currentVersions(loadRepo(root)).get('A');
   expect(JSON.parse(plm(root, '--format', 'json', 'report', 'coverage', 'P').stdout).data).toEqual([]);
   write(root, {
-    'A-wing/tests/T-load/item.yaml': 'id: T\ntype: test-case\ntitle: Load test\n',
+    'A-wing/tests/T-load-test/item.yaml': 'id: T\ntype: test-case\ntitle: Load test\n',
     'meta/T.yaml': 'links:\n  - type: verifies\n    target: R\n',
     'rig.log': 'ok',
   });

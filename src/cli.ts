@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // CL-01.1
 import { randomBytes } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { basename, join, relative, resolve } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { Document, parseDocument, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { changeSince, confirm, confirmation, coverage, fromRun, linkStates, type LinkState } from './links.ts';
-import { entry, homeFolders, isRequirementFile, loadRepo, readYaml, Refused, UsageError, writeYaml, type Named, type Repo } from './repo.ts';
+import { entry, homeFolders, isRequirementFile, loadRepo, nameFor, readYaml, Refused, UsageError, writeYaml, type Named, type Repo } from './repo.ts';
 import { results } from './schemas.ts';
 import { validate } from './validate.ts';
 import { currentVersions, git, snapshotAt, versionAt } from './version.ts';
@@ -118,8 +118,7 @@ program.command('new <type> [title]').description('create an item in the current
   if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item folder`);
 
   const id = newId(repo, type);
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const name = slug ? `${id}-${slug}` : id;
+  const name = nameFor(id, title);
   let folder = parent ? `${parent.path}/` : '';
   if (type === 'test-case') folder += `${homeFolders['test-case']}/`;
 
@@ -129,6 +128,16 @@ program.command('new <type> [title]').description('create an item in the current
   writeYaml(repo.root, item);
   writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: parseDocument('status: draft\n') });
   output(id, { id });
+});
+
+// CL-02.5
+program.command('rename <id> <title>').description('retitle an item and rename its folder or file').action((id: string, title: string) => {
+  const repo = openRepo();
+  const { item, path } = entry(repo, id);
+  item.doc.setIn(['title'], title);
+  writeYaml(repo.root, item);
+  const name = nameFor(id, title) + (isRequirementFile(path) ? '.yaml' : '');
+  renameSync(join(repo.root, path), join(repo.root, dirname(path), name));
 });
 
 // CL-03.1, CL-03.2

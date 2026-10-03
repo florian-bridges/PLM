@@ -80,6 +80,9 @@ export function loadRepo(start: string): Repo {
   return repo;
 }
 
+// CO-02.7: `<ID>-<slug of title>`, or the ID alone for an empty title.
+export const nameFor = (id: string, title: unknown) => [id, String(title ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')].filter(Boolean).join('-');
+
 // CO-02.2
 export const nameMatches = (name: string, id: string) => name === id || name === `${id}.yaml` || name.startsWith(`${id}-`);
 

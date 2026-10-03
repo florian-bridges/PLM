@@ -31,6 +31,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, and `tests` from `test-run` to any type.
 *Rationale:* Fixed semantics keep reports comparable.
 
+**CO-02.7** The core shall warn when a name has a title part other than the slug of its `title`: lowercase, with runs of characters other than ASCII letters and digits replaced by `-`, trimmed of `-`.
+*Rationale:* Names show the structure in file browsers and on the Git host; names left from earlier titles mislead.
+
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.
 *Rationale:* One index format serves the CLI, VS Code and the browser without a search server.
 
@@ -94,6 +97,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types.
 *Rationale:* Items can follow at once.
+
+**CL-02.5** `plm rename <ID> <title>` shall set the item's `title` and rename its folder or file to match it per CO-02.7.
+*Rationale:* Retitling and renaming in one step keeps names current; links refer to IDs and need no change.
 
 **CL-03.1** `plm test record <test-case> --sut <ID> --result pass|fail|inconclusive [--log <file>...]` shall create a test run in `runs/` with date, result and copies of the log files.
 *Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for.

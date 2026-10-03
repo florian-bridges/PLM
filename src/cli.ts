@@ -64,9 +64,9 @@ program.command('link <source> <type> <target>').description('add an unconfirmed
 });
 
 // CL-01.2
-program.command('confirm <source> [type] [target]').description('confirm links').action((source: string, type?: string, target?: string) => {
+program.command('confirm <source>').description('confirm all links of an item').action((source: string) => {
   const repo = openRepo();
-  const links = confirm(repo, currentVersions(repo), validate(repo), source, type, target);
+  const links = confirm(repo, currentVersions(repo), validate(repo), source);
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 
@@ -136,18 +136,17 @@ program.command('test').command('record <test-case>').description('record a test
   .requiredOption('--sut <id>')
   .addOption(new Option('--result <result>').choices(results).makeOptionMandatory())
   .option('--log <files...>', '', [])
-  .option('--commit <commit>', '', 'HEAD')
-  .action((testCase: string, options: { sut: string; result: string; log: string[]; commit: string }) => {
+  .action((testCase: string, options: { sut: string; result: string; log: string[] }) => {
     const repo = openRepo();
     const current = currentVersions(repo);
-    const testedVersion = (id: string) => versionAt(repo.root, options.commit, entry(repo, id).id);
+    const testedVersion = (id: string) => versionAt(repo.root, 'HEAD', entry(repo, id).id);
     const links = [
-      { type: 'executes', target: testCase, ...confirmation(repo, testCase, testedVersion(testCase), options.commit) },
-      { type: 'tests', target: options.sut, ...confirmation(repo, options.sut, testedVersion(options.sut), options.commit) },
+      { type: 'executes', target: testCase, ...confirmation(repo, testCase, testedVersion(testCase)) },
+      { type: 'tests', target: options.sut, ...confirmation(repo, options.sut, testedVersion(options.sut)) },
     ];
     // CL-03.3
     const changed = links.find((link) => link.version !== current.get(link.target));
-    if (changed) throw new Refused(`${changed.target} differs from ${options.commit}; commit it first`);
+    if (changed) throw new Refused(`${changed.target} differs from HEAD; commit it first`);
 
     const id = newId(repo, 'test-run');
     const folder = `${homeFolders['test-run']}/${id}`;

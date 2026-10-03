@@ -30,7 +30,6 @@ function schemaFor(ajv: Ajv2020, root: string, type: string): ValidateFunction |
 export function validate(repo: Repo): Finding[] {
   const ajv = new Ajv2020({ allErrors: true, strictTypes: false });
   const findings: Finding[] = [];
-  const idsByLowerCase = new Map<string, string>();
   for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
     const { id, item, meta } = entry;
     const type = String(item.data.type);
@@ -53,9 +52,7 @@ export function validate(repo: Repo): Finding[] {
     const misplaced = home ? folder !== home : Object.values(homeFolders).includes(folder);
     if (misplaced) findings.push(finding(item, ['type'], 'misplaced', 'Requirements, test cases and runs belong in their folders, and only there'));
 
-    const clashing = idsByLowerCase.get(id.toLowerCase());
-    if (clashing) findings.push(finding(item, ['id'], 'id-clash', `${id} clashes with ${clashing}`));
-    idsByLowerCase.set(id.toLowerCase(), id);
+    if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', `Duplicate id ${id}`));
 
     usesOf(entry).forEach((used, index) => {
       if (!repo.entries.has(used)) findings.push(finding(item, ['uses', index], 'unknown-use', `Unknown used item ${used}`));

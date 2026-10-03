@@ -63,12 +63,13 @@ test('CO-01.2, CO-02.1, CO-02.2, CO-02.4: findings with codes and positions', ()
   write(root, {
     'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\n',
     'X-rib/item.yaml': 'id: Y\ntype: part\ntitle: Rib\n',
+    'L-copy/item.yaml': 'id: L\ntype: part\ntitle: Bolt\n',
     'L-bolt/item.yaml': 'id: L\ntype: part\ntitle: Bolt\nexternal_ids: { reqif: B1 }\n',
     'A-wing/requirements/Q.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
     'meta/P.yaml': 'links:\n  - type: verifies\n    target: R\n',
   });
   const findings = validate(loadRepo(root));
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-mismatch', 'link-type', 'misplaced', 'schema', 'schema']);
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'id-mismatch', 'link-type', 'misplaced', 'schema', 'schema']);
   expect(findings.find((f) => f.code === 'schema')).toMatchObject({ file: 'A-wing/P-spar/item.yaml', line: 4, col: 9 });
 });
 

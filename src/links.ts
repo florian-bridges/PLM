@@ -20,20 +20,19 @@ export function linkStates(repo: Repo, versions: Map<string, string>): LinkState
 export const fromRun = (repo: Repo, state: LinkState) => repo.entries.get(state.source)?.item.data.type === 'test-run';
 
 // TE-02.1, TE-02.2
-export function confirmation(repo: Repo, target: string, version: string | undefined, commit = 'HEAD'): Omit<Link, 'type' | 'target'> {
+export function confirmation(repo: Repo, target: string, version: string | undefined): Omit<Link, 'type' | 'target'> {
   const tryGit = (args: string[]) => { try { return git(repo.root, args); } catch { return ''; } };
   const by = tryGit(['config', 'user.name']);
   if (!by) throw new Refused('Set git user.name before confirming');
-  const hash = tryGit(['rev-parse', '--verify', '-q', '--short', commit]);
-  const exact = hash && versionAt(repo.root, commit, target) === version;
+  const hash = tryGit(['rev-parse', '--verify', '-q', '--short', 'HEAD']);
+  const exact = hash && versionAt(repo.root, 'HEAD', target) === version;
   return { title: String(entry(repo, target).item.data.title), version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }) };
 }
 
-// TE-02.1
-export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, type?: string, target?: string): Link[] {
+// TE-02.1, CL-01.2
+export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string): Link[] {
   const sourceEntry = entry(repo, source);
-  const matches = (link: Link) => (!type || link.type === type) && (!target || link.target === target);
-  const selected = linksOf(sourceEntry).map((link, index) => ({ link, index })).filter(({ link }) => matches(link));
+  const selected = linksOf(sourceEntry).map((link, index) => ({ link, index }));
   for (const { link } of selected) {
     // TE-02.2
     const targetFile = repo.entries.get(link.target)?.item.path;

@@ -16,8 +16,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.1** The core shall validate `item.yaml` with Ajv against the JSON Schema (2020-12) of its type; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
 *Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add their own attributes.
 
-**CO-02.2** The core shall report as errors: names not starting with their `id`, requirements and test cases outside their item's `requirements/` and `tests/` folders, test runs outside the top-level `runs/` folder, other items inside them, duplicate IDs or IDs differing only in case, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
-*Rationale:* These errors break versions, links or composition and would otherwise surface late, for example on case-insensitive file systems.
+**CO-02.2** The core shall report as errors: names not starting with their `id`, requirements and test cases outside their item's `requirements/` and `tests/` folders, test runs outside the top-level `runs/` folder, other items inside them, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
+*Rationale:* These errors break versions, links or composition and would otherwise surface late.
 
 **CO-02.3** The core shall report files above the size limit in `plm.yaml` that are not stored in Git LFS.
 *Rationale:* Binaries outside LFS bloat every clone permanently and cannot be locked.
@@ -80,7 +80,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>[..<head>]` and `report trace|coverage|compliance [<item>]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Commander is the established choice.
 
-**CL-01.2** `confirm` shall accept a source item and optionally a link type and target, confirming all links of the source by default.
+**CL-01.2** `confirm <source>` shall confirm all links of the source item.
 *Rationale:* After review, engineers typically confirm all links of an item at once.
 
 **CL-02.1** `plm new <type> [title]` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements and test cases in its `requirements/` and `tests/` folders, and print the new ID.
@@ -98,10 +98,10 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-03.1** `plm test record <test-case> --sut <ID> --result pass|fail|inconclusive [--log <file>...]` shall create a test run in `runs/` with date, result and copies of the log files.
 *Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for.
 
-**CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation per TE-02.1 with the versions at the commit given by `--commit` (default `HEAD`), recorded as `commit`.
-*Rationale:* The run must record exactly which version was tested; the commit makes this reproducible on rigs.
+**CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation per TE-02.1 with the versions at `HEAD`, recorded as `commit`.
+*Rationale:* The run must record exactly which version was tested; the commit makes it reproducible.
 
-**CL-03.3** Recording shall be refused while the system under test or test case differs from that commit.
+**CL-03.3** Recording shall be refused while the system under test or test case differs from `HEAD`.
 *Rationale:* Uncommitted states cannot be reproduced and so cannot serve as evidence.
 
 **CL-05.1** Every command shall accept `--format json`, with the JSON output schema versioned.

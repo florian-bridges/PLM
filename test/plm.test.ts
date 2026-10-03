@@ -153,7 +153,7 @@ test('CO-01.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verif
   expect(record('maybe').status).toBe(2);
   const run = record('pass').stdout.trim();
   expect(existsSync(join(root, `runs/${run}/rig.log`))).toBe(true);
-  expect(readFileSync(join(root, `meta/${run}.yaml`), 'utf8')).toContain(`commit: ${git(root, ['rev-parse', '--short', 'HEAD'])}`);
+  expect(loadRepo(root).entries.get(run)?.meta.data.links?.[0].commit).toBe(git(root, ['rev-parse', '--short', 'HEAD']));
   expect(validate(loadRepo(root))).toEqual([]);
   expect(coverage()).toBe('verified');
   write(root, { 'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\n' });

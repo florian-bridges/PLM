@@ -52,31 +52,38 @@ Requires Node.js 22.18 or later and Git.
 
 ```sh
 npm install
-npm run build && npm link   # or run from source: node src/cli.ts
+npm run build
+npm link
 npm test
 ```
 
-A product repository is a Git repository with a `plm.yaml` defining ID prefixes:
+Without `npm link`, run the CLI from source with `node src/cli.ts`.
 
-```yaml
-prefixes:
-  requirement: REQ-
-  part: PRT-
+A product repository is a Git repository with a `plm.yaml` defining ID prefixes. Create one in an empty folder:
+
+```sh
+mkdir wing && cd wing
+plm init
 ```
 
 Each item lives in `items/<ID>/item.yaml` with its artifacts beside it; its status and links are in `meta/<ID>.yaml`.
 
-```sh
-plm new requirement --title "Wing shall carry 3g"   # prints e.g. REQ-N3KJWJ
-plm new part --title "Main spar"                    # prints e.g. PRT-DYB7WG
-plm link PRT-DYB7WG satisfies REQ-N3KJWJ            # add an unconfirmed link
-plm confirm PRT-DYB7WG                              # record the target's current version
-git add -A && git commit -m "Spar satisfies load requirement"
+Create a requirement and a part, link them, and confirm the link, which records the requirement's current version. `plm new` prints the new ID:
 
-# after editing the requirement:
-plm suspects --diff     # suspect links and what changed since confirmation
-plm validate            # schema, IDs, link targets and types, cycles
-plm show PRT-DYB7WG     # item, version and links with their state
+```sh
+REQ=$(plm new requirement --title "Wing shall carry 3g")
+PRT=$(plm new part --title "Main spar")
+plm link $PRT satisfies $REQ
+plm confirm $PRT
+git add -A && git commit -m "Spar satisfies load requirement"
+```
+
+After editing the requirement's `item.yaml`, list suspect links with what changed since confirmation, validate the repository, and show the part with its version and links:
+
+```sh
+plm suspects --diff
+plm validate
+plm show $PRT
 ```
 
 Use `-C <dir>` to work on another repository and `--format json` for machine-readable output. Exit codes: 0 success, 1 findings, 2 usage error, 3 internal error.

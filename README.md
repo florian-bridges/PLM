@@ -48,10 +48,6 @@ A release is a reviewed merge into the protected `main` branch; there are no rev
 
 Not yet implemented: `plm retire`, search, VS Code extension, static site and CI.
 
-## Open topics
-
-* **Requirement parameters.** Values live in requirement text; machine-readable values with units would need a schema extension and checks against design data.
-
 ## Getting started
 
 Requires Node.js 22.18 or later and Git.

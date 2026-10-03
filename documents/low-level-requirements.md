@@ -43,7 +43,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-04.2** Resolution shall walk the composition from the root and return each selected item with its version, reporting listed items that are unreachable.
 *Rationale:* Reports and baselines need exact versions; unreachable entries reveal configuration errors.
 
-**CO-05.1** Import shall map SPEC-OBJECTs to requirement items, SPECIFICATIONs to `specification` items whose children follow the SPEC-HIERARCHY, and SPEC-RELATIONs to unconfirmed links.
+**CO-05.1** Import shall map SPEC-OBJECTs to requirement items, a SPECIFICATION to the `requirements/` folder of an item chosen at import, in SPEC-HIERARCHY order, and SPEC-RELATIONs to unconfirmed links.
 *Rationale:* These are ReqIF's equivalents of requirements, documents and links. Imported links start unconfirmed because ReqIF carries no versions.
 
 **CO-05.2** Import shall store each ReqIF IDENTIFIER in `external_ids.reqif`, update items matched by it and report, never delete, items missing from the file.

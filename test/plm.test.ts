@@ -1,13 +1,15 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { expect, test } from 'vitest';
+import { afterAll, expect, test } from 'vitest';
 import { changeSince, confirm, linkStates } from '../src/links.ts';
 import { loadRepo, Refused } from '../src/repo.ts';
 import { validate } from '../src/validate.ts';
 import { currentVersions, git, versionAt } from '../src/version.ts';
 
+const base = mkdtempSync(join(tmpdir(), 'plm-test-'));
+afterAll(() => rmSync(base, { recursive: true, force: true }));
 const write = (root: string, files: Record<string, string>) => {
   for (const [path, text] of Object.entries(files)) {
     mkdirSync(dirname(join(root, path)), { recursive: true });
@@ -20,7 +22,7 @@ const commit = (root: string) => {
 };
 // Wing A with nested spar P satisfying the wing's requirement R; the wing uses bolt L.
 const fixture = () => {
-  const root = mkdtempSync(join(tmpdir(), 'plm-test-'));
+  const root = mkdtempSync(join(base, 'repo-'));
   write(root, {
     'plm.yaml': 'prefixes:\n  part: PRT-\n  test-run: RUN-\n',
     'A-wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nuses: [L]\n',
@@ -88,7 +90,7 @@ test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes th
 });
 
 test('CL-02.1, CL-02.2, CL-02.4: init, then new items nest in the working folder', () => {
-  const root = join(mkdtempSync(join(tmpdir(), 'plm-test-')), 'new');
+  const root = join(base, 'new');
   expect(plm(root, 'init').status).toBe(0);
   expect(plm(root, 'init').status).toBe(2);
   const dir = join(root, `${plm(root, 'new', 'assembly', 'My aircraft').stdout.trim()}-my-aircraft`);

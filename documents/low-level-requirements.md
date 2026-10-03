@@ -157,9 +157,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-02.1** A tree view shall show composition from the configuration chosen in its title bar, or all top-level items, with type icons and status badges.
 *Rationale:* Engineers work on one variant at a time; badges show maturity at a glance.
 
-**VS-02.2** The view shall refresh on file changes through a file system watcher.
-*Rationale:* Files also change through Git, the CLI and other editors.
-
 **VS-03.1** Opening a `specification` item shall show a read-only webview of its subtree as numbered sections with ID, status and rendered Markdown; clicking a requirement opens its form.
 *Rationale:* Read-only rendering avoids a second editor; reviewers see the document as exchanged with customers.
 
@@ -192,9 +189,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CI-01.3** Findings shall appear as merge request annotations: GitHub check annotations or a GitLab Code Quality report.
 *Rationale:* Annotations show findings at the affected lines, where reviewers look.
 
-**CI-01.4** Hosts shall require this job to pass before merging into protected branches.
-*Rationale:* Without enforcement on the host, the check is only advisory.
-
 **CI-01.5** After merges into protected branches CI shall run `plm tag`.
 *Rationale:* Tags are created only from reviewed states on protected branches.
 
@@ -220,9 +214,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **SI-01.2** Each item shall have a page with attributes, text, artifact downloads, children, links with their state, and history: the commits touching its files, with date, author, message and merge request.
 *Rationale:* Reviewers need the complete picture of an item, including why it changed.
-
-**SI-01.3** Search shall run in the browser on the index from CO-03.1.
-*Rationale:* Without a server, search must run in the browser.
 
 **SI-01.4** 3D models shall be shown with three.js using the converted models from CI-03.1.
 *Rationale:* Converted models load fast in browsers without CAD tools.

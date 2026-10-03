@@ -4,8 +4,6 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 ## Core library (CO)
 
-Loads, validates and queries the product repository; shared by all components.
-
 **CO-01** The core shall load items, artifacts, links and configurations from a repository. (CR-01–CR-03; US-2, US-3)
 *Rationale:* All components need the same view of the repository; one loader avoids inconsistent interpretations.
 
@@ -22,8 +20,6 @@ Loads, validates and queries the product repository; shared by all components.
 *Rationale:* ReqIF is the standard exchange format supported by DOORS and Polarion, the tools customers and suppliers commonly use.
 
 ## Traceability engine (TE)
-
-Computes item versions, link states, impact and coverage.
 
 **TE-01** The engine shall compute each item's version from its content and its children's versions. (CR-07, CR-12; US-2, US-5)
 *Rationale:* Including children means a change anywhere below an assembly invalidates evidence on it, as test results on assemblies require.
@@ -45,8 +41,6 @@ Computes item versions, link states, impact and coverage.
 
 ## CLI (CL)
 
-Command-line access for engineers, scripts and CI.
-
 **CL-01** The CLI shall expose validation, search, link confirmation, impact analysis and reports. (CR-04–CR-07, CR-10, CR-13; US-1–US-7)
 *Rationale:* A CLI makes every function scriptable and usable in CI and on rigs without an editor.
 
@@ -63,8 +57,6 @@ Command-line access for engineers, scripts and CI.
 *Rationale:* Scripts and CI need parseable results and reliable failure signals.
 
 ## VS Code extension (VS)
-
-The engineer's local workspace.
 
 **VS-01** The extension shall provide forms to create and edit items and links, validated while typing. (CR-04; US-1–US-5)
 *Rationale:* Engineers should not need to know the YAML schemas; forms with live validation lower the entry barrier.
@@ -86,8 +78,6 @@ The engineer's local workspace.
 
 ## CI integration (CI)
 
-Runs on the Git host for every merge request and tag.
-
 **CI-01** CI shall validate each merge request and block merging on errors or unconfirmed suspect links. (CR-09, CR-14; US-7)
 *Rationale:* Checking in CI keeps errors and unconfirmed suspects out of protected branches, whatever tools users run locally.
 
@@ -101,8 +91,6 @@ Runs on the Git host for every merge request and tag.
 *Rationale:* Publishing per branch and tag gives every state, including baselines, a stable read-only view.
 
 ## Static site (SI)
-
-Read-only view for users without local tools.
 
 **SI-01** The site shall let users search and browse items, artifacts, links, 3D models and item history. (CR-05, CR-15; US-6)
 *Rationale:* Reviewers, managers and authorities need access without installing tools or cloning repositories.

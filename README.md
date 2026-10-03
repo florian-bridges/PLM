@@ -121,7 +121,7 @@ plm test record $TC --sut $AC --result pass --log rig.log
 plm report coverage $AC
 ```
 
-`plm report coverage` lists each requirement as verified, pending (a test case exists but has no current passing run) or unverified. A change to the tested item makes its runs suspect, and its requirements fall back to pending.
+`plm report coverage` lists each requirement as verified, pending (a test case exists but has no current passing run) or unverified. A change to the tested item makes its runs outdated, and its requirements fall back to pending, naming the outdated runs. `plm suspects` does not list run links: they are evidence of what was tested, not links to review.
 
 To reuse an item elsewhere, such as a standard part, list its ID under `uses:` in the `item.yaml` of the assembly using it.
 

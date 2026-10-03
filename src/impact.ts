@@ -1,5 +1,5 @@
 // TE-05: impact of a change between a base commit and a head commit or the working tree.
-import { linkStates, type LinkState } from './links.ts';
+import { fromRun, linkStates, type LinkState } from './links.ts';
 import { git, type Snapshot } from './version.ts';
 
 export interface Impact { changed: string[]; propagated: string[]; suspects: LinkState[]; runs: string[] }
@@ -22,13 +22,12 @@ export function impact(base: Snapshot, head: Snapshot, files: string[]): Impact 
 
   // TE-05.2
   const becameSuspect = (state: LinkState) => state.state === 'suspect' && state.link.version === base.versions.get(state.link.target);
-  const suspects = linkStates(head.repo, head.versions).filter(becameSuspect);
-  const isRun = (id: string) => head.repo.entries.get(id)?.item.data.type === 'test-run';
+  const becameSuspects = linkStates(head.repo, head.versions).filter(becameSuspect);
 
   return {
     changed: changedIds.filter((id) => ownersOfChangedFiles.has(id)),
     propagated: changedIds.filter((id) => !ownersOfChangedFiles.has(id)),
-    suspects,
-    runs: [...new Set(suspects.map((state) => state.source))].filter(isRun),
+    suspects: becameSuspects.filter((state) => !fromRun(head.repo, state)),
+    runs: [...new Set(becameSuspects.filter((state) => fromRun(head.repo, state)).map((state) => state.source))],
   };
 }

@@ -6,7 +6,7 @@ import { basename, join, relative, resolve } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { Document, parseDocument, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { changeSince, confirm, coverage, linkStates } from './links.ts';
+import { changeSince, confirm, coverage, fromRun, linkStates } from './links.ts';
 import { entry, homeFolders, isRequirementFile, loadRepo, readYaml, Refused, UsageError, writeYaml, type Repo } from './repo.ts';
 import { results } from './schemas.ts';
 import { validate } from './validate.ts';
@@ -69,7 +69,7 @@ program.command('confirm <source> [type] [target]').description('confirm links')
 program.command('suspects').description('list suspect and unconfirmed links').option('--diff', 'show what changed').action(({ diff }) => {
   const repo = openRepo();
   const states = linkStates(repo, currentVersions(repo))
-    .filter((state) => state.state !== 'current')
+    .filter((state) => state.state !== 'current' && !fromRun(repo, state))
     .map((state) => (diff && state.state === 'suspect' ? { ...state, ...changeSince(repo, state.link) } : state));
   const lines = states.map((state) => {
     const change = 'diff' in state && state.diff ? `\n${state.diff}` : '';
@@ -160,7 +160,7 @@ program.command('report').command('coverage [item]').description('report require
     const repo = openRepo();
     const root = item ? entry(repo, item).id : undefined;
     const rows = coverage(repo, linkStates(repo, currentVersions(repo)), root);
-    output(rows.map((row) => [row.state, row.requirement, row.run].filter(Boolean).join(' ')).join('\n'), rows);
+    output(rows.map((row) => [row.state, row.requirement, row.run, ...(row.outdated ? ['outdated', ...row.outdated] : [])].filter(Boolean).join(' ')).join('\n'), rows);
     if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
   });
 

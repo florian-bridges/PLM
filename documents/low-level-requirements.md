@@ -51,8 +51,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-02.2** Confirmation shall be refused while the target fails validation.
 *Rationale:* Confirming against a broken item would record a meaningless state.
 
-**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none.
-*Rationale:* Separating unconfirmed from suspect distinguishes new, unreviewed links from links invalidated by change.
+**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none. Links from test runs are evidence, not links to review: suspect lists shall omit them, and a run with a suspect link is outdated.
+*Rationale:* Separating unconfirmed from suspect distinguishes new, unreviewed links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
 
 **TE-03.2** To show what changed, the engine shall find the latest commit at which the target had the confirmed version and return the diff of the target's subtree since then.
 *Rationale:* The user must judge whether the change matters; the diff shows exactly what happened since confirmation.
@@ -63,13 +63,13 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-04.2** The engine shall fetch aliased repositories into `.plm/repos/` and use the Git object hash of `<path>` at the pinned commit as the version, or the item version if the alias is a PLM repository.
 *Rationale:* Software repositories are usually not PLM repositories; object hashes give them versions without imposing the item model.
 
-**TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links that became suspect, and test runs whose evidence is no longer current.
+**TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links other than from test runs that became suspect, and runs that became outdated.
 *Rationale:* These are the questions a change board asks before approval.
 
 **TE-05.2** A link shall have become suspect when its confirmed version equals the target's version at base but not at head.
 *Rationale:* Links already suspect at base are not caused by the change.
 
-**TE-06.1** A requirement shall count as verified when a test case `verifies` it through a current link and that test case's latest run, by date, with current `executes` and `tests` links has result `pass`.
+**TE-06.1** A requirement shall count as verified when a test case `verifies` it through a current link and that test case's latest run, by date, with current `executes` and `tests` links has result `pass`; a pending requirement shall name its test cases' outdated latest runs.
 *Rationale:* Evidence counts only for the versions tested and the latest result; reusing the suspect mechanism avoids a second staleness check.
 
 **TE-06.2** Coverage shall be reported for the repository or an item subtree as verified, verification pending (verifying test case without current passing run) and unverified (no verifying test case).

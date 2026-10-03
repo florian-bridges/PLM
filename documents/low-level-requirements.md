@@ -128,7 +128,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-04.1** `plm release <ID>` shall set `status: released` and the next revision letter, skipping I, O, Q, S, X and Z (ASME Y14.35).
 *Rationale:* ASME Y14.35 omits letters easily confused with digits.
 
-**CL-04.2** Release shall be refused if the item or its subtree has validation errors, suspect or unconfirmed links, or unreleased children.
+**CL-04.2** Release shall be refused if the item or its subtree has validation errors, suspect or unconfirmed links, or unreleased nested or used items.
 *Rationale:* A released item must be consistent and built only from released parts.
 
 **CL-04.3** `plm tag` shall create annotated tags `rev/<ID>/<revision>` for newly released items and `baseline/<name>` for configurations, recording versions in the tag message.
@@ -212,7 +212,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **SI-01.1** The site shall be built with Astro from the core library and contain only static files.
 *Rationale:* Static files can be hosted anywhere, including isolated networks, without a server to maintain.
 
-**SI-01.2** Each item shall have a page with attributes, text, artifact downloads, children, links with their state, and history: the commits touching its files, with date, author, message and merge request.
+**SI-01.2** Each item shall have a page with attributes, text, artifact downloads, nested and used items, links with their state, and history: the commits touching its files, with date, author, message and merge request.
 *Rationale:* Reviewers need the complete picture of an item, including why it changed.
 
 **SI-01.4** 3D models shall be shown with three.js using the converted models from CI-03.1.

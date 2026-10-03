@@ -5,22 +5,31 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { parse } from 'yaml';
-import { list, nameMatches, usesOf, type Repo } from './repo.ts';
+import { homeFolders, isRequirementFile, list, nameMatches, usesOf, type Repo } from './repo.ts';
 
 export function git(root: string, args: string[], env: Record<string, string> = {}): string {
-  return execFileSync('git', args, { cwd: root, encoding: 'utf8', env: { ...process.env, ...env }, maxBuffer: 1 << 28 }).trim();
+  const options = { cwd: root, encoding: 'utf8' as const, env: { ...process.env, ...env }, maxBuffer: 1 << 28 };
+  return execFileSync('git', args, options).trim();
 }
 
 // TE-01.1
-export function computeVersions(ids: Iterable<string>, hashes: Map<string, string>, pathOf: (id: string) => string | undefined, uses: (id: string) => string[]) {
+export function computeVersions(
+  ids: Iterable<string>,
+  hashes: Map<string, string>,
+  pathOf: (id: string) => string | undefined,
+  usesOfId: (id: string) => string[],
+): Map<string, string> {
   const versions = new Map<string, string>();
-  const visit = (id: string, chain: string[]): string | undefined => {
+  const visit = (id: string, usedBy: string[]): string | undefined => {
     const path = pathOf(id);
     const hash = path && hashes.get(path);
     if (!hash || versions.has(id)) return versions.get(id) ?? hash;
-    if (chain.includes(id)) throw new Error(`Cycle in uses: ${[...chain, id].join(' → ')}`);
-    const used = () => uses(id).map((u) => visit(u, [...chain, id])).filter(Boolean);
-    versions.set(id, path.endsWith('.yaml') ? hash : createHash('sha256').update([hash, ...used()].join('\n')).digest('hex'));
+    if (usedBy.includes(id)) throw new Error(`Cycle in uses: ${[...usedBy, id].join(' → ')}`);
+    if (isRequirementFile(path)) versions.set(id, hash);
+    else {
+      const usedVersions = usesOfId(id).map((used) => visit(used, [...usedBy, id])).filter(Boolean);
+      versions.set(id, createHash('sha256').update([hash, ...usedVersions].join('\n')).digest('hex'));
+    }
     return versions.get(id);
   };
   for (const id of ids) visit(id, []);
@@ -32,30 +41,34 @@ function objectHashes(root: string, tree: string): Map<string, string> {
   const rows = git(root, ['ls-tree', '-r', '-t', '-z', tree]).split('\0').filter(Boolean);
   return new Map(rows.map((row) => {
     const [info, path] = row.split('\t');
-    return [path, info.split(' ')[2]];
+    const [, , hash] = info.split(' ');
+    return [path, hash];
   }));
 }
 
 // TE-01.2: stage the working tree into a temporary index, so LFS filters apply.
 export function currentVersions(repo: Repo): Map<string, string> {
-  const tops = [...new Set([...repo.entries.values()].map((e) => e.path.split('/')[0]))];
-  if (!tops.length) return new Map();
-  const dir = mkdtempSync(join(tmpdir(), 'plm-'));
+  const topFolders = [...new Set([...repo.entries.values()].map((entry) => entry.path.split('/')[0]))];
+  if (!topFolders.length) return new Map();
+  const tempFolder = mkdtempSync(join(tmpdir(), 'plm-'));
   try {
-    const env = { GIT_INDEX_FILE: join(dir, 'index') };
-    git(repo.root, ['add', '-A', '--', ...tops], env);
+    const env = { GIT_INDEX_FILE: join(tempFolder, 'index') };
+    git(repo.root, ['add', '-A', '--', ...topFolders], env);
     const hashes = objectHashes(repo.root, git(repo.root, ['write-tree'], env));
-    return computeVersions(repo.entries.keys(), hashes, (id) => repo.entries.get(id)?.path, (id) => usesOf(repo.entries.get(id)));
+    const pathOf = (id: string) => repo.entries.get(id)?.path;
+    const usesOfId = (id: string) => usesOf(repo.entries.get(id));
+    return computeVersions(repo.entries.keys(), hashes, pathOf, usesOfId);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    rmSync(tempFolder, { recursive: true, force: true });
   }
 }
 
 // An item's version as of a commit (used by TE-03.2).
 export function versionAt(root: string, commit: string, id: string): string | undefined {
   const hashes = objectHashes(root, commit);
-  const pathOf = (id: string) => [...hashes.keys()].find((p) => nameMatches(basename(p), id)
-    && (hashes.has(`${p}/item.yaml`) || (p.endsWith('.yaml') && basename(dirname(p)) === 'requirements')));
-  const uses = (id: string) => list<string>(parse(git(root, ['show', `${commit}:${pathOf(id)}/item.yaml`]))?.uses);
-  return computeVersions([id], hashes, pathOf, uses).get(id);
+  const isItemFolder = (path: string) => hashes.has(`${path}/item.yaml`);
+  const isRequirement = (path: string) => isRequirementFile(path) && basename(dirname(path)) === homeFolders.requirement;
+  const pathOf = (wanted: string) => [...hashes.keys()].find((path) => nameMatches(basename(path), wanted) && (isItemFolder(path) || isRequirement(path)));
+  const usesOfId = (wanted: string) => list<string>(parse(git(root, ['show', `${commit}:${pathOf(wanted)}/item.yaml`]))?.uses);
+  return computeVersions([id], hashes, pathOf, usesOfId).get(id);
 }

@@ -5,7 +5,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { parse } from 'yaml';
-import { homeFolders, isRequirementFile, list, nameMatches, usesOf, type Repo } from './repo.ts';
+import { homeFolders, isRequirementFile, list, loadRepo, nameMatches, usesOf, UsageError, type Repo } from './repo.ts';
 
 export function git(root: string, args: string[], env: Record<string, string> = {}): string {
   const options = { cwd: root, encoding: 'utf8' as const, env: { ...process.env, ...env }, maxBuffer: 1 << 28 };
@@ -71,4 +71,25 @@ export function versionAt(root: string, commit: string, id: string): string | un
   const pathOf = (wanted: string) => [...hashes.keys()].find((path) => nameMatches(basename(path), wanted) && (isItemFolder(path) || isRequirement(path)));
   const usesOfId = (wanted: string) => list<string>(parse(git(root, ['show', `${commit}:${pathOf(wanted)}/item.yaml`]))?.uses);
   return computeVersions([id], hashes, pathOf, usesOfId).get(id);
+}
+
+export interface Snapshot { repo: Repo; versions: Map<string, string> }
+
+// TE-05.1: the repository and its versions at a commit, loaded from a temporary worktree.
+export function snapshotAt(root: string, commit: string): Snapshot {
+  try {
+    git(root, ['rev-parse', '--verify', '--quiet', `${commit}^{commit}`]);
+  } catch {
+    throw new UsageError(`Unknown commit ${commit}`);
+  }
+  const prefix = git(root, ['rev-parse', '--show-prefix']);
+  const worktree = mkdtempSync(join(tmpdir(), 'plm-'));
+  try {
+    git(root, ['worktree', 'add', '--detach', '-q', worktree, commit], { GIT_LFS_SKIP_SMUDGE: '1' });
+    const repo = loadRepo(join(worktree, prefix));
+    return { repo, versions: currentVersions(repo) };
+  } finally {
+    rmSync(worktree, { recursive: true, force: true });
+    git(root, ['worktree', 'prune']);
+  }
 }

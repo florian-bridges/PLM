@@ -135,3 +135,22 @@ test('CL-03.1–CL-03.3, TE-06.1, TE-06.2: recorded runs verify requirements unt
   write(root, { 'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\n' });
   expect(coverage()).toBe('pending');
 });
+
+test('TE-05.1, TE-05.2: impact of a change on items, links and test runs', () => {
+  const root = fixture();
+  write(root, {
+    'runs/X/item.yaml': 'id: X\ntype: test-run\ntitle: Run\n',
+    'meta/X.yaml': 'links:\n  - type: tests\n    target: A\n',
+    'meta/P.yaml': 'links:\n  - type: satisfies\n    target: R\n    version: outdated\n',
+  });
+  const repo = loadRepo(root);
+  confirm(repo, currentVersions(repo), [], 'X');
+  commit(root);
+  write(root, { 'A-wing/requirements/R-load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
+  const impact = (range: string) => JSON.parse(plm(root, '--format', 'json', 'impact', range).stdout).data;
+  const expected = { changed: ['R'], propagated: ['A'], suspects: [{ source: 'X', link: { type: 'tests', target: 'A' } }], runs: ['X'] };
+  expect(impact('HEAD')).toMatchObject(expected);
+  commit(root);
+  expect(impact('HEAD~1..HEAD')).toMatchObject(expected);
+  expect(plm(root, 'impact', 'nonsense').status).toBe(2);
+});

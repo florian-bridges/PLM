@@ -46,7 +46,7 @@ Proof of concept: a `plm` CLI with the core library and traceability engine. Ite
 
 A release is a reviewed merge into the protected `main` branch; there are no revisions or baselines, and an item's earlier released versions are its states at earlier commits of `main`.
 
-Not yet implemented: configurations, impact analysis, search, ReqIF, VS Code extension, static site and CI.
+Not yet implemented: configurations, search, ReqIF, VS Code extension, static site and CI.
 
 ## Getting started
 
@@ -101,6 +101,13 @@ After editing the requirement file, list suspect links with what changed since c
 plm suspects --diff
 plm validate
 plm show $PRT
+```
+
+Before merging, list what a change affects compared with `main`: items whose own files changed, items changed through them, links that became suspect and test runs no longer current. Without `..<head>` the working tree is compared:
+
+```sh
+plm impact main
+plm impact main..my-branch
 ```
 
 Test cases live in the top-level `tests/` folder, test runs in `runs/`, so adding them changes no product version. Create a test case, which `plm new` always puts in `tests/`, link it to the requirement, commit, then record a run against the tested item. Recording confirms the run's links against the committed versions, refuses uncommitted changes and copies the logs:

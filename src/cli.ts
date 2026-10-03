@@ -5,11 +5,12 @@ import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { Document, parseDocument, stringify } from 'yaml';
+import { changedFiles, impact } from './impact.ts';
 import { changeSince, confirm, coverage, linkStates } from './links.ts';
 import { entry, homeFolders, isRequirementFile, loadRepo, readYaml, Refused, UsageError, writeYaml, type Repo } from './repo.ts';
 import { results } from './schemas.ts';
 import { validate } from './validate.ts';
-import { currentVersions, git, versionAt } from './version.ts';
+import { currentVersions, git, snapshotAt, versionAt } from './version.ts';
 
 const program = new Command('plm')
   .option('-C, --repo <dir>', 'working folder', '.')
@@ -76,6 +77,21 @@ program.command('suspects').description('list suspect and unconfirmed links').op
   });
   output(lines.join('\n'), states);
   if (states.length) exitCode = 1;
+});
+
+// TE-05.1: impact of the changes from a base commit to a head commit or the working tree.
+program.command('impact <range>').description('list items, links and test runs affected by a change').action((range: string) => {
+  const repo = openRepo();
+  const [base, head] = range.split('..');
+  const headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) };
+  const result = impact(snapshotAt(repo.root, base), headSnapshot, changedFiles(repo.root, base, head));
+  const lines = [
+    ...result.changed.map((id) => `changed ${id}`),
+    ...result.propagated.map((id) => `propagated ${id}`),
+    ...result.suspects.map((state) => `suspect ${state.source} ${state.link.type} ${state.link.target}`),
+    ...result.runs.map((id) => `outdated run ${id}`),
+  ];
+  output(lines.join('\n'), result);
 });
 
 // CL-02.4: initialize a product repository.

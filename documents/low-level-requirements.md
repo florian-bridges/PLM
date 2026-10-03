@@ -136,8 +136,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-02.1** A tree view shall show composition, nested and used items, from the top-level items, with type icons and status badges; selecting an item opens its `item.yaml`.
 *Rationale:* Badges show maturity. Used items appear under each item using them, as they count toward its version.
 
-**VS-03.1** Opening an item's `requirements/` folder shall show a read-only webview of its requirements as numbered sections with ID, status and rendered Markdown; clicking a requirement opens its form.
-*Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements as one document.
+**VS-03.1** A product tree command shall show a read-only webview of an item's requirements and those of its nested items, as numbered sections with ID, title, status and rendered Markdown; clicking an ID opens its file.
+*Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements from aircraft to equipment level as one document.
 
 **VS-04.1** A links view shall list the active item's outgoing and incoming links with their state; the active item is the innermost item containing the active editor's file.
 *Rationale:* Incoming links show what depends on an item before it is changed.

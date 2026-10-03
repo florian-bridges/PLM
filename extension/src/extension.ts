@@ -1,4 +1,4 @@
-// VS-01, VS-02, VS-04: VS Code glue; the logic is in logic.ts and the core.
+// VS-01–VS-04: VS Code glue; the logic is in logic.ts and the core.
 import { existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
@@ -6,7 +6,7 @@ import { changeSince, confirm, linkStates } from '../../src/links.ts';
 import { childrenOf, findRoot, innermostItem, loadRepo, type Entry } from '../../src/repo.ts';
 import { validate } from '../../src/validate.ts';
 import { currentVersions, git } from '../../src/version.ts';
-import { changedPaths, linkRows, productTree, type LinkRow } from './logic.ts';
+import { changedPaths, linkRows, productTree, requirementsMarkdown, type LinkRow } from './logic.ts';
 
 export function activate(context: vscode.ExtensionContext) {
   const folder = vscode.workspace.workspaceFolders?.[0];
@@ -36,6 +36,13 @@ export function activate(context: vscode.ExtensionContext) {
       command: { title: 'Open', command: 'vscode.open', arguments: [fileUri(found.item.path)] },
     }),
     getChildren: (row) => productTree(open(), row?.id),
+  };
+
+  // VS-03.1
+  const showRequirements = async (found: Entry) => {
+    const link = (target: Entry) => `command:vscode.open?${encodeURIComponent(JSON.stringify([fileUri(target.item.path)]))}`;
+    const panel = vscode.window.createWebviewPanel('plm.requirements', `${found.item.data.title} requirements`, vscode.ViewColumn.Active, { enableCommandUris: ['vscode.open'] });
+    panel.webview.html = await vscode.commands.executeCommand<string>('markdown.api.render', requirementsMarkdown(open(), found.id, link));
   };
 
   // VS-04.1
@@ -80,6 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerTreeDataProvider('plm.tree', tree),
     vscode.window.registerTreeDataProvider('plm.links', links),
     vscode.workspace.registerTextDocumentContentProvider('plm-git', gitFiles),
+    vscode.commands.registerCommand('plm.showRequirements', showRequirements),
     vscode.commands.registerCommand('plm.showChange', showChange),
     vscode.commands.registerCommand('plm.confirm', confirmItem),
     vscode.workspace.onDidSaveTextDocument(() => { refreshDiagnostics(); treeChanged.fire(); changed.fire(); }),

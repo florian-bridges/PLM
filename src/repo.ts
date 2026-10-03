@@ -9,7 +9,7 @@ export interface Meta { links?: Link[]; status?: string }
 
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 // `path`: item folder or requirement file.
-export interface Entry { id: string; path: string; nested: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
+export interface Entry { id: string; path: string; nested: string[]; requirements: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
 export interface Settings { prefixes?: Record<string, string> }
 export interface Repo { root: string; settings: Settings; entries: Map<string, Entry>; duplicates: Entry[] }
 
@@ -50,15 +50,15 @@ export function loadRepo(start: string): Repo {
   const addEntry = (path: string): Entry => {
     const item = readYaml<Item>(root, isRequirementFile(path) ? path : `${path}/item.yaml`);
     const id = String(item.data.id ?? basename(path));
-    const added: Entry = { id, path, nested: [], item, meta: readYaml(root, `meta/${id}.yaml`) };
+    const added: Entry = { id, path, nested: [], requirements: [], item, meta: readYaml(root, `meta/${id}.yaml`) };
     if (repo.entries.has(id)) repo.duplicates.push(added);
     else repo.entries.set(id, added);
     return added;
   };
 
-  const addRequirements = (folder: string) => {
+  const addRequirements = (folder: string, parent: Entry) => {
     for (const file of readdirSync(join(root, folder))) {
-      if (isRequirementFile(file)) addEntry(`${folder}/${file}`);
+      if (isRequirementFile(file)) parent.requirements.push(addEntry(`${folder}/${file}`).id);
     }
   };
 
@@ -66,7 +66,7 @@ export function loadRepo(start: string): Repo {
     for (const child of readdirSync(join(root, folder), { withFileTypes: true })) {
       if (!child.isDirectory()) continue;
       const path = folder ? `${folder}/${child.name}` : child.name;
-      if (parent && child.name === homeFolders.requirement) addRequirements(path);
+      if (parent && child.name === homeFolders.requirement) addRequirements(path, parent);
       else if (parent ? child.name === homeFolders['test-case'] : !folder && child.name === homeFolders['test-run']) walk(path);
       else if (existsSync(join(root, path, 'item.yaml'))) {
         const nested = addEntry(path);
@@ -118,8 +118,5 @@ export function subtree(repo: Repo, id: string, seen = new Set<string>()): strin
 // TE-06.2
 export function selection(repo: Repo, root: string): string[] {
   const items = subtree(repo, root);
-  const itemPaths = new Set(items.map((id) => entry(repo, id).path));
-  const owningItemPath = (requirement: Entry) => dirname(dirname(requirement.path));
-  const requirements = [...repo.entries.values()].filter((candidate) => isRequirementFile(candidate.path) && itemPaths.has(owningItemPath(candidate)));
-  return [...items, ...requirements.map((requirement) => requirement.id)];
+  return [...items, ...items.flatMap((id) => entry(repo, id).requirements)];
 }

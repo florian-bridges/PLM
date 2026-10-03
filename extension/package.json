@@ -1,5 +1,5 @@
 {
-  "//": "VS-01.1, VS-02.1, VS-04.1, VS-04.2",
+  "//": "VS-01.1, VS-02.1, VS-03.1, VS-04.1, VS-04.2",
   "name": "plm-vscode",
   "displayName": "PLM",
   "version": "0.1.0",
@@ -11,15 +11,18 @@
   "contributes": {
     "views": { "explorer": [{ "id": "plm.tree", "name": "PLM Product" }, { "id": "plm.links", "name": "PLM Links" }] },
     "commands": [
+      { "command": "plm.showRequirements", "title": "Show requirements", "icon": "$(book)" },
       { "command": "plm.showChange", "title": "Show change", "icon": "$(diff)" },
       { "command": "plm.confirm", "title": "Confirm", "icon": "$(check)" }
     ],
     "menus": {
       "view/item/context": [
+        { "command": "plm.showRequirements", "when": "view == plm.tree", "group": "inline" },
         { "command": "plm.showChange", "when": "view == plm.links && viewItem == suspect", "group": "inline" },
         { "command": "plm.confirm", "when": "view == plm.links", "group": "inline" }
       ],
       "commandPalette": [
+        { "command": "plm.showRequirements", "when": "false" },
         { "command": "plm.showChange", "when": "false" },
         { "command": "plm.confirm", "when": "false" }
       ]

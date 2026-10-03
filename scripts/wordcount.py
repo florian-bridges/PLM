@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+"""Count words in git-tracked files of the documents and source directories.
+
+Words are whitespace-separated tokens. Binary files are skipped.
+Exits with status 1 if a given word limit is exceeded.
+"""
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def tracked_files(directory, include_untracked):
+    cmd = ["git", "ls-files", "-z"]
+    if include_untracked:
+        cmd += ["--cached", "--others", "--exclude-standard"]
+    cmd += ["--", directory]
+    out = subprocess.run(cmd, cwd=REPO_ROOT, check=True, capture_output=True).stdout
+    return sorted(p for p in out.decode().split("\0") if p)
+
+
+def count_words(path):
+    data = (REPO_ROOT / path).read_bytes()
+    if b"\0" in data:
+        return None  # binary
+    return len(data.decode("utf-8", errors="replace").split())
+
+
+def summarize(directory, limit, include_untracked, verbose):
+    counts = {}
+    skipped = 0
+    for path in tracked_files(directory, include_untracked):
+        if not (REPO_ROOT / path).is_file():
+            continue  # deleted in working tree
+        words = count_words(path)
+        if words is None:
+            skipped += 1
+        else:
+            counts[path] = words
+
+    total = sum(counts.values())
+    limit_str = f" / {limit}" if limit is not None else ""
+    print(f"{directory}/: {total}{limit_str} words in {len(counts)} files"
+          + (f" ({skipped} binary skipped)" if skipped else ""))
+    if verbose:
+        for path, words in sorted(counts.items(), key=lambda kv: -kv[1]):
+            print(f"  {words:>8}  {path}")
+
+    if limit is not None and total > limit:
+        print(f"  LIMIT EXCEEDED by {total - limit} words")
+        return False
+    return True
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--docs-dir", default="documents")
+    parser.add_argument("--src-dir", default="src")
+    parser.add_argument("--max-docs", type=int, help="word limit for the documents directory")
+    parser.add_argument("--max-src", type=int, help="word limit for the source directory")
+    parser.add_argument("-u", "--include-untracked", action="store_true",
+                        help="also count untracked files that are not git-ignored")
+    parser.add_argument("-v", "--verbose", action="store_true", help="list per-file counts")
+    args = parser.parse_args()
+
+    ok = summarize(args.docs_dir, args.max_docs, args.include_untracked, args.verbose)
+    ok &= summarize(args.src_dir, args.max_src, args.include_untracked, args.verbose)
+    sys.exit(0 if ok else 1)
+
+
+if __name__ == "__main__":
+    main()

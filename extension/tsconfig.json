@@ -1,0 +1,6 @@
+{
+  "//": "VS-01.1: typecheck only; esbuild bundles.",
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "noEmit": true, "rootDir": "..", "module": "preserve", "moduleResolution": "bundler", "types": ["node", "vscode"] },
+  "include": ["src", "test"]
+}

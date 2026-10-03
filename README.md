@@ -46,7 +46,9 @@ Proof of concept: a `plm` CLI with the core library and traceability engine. Ite
 
 A release is a reviewed merge into the protected `main` branch; there are no revisions or baselines, and an item's earlier released versions are its states at earlier commits of `main`.
 
-Not yet implemented: `plm retire`, search, VS Code extension, static site and CI.
+The VS Code extension shows validation findings in the Problems panel and the links of the active item, with their change and confirmation.
+
+Not yet implemented: `plm retire`, search, static site and CI; in VS Code the product tree, requirements document, item forms and manual test runs.
 
 ## Getting started
 
@@ -249,4 +251,5 @@ plm report coverage $AC
 * To reuse an item, such as a standard part, list its ID under `uses:` in the `item.yaml` of the assembly using it.
 * `plm impact <base>[..<head>]` compares a commit with another commit or, by default, the working tree, e.g. `plm impact main..my-branch` before merging.
 * `plm report coverage [item]` reports the requirements of the repository or of an item's subtree as verified, pending or unverified.
+* The VS Code extension is built with `npm run build:ext` and, for now, run from source with `code --extensionDevelopmentPath=<plm>/extension <product repository>`. It validates on save. The PLM Links view in the Explorer lists the links of the item containing the open file; suspect links offer Show change, and Confirm confirms all links of the link's source item.
 * `--format json` gives machine-readable output. Exit codes: 0 success, 1 findings, 2 usage error, 3 internal error.

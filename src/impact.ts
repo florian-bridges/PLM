@@ -1,6 +1,6 @@
 // TE-05
 import { fromRun, linkStates, type LinkState } from './links.ts';
-import { named, type Named } from './repo.ts';
+import { innermostItem, named, type Named } from './repo.ts';
 import { git, type Snapshot } from './version.ts';
 
 export interface Impact { changed: Named[]; propagated: Named[]; suspects: LinkState[]; runs: Named[] }
@@ -14,10 +14,7 @@ export function changedFiles(root: string, base: string, head?: string): string[
 
 // TE-05.1, CL-05.3
 export function impact(base: Snapshot, head: Snapshot, files: string[]): Impact {
-  const innermostOwner = ({ repo }: Snapshot, file: string) => [...repo.entries.values()]
-    .filter((entry) => file === entry.path || file.startsWith(`${entry.path}/`))
-    .sort((a, b) => b.path.length - a.path.length)[0]?.id;
-  const ownersOfChangedFiles = new Set(files.flatMap((file) => [innermostOwner(base, file), innermostOwner(head, file)]));
+  const ownersOfChangedFiles = new Set(files.flatMap((file) => [innermostItem(base.repo, file), innermostItem(head.repo, file)]));
   const ids = new Set([...base.repo.entries.keys(), ...head.repo.entries.keys()]);
   const changedIds = [...ids].filter((id) => base.versions.get(id) !== head.versions.get(id));
 

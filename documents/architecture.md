@@ -48,6 +48,7 @@ Core library, traceability engine, CLI, VS Code extension, CI integration and st
 | Versioning | Git, Git LFS |
 | Data | YAML, JSON Schema (Ajv) |
 | CLI | Commander |
+| VS Code extension | VS Code API, esbuild |
 | Static site | Astro |
 | Tooling | npm, ESLint, Prettier, Vitest |
 | CI | GitHub Actions, GitLab CI |

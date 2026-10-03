@@ -121,14 +121,14 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## VS Code extension
 
-**VS-01.1** The extension shall reuse the core library and run in the extension host without a separate server.
-*Rationale:* One core avoids duplicated logic and diverging results between editor and CI.
+**VS-01.1** The extension shall reuse the core library and run in the extension host without a separate server, bundled by esbuild into one CommonJS file and activated in workspaces containing `plm.yaml`.
+*Rationale:* One core avoids duplicated logic and diverging results between editor and CI. A bundle needs no installed dependencies; other workspaces stay unaffected.
 
 **VS-01.2** Item editing shall use a webview form generated from the type's JSON Schema, writing changes to `item.yaml` and `meta/<ID>.yaml` through the core.
 *Rationale:* Forms generated from schemas support new and program-specific types without extension code.
 
-**VS-01.3** Diagnostics shall be updated in the Problems panel within one second of a change.
-*Rationale:* Immediate feedback catches errors while the context is fresh.
+**VS-01.3** Diagnostics shall be updated in the Problems panel within one second of saving a file.
+*Rationale:* Immediate feedback catches errors while the context is fresh. Validation reads files from disk, so unsaved edits are not seen.
 
 **VS-01.4** Link targets shall be selected through the core search.
 *Rationale:* Typing IDs by hand is error-prone; search finds targets by title or text.
@@ -139,11 +139,11 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-03.1** Opening an item's `requirements/` folder shall show a read-only webview of its requirements as numbered sections with ID, status and rendered Markdown; clicking a requirement opens its form.
 *Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements as one document.
 
-**VS-04.1** A links view shall list the active item's outgoing and incoming links with their state.
+**VS-04.1** A links view shall list the active item's outgoing and incoming links with their state; the active item is the innermost item containing the active editor's file.
 *Rationale:* Incoming links show what depends on an item before it is changed.
 
-**VS-04.2** "Show change" shall open the diff from TE-03.2 in the VS Code diff editor; "Confirm" shall perform TE-02.1.
-*Rationale:* The built-in diff editor is familiar and handles text and YAML well.
+**VS-04.2** "Show change" shall open the files changed since the commit from TE-03.2 in the VS Code multi-file diff editor; "Confirm" shall confirm all links of the item per CL-01.2.
+*Rationale:* The built-in diff editor is familiar and handles text and YAML well. Confirming per item matches the CLI.
 
 **VS-06.1** A command shall record a manual test run through a form, applying CL-03.1 to CL-03.3.
 *Rationale:* Manual and automated runs must produce identical evidence.

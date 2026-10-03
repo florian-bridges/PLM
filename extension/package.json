@@ -1,0 +1,28 @@
+{
+  "//": "VS-01.1, VS-04.1, VS-04.2",
+  "name": "plm-vscode",
+  "displayName": "PLM",
+  "version": "0.1.0",
+  "private": true,
+  "publisher": "plm",
+  "engines": { "vscode": "^1.105.0" },
+  "main": "./dist/extension.js",
+  "activationEvents": ["workspaceContains:plm.yaml"],
+  "contributes": {
+    "views": { "explorer": [{ "id": "plm.links", "name": "PLM Links" }] },
+    "commands": [
+      { "command": "plm.showChange", "title": "Show change", "icon": "$(diff)" },
+      { "command": "plm.confirm", "title": "Confirm", "icon": "$(check)" }
+    ],
+    "menus": {
+      "view/item/context": [
+        { "command": "plm.showChange", "when": "view == plm.links && viewItem == suspect", "group": "inline" },
+        { "command": "plm.confirm", "when": "view == plm.links", "group": "inline" }
+      ],
+      "commandPalette": [
+        { "command": "plm.showChange", "when": "false" },
+        { "command": "plm.confirm", "when": "false" }
+      ]
+    }
+  }
+}

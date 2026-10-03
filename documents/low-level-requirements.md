@@ -4,8 +4,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## Core library
 
-**CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<ID>-<title>/item.yaml` with their `requirements/<ID>-<title>.yaml`, test cases `tests/<ID>-<title>/item.yaml`, test runs `runs/<ID>-<title>/item.yaml` and `meta/<ID>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
-*Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files.
+**CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<ID>-<title>/item.yaml` with their requirements `requirements/<ID>-<title>.yaml` and test cases `tests/<ID>-<title>/item.yaml`, test runs `runs/<ID>-<title>/item.yaml` and `meta/<ID>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
+*Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files. Test cases in the tested item's folder make its version cover its requirements and test cases, so adding or changing a test case outdates the runs against the item. Runs stay outside: inside the tested item, a run would change the version it records.
 
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown) and `uses`. `meta/<ID>.yaml` shall hold `owner`, `status` and `links`.
 *Rationale:* Separating content from administrative data keeps versions stable when links, ownership or status change (TE-01.1).
@@ -16,7 +16,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.1** The core shall validate `item.yaml` with Ajv against the JSON Schema (2020-12) of its type; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
 *Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add their own attributes.
 
-**CO-02.2** The core shall report as errors: names not starting with their `id`, requirements, test cases and test runs outside `requirements/`, `tests/` and `runs/` folders respectively, other items inside them, duplicate IDs or IDs differing only in case, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
+**CO-02.2** The core shall report as errors: names not starting with their `id`, requirements and test cases outside their item's `requirements/` and `tests/` folders, test runs outside the top-level `runs/` folder, other items inside them, duplicate IDs or IDs differing only in case, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late, for example on case-insensitive file systems.
 
 **CO-02.3** The core shall report files above the size limit in `plm.yaml` that are not stored in Git LFS.
@@ -83,7 +83,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.2** `confirm` shall accept a source item and optionally a link type and target, confirming all links of the source by default.
 *Rationale:* After review, engineers typically confirm all links of an item at once.
 
-**CL-02.1** `plm new <type> [title]` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements in its `requirements/` folder, test cases in `tests/`, and print the new ID.
+**CL-02.1** `plm new <type> [title]` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements and test cases in its `requirements/` and `tests/` folders, and print the new ID.
 *Rationale:* Repository templates let programs prefill attributes and conventions.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.

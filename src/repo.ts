@@ -40,10 +40,9 @@ export function findRoot(start: string): string {
   }
 }
 
-// Item folders contain item.yaml and nest; requirements are files in their requirements folder;
-// test cases and runs are item folders in the top-level tests and runs folders.
+// Item folders contain item.yaml and nest; requirements are files in their requirements folder,
+// test cases item folders in their tests folder; runs are item folders in the top-level runs folder.
 export const homeFolders: Record<string, string> = { requirement: 'requirements', 'test-case': 'tests', 'test-run': 'runs' };
-const topLevelHomeFolders = [homeFolders['test-case'], homeFolders['test-run']];
 
 export function loadRepo(start: string): Repo {
   const root = findRoot(start);
@@ -68,9 +67,8 @@ export function loadRepo(start: string): Repo {
     for (const child of readdirSync(join(root, folder), { withFileTypes: true })) {
       if (!child.isDirectory()) continue;
       const path = folder ? `${folder}/${child.name}` : child.name;
-      const isTopLevel = !folder;
       if (parent && child.name === homeFolders.requirement) addRequirements(path);
-      else if (isTopLevel && topLevelHomeFolders.includes(child.name)) walk(path);
+      else if (parent ? child.name === homeFolders['test-case'] : !folder && child.name === homeFolders['test-run']) walk(path);
       else if (existsSync(join(root, path, 'item.yaml'))) {
         const nested = addEntry(path);
         parent?.nested.push(nested.id);

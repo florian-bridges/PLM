@@ -13,9 +13,9 @@
 plm.yaml                      repository settings
 <ID>-<title>/item.yaml        top-level item: attributes, used items
 <ID>-<title>/requirements/    the item's requirements, one file each
+<ID>-<title>/tests/           the item's test cases
 <ID>-<title>/<ID>-<title>/    nested items
 <ID>-<title>/...              the item's artifacts
-tests/<ID>-<title>/           test cases
 runs/<ID>-<title>/            test runs with their logs
 meta/<ID>.yaml                owner, status, links
 ```
@@ -34,7 +34,7 @@ meta/<ID>.yaml                owner, status, links
 ## Change and verification
 
 * **Change requests** use the host's issues and merge requests; the host provides permissions and approvals (CR-13, CR-14, CR-17).
-* **Test runs** record SUT version, result and logs. Test cases and runs live outside item folders, so adding them changes no product version. Tests execute externally (CI, HIL rigs) and report via the CLI; manual results are entered in VS Code.
+* **Test runs** record SUT version, result and logs. Test cases live in the item they test, so adding one changes the item's version; runs live outside item folders, so recording one changes none. Tests execute externally (CI, HIL rigs) and report via the CLI; manual results are entered in VS Code.
 
 ## Components
 

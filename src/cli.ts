@@ -111,13 +111,13 @@ program.command('new <type> [title]').description('create an item in the current
   const contains = (folder: string) => here === folder || here.startsWith(`${folder}/`);
   // Parents load first, so the last match is innermost.
   const parent = [...repo.entries.values()].filter((candidate) => !isRequirementFile(candidate.path) && contains(candidate.path)).at(-1);
-  if (type === 'requirement' && !parent) throw new UsageError('Create requirements inside an item folder');
+  if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item folder`);
 
   const id = newId(repo, type);
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const name = slug ? `${id}-${slug}` : id;
   let folder = parent ? `${parent.path}/` : '';
-  if (type === 'test-case') folder = `${homeFolders['test-case']}/`;
+  if (type === 'test-case') folder += `${homeFolders['test-case']}/`;
 
   const item = readYaml(repo.root, `templates/${type}.yaml`);
   item.path = type === 'requirement' ? `${folder}${homeFolders.requirement}/${name}.yaml` : `${folder}${name}/item.yaml`;

@@ -101,7 +101,8 @@ test('CL-02.1, CL-02.2, CL-02.4: init, then new items nest in the working folder
   const req = plm(dir, 'new', 'requirement', 'Carry 3g').stdout.trim();
   expect(existsSync(join(dir, `requirements/${req}-carry-3g.yaml`))).toBe(true);
   const tc = plm(dir, 'new', 'test-case', 'Load').stdout.trim();
-  expect(existsSync(join(root, `tests/${tc}-load/item.yaml`))).toBe(true);
+  expect(existsSync(join(dir, `tests/${tc}-load/item.yaml`))).toBe(true);
+  expect(plm(root, 'new', 'test-case', 'Load').status).toBe(2);
   expect(validate(loadRepo(root))).toEqual([]);
 });
 
@@ -114,17 +115,19 @@ test('CL-05.1, CL-05.2: JSON output and exit codes', () => {
   expect(plm(root, 'nonsense').status).toBe(2);
 });
 
-test('CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verify requirements until the SUT changes', () => {
+test('CO-01.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verify requirements until the SUT changes', () => {
   const root = fixture();
   const coverage = () => JSON.parse(plm(root, '--format', 'json', 'report', 'coverage', 'A').stdout).data[0].state;
   const record = (result: string) => plm(root, 'test', 'record', 'T', '--sut', 'A', '--result', result, '--log', join(root, 'rig.log'));
   expect(coverage()).toBe('unverified');
+  const wing = currentVersions(loadRepo(root)).get('A');
   expect(JSON.parse(plm(root, '--format', 'json', 'report', 'coverage', 'P').stdout).data).toEqual([]);
   write(root, {
-    'tests/T-load/item.yaml': 'id: T\ntype: test-case\ntitle: Load test\n',
+    'A-wing/tests/T-load/item.yaml': 'id: T\ntype: test-case\ntitle: Load test\n',
     'meta/T.yaml': 'links:\n  - type: verifies\n    target: R\n',
     'rig.log': 'ok',
   });
+  expect(currentVersions(loadRepo(root)).get('A')).not.toBe(wing);
   expect(plm(root, 'confirm', 'T').status).toBe(0);
   expect(coverage()).toBe('pending');
   expect(record('pass').status).toBe(1);

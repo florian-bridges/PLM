@@ -110,7 +110,7 @@ plm impact main
 plm impact main..my-branch
 ```
 
-Test cases live in the top-level `tests/` folder, test runs in `runs/`, so adding them changes no product version. Create a test case, which `plm new` always puts in `tests/`, link it to the requirement, commit, then record a run against the tested item. Recording confirms the run's links against the committed versions, refuses uncommitted changes and copies the logs:
+Test cases live in the `tests/` folder of the item they test, so adding or changing one changes the item's version and outdates its runs. Test runs live in the top-level `runs/` folder, so recording one changes no version. Create a test case in the aircraft folder, link it to the requirement, commit, then record a run against the tested item. Recording confirms the run's links against the committed versions, refuses uncommitted changes and copies the logs:
 
 ```sh
 TC=$(plm new test-case "Static load")

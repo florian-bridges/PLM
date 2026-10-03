@@ -115,17 +115,13 @@ test('CL-02.1, CL-02.2, CL-02.4: init, then new items nest in the working folder
   expect(validate(loadRepo(root))).toEqual([]);
 });
 
-test('CL-05.1, CL-05.2: JSON output and exit codes', () => {
+test('CL-05.1–CL-05.3: JSON output, exit codes and titles next to IDs', () => {
   const root = fixture();
   expect(plm(root, 'validate').status).toBe(0);
   const suspects = plm(root, '--format', 'json', 'suspects');
   expect(suspects.status).toBe(1);
   expect(JSON.parse(suspects.stdout)).toMatchObject({ schema: 2, data: [{ state: 'unconfirmed' }] });
   expect(plm(root, 'nonsense').status).toBe(2);
-});
-
-test('CL-05.3: reports show titles next to IDs', () => {
-  const root = fixture();
   expect(plm(root, 'suspects').stdout).toBe('unconfirmed P (Spar) satisfies R (Load)\n');
   expect(JSON.parse(plm(root, '--format', 'json', 'suspects').stdout).data[0]).toMatchObject({ source: 'P', title: 'Spar', targetTitle: 'Load' });
   expect(plm(root, 'report', 'coverage').stdout).toBe('unverified R (Load)\n');

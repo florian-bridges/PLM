@@ -1,4 +1,4 @@
-// CO-01.2, CO-02.1, CO-02.5: built-in item type schemas (JSON Schema 2020-12).
+// CO-01.2, CO-02.1, CO-02.5
 const str = { type: 'string' };
 export const results = ['pass', 'fail', 'inconclusive'];
 
@@ -19,7 +19,7 @@ export const builtinTypes: Record<string, object> = {
   'test-run': { properties: { date: str, result: { enum: results } } },
 };
 
-// CO-02.2, CO-02.6: allowed link types as [source types, target types]; '*' allows any type.
+// CO-02.2, CO-02.6: [source types, target types]; '*' allows any type.
 export const linkRules: Record<string, [string[], string[]]> = {
   satisfies: [['*'], ['requirement']],
   implements: [['*'], ['requirement']],

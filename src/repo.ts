@@ -1,4 +1,4 @@
-// CO-01.1, CO-01.2: load and write the product repository.
+// CO-01.1, CO-01.2
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { Document, LineCounter, parseDocument } from 'yaml';
@@ -24,14 +24,13 @@ export function readYaml<T>(root: string, path: string): YamlFile<T> {
   return { path, doc, lines, data: (doc.toJS() ?? {}) as T };
 }
 
-// Writes through the parsed document, keeping comments and formatting.
 export function writeYaml(root: string, file: Pick<YamlFile<unknown>, 'path' | 'doc'>): void {
   const target = join(root, file.path);
   mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, String(file.doc));
 }
 
-// CL-01.1: the repository is the nearest folder upwards containing plm.yaml.
+// CL-01.1
 export function findRoot(start: string): string {
   for (let folder = resolve(start); ; folder = dirname(folder)) {
     if (existsSync(join(folder, 'plm.yaml'))) return folder;
@@ -81,7 +80,7 @@ export function loadRepo(start: string): Repo {
   return repo;
 }
 
-// CO-02.2: a folder or file name is the ID, optionally followed by `-<title>`.
+// CO-02.2
 export const nameMatches = (name: string, id: string) => name === id || name === `${id}.yaml` || name.startsWith(`${id}-`);
 
 export const isRequirementFile = (path: string) => path.endsWith('.yaml');
@@ -90,7 +89,7 @@ export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
 export const childrenOf = (entry?: Entry): string[] => [...(entry?.nested ?? []), ...usesOf(entry)];
 export const linksOf = (entry: Entry): Link[] => list(entry.meta.data.links);
 
-// CL-05.3: an item as reports show it.
+// CL-05.3
 export interface Named { id: string; title: string }
 export const named = (repo: Repo, id: string): Named => ({ id, title: String(repo.entries.get(id)?.item.data.title ?? '') });
 
@@ -108,7 +107,7 @@ export function subtree(repo: Repo, id: string, seen = new Set<string>()): strin
   return [id, ...children.flatMap((child) => subtree(repo, child, seen))];
 }
 
-// TE-06.2: the root's subtree and the requirements of its items.
+// TE-06.2
 export function selection(repo: Repo, root: string): string[] {
   const items = subtree(repo, root);
   const itemPaths = new Set(items.map((id) => entry(repo, id).path));

@@ -1,4 +1,4 @@
-// TE-01: item versions from Git object hashes.
+// TE-01
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -24,7 +24,7 @@ export function computeVersions(
     const path = pathOf(id);
     const hash = path && hashes.get(path);
     if (!hash || versions.has(id)) return versions.get(id) ?? hash;
-    if (usedBy.includes(id)) throw new Error(`Cycle in uses: ${[...usedBy, id].join(' → ')}`);
+    if (usedBy.includes(id)) return undefined;
     if (isRequirementFile(path)) versions.set(id, hash);
     else {
       const usedVersions = usesOfId(id).map((used) => visit(used, [...usedBy, id])).filter(Boolean);
@@ -46,14 +46,14 @@ function objectHashes(root: string, tree: string): Map<string, string> {
   }));
 }
 
-// TE-01.1: the versions of all items of a repository, given the object hashes of a tree.
+// TE-01.1
 function versionsFromHashes(repo: Repo, hashes: Map<string, string>): Map<string, string> {
   const pathOf = (id: string) => repo.entries.get(id)?.path;
   const usesOfId = (id: string) => usesOf(repo.entries.get(id));
   return computeVersions(repo.entries.keys(), hashes, pathOf, usesOfId);
 }
 
-// TE-01.2: stage the working tree into a temporary index, so LFS filters apply.
+// TE-01.2
 export function currentVersions(repo: Repo): Map<string, string> {
   const topFolders = [...new Set([...repo.entries.values()].map((entry) => entry.path.split('/')[0]))];
   if (!topFolders.length) return new Map();
@@ -67,7 +67,7 @@ export function currentVersions(repo: Repo): Map<string, string> {
   }
 }
 
-// An item's version as of a commit (used by TE-03.2).
+// TE-03.2
 export function versionAt(root: string, commit: string, id: string): string | undefined {
   const hashes = objectHashes(root, commit);
   const isItemFolder = (path: string) => hashes.has(`${path}/item.yaml`);
@@ -79,8 +79,7 @@ export function versionAt(root: string, commit: string, id: string): string | un
 
 export interface Snapshot { repo: Repo; versions: Map<string, string> }
 
-// TE-05.1: the repository at a commit, loaded from a temporary worktree, with versions from the
-// commit itself, since worktrees lack submodules and LFS content.
+// TE-05.1: versions come from the commit, since worktrees lack submodules and LFS content.
 export function snapshotAt(root: string, commit: string): Snapshot {
   try {
     git(root, ['rev-parse', '--verify', '--quiet', `${commit}^{commit}`]);

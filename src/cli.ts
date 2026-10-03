@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// CL-01.1: the `plm` command-line program.
+// CL-01.1
 import { randomBytes } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
@@ -19,7 +19,7 @@ const program = new Command('plm')
 const workingFolder = (): string => program.opts().repo;
 const openRepo = () => loadRepo(workingFolder());
 
-// CL-05.1: JSON output carries a schema version.
+// CL-05.1
 function output(text: string, data: unknown) {
   const json = program.opts().format === 'json';
   console.log(json ? JSON.stringify({ schema: 2, data }, null, 2) : text);
@@ -83,7 +83,7 @@ program.command('suspects').description('list suspect and unconfirmed links').op
   if (states.length) exitCode = 1;
 });
 
-// TE-05.1: impact of the changes from a base commit to a head commit or the working tree.
+// TE-05.1
 program.command('impact <range>').description('list items, links and test runs affected by a change').action((range: string) => {
   const repo = openRepo();
   const [base, head] = range.split('..');
@@ -98,7 +98,7 @@ program.command('impact <range>').description('list items, links and test runs a
   output(lines.join('\n'), result);
 });
 
-// CL-02.4: initialize a product repository.
+// CL-02.4
 program.command('init').description('create a product repository').action(() => {
   const root = workingFolder();
   if (existsSync(join(root, 'plm.yaml'))) throw new UsageError('plm.yaml already exists');
@@ -158,7 +158,7 @@ program.command('test').command('record <test-case>').description('record a test
     output(id, { id });
   });
 
-// TE-06.2: requirement coverage, optionally of one item's subtree.
+// TE-06.2
 program.command('report').command('coverage [item]').description('report requirement verification')
   .action((item: string | undefined) => {
     const repo = openRepo();

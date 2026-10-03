@@ -1,11 +1,11 @@
-// CO-02: validate items, links and composition.
+// CO-02
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
 import { childrenOf, homeFolders, linksOf, nameMatches, usesOf, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
-// CO-02.4: every finding has a position, severity and stable code.
+// CO-02.4
 export interface Finding { file: string; line: number; col: number; severity: 'error' | 'warning'; code: string; message: string }
 
 function finding(file: YamlFile<unknown>, path: (string | number)[], code: string, message: string): Finding {
@@ -16,7 +16,7 @@ function finding(file: YamlFile<unknown>, path: (string | number)[], code: strin
   return { file: file.path, line, col, severity: 'error', code, message };
 }
 
-// CO-02.1: built-in schema, extended by schemas/<type>.schema.json.
+// CO-02.1
 function schemaFor(ajv: Ajv2020, root: string, type: string): ValidateFunction | undefined {
   const extensionFile = join(root, 'schemas', `${type}.schema.json`);
   const builtin = Object.hasOwn(builtinTypes, type) ? builtinTypes[type] : undefined;
@@ -77,7 +77,7 @@ export function validate(repo: Repo): Finding[] {
   return [...findings, ...cycles(repo)];
 }
 
-// CO-02.2: composition cycles, by depth-first search.
+// CO-02.2
 function cycles(repo: Repo): Finding[] {
   const state = new Map<string, 'open' | 'done'>();
   const findings: Finding[] = [];

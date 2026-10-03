@@ -1,4 +1,4 @@
-// TE-02, TE-03, TE-06: link confirmation, suspect links and verification coverage.
+// TE-02, TE-03, TE-06
 import { entry, linksOf, named, Refused, selection, subtree, writeYaml, type Entry, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { git, versionAt } from './version.ts';
@@ -16,10 +16,10 @@ export function linkStates(repo: Repo, versions: Map<string, string>): LinkState
   })));
 }
 
-// TE-03.1: links from test runs are evidence, not links to review.
+// TE-03.1
 export const fromRun = (repo: Repo, state: LinkState) => repo.entries.get(state.source)?.item.data.type === 'test-run';
 
-// TE-02.1, TE-02.2: the fields a confirmation records.
+// TE-02.1, TE-02.2
 export function confirmation(repo: Repo, target: string, version: string | undefined, commit = 'HEAD'): Omit<Link, 'type' | 'target'> {
   const tryGit = (args: string[]) => { try { return git(repo.root, args); } catch { return ''; } };
   const by = tryGit(['config', 'user.name']);

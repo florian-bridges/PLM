@@ -1,11 +1,11 @@
-// TE-05: impact of a change between a base commit and a head commit or the working tree.
+// TE-05
 import { fromRun, linkStates, type LinkState } from './links.ts';
 import { named, type Named } from './repo.ts';
 import { git, type Snapshot } from './version.ts';
 
 export interface Impact { changed: Named[]; propagated: Named[]; suspects: LinkState[]; runs: Named[] }
 
-// TE-05.1: files changed from the base, including untracked files when the head is the working tree.
+// TE-05.1
 export function changedFiles(root: string, base: string, head?: string): string[] {
   const diff = git(root, ['diff', '--name-only', '--relative', base, ...(head ? [head] : [])]);
   const untracked = head ? '' : git(root, ['ls-files', '--others', '--exclude-standard']);

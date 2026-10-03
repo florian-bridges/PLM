@@ -46,6 +46,13 @@ function objectHashes(root: string, tree: string): Map<string, string> {
   }));
 }
 
+// TE-01.1: the versions of all items of a repository, given the object hashes of a tree.
+function versionsFromHashes(repo: Repo, hashes: Map<string, string>): Map<string, string> {
+  const pathOf = (id: string) => repo.entries.get(id)?.path;
+  const usesOfId = (id: string) => usesOf(repo.entries.get(id));
+  return computeVersions(repo.entries.keys(), hashes, pathOf, usesOfId);
+}
+
 // TE-01.2: stage the working tree into a temporary index, so LFS filters apply.
 export function currentVersions(repo: Repo): Map<string, string> {
   const topFolders = [...new Set([...repo.entries.values()].map((entry) => entry.path.split('/')[0]))];
@@ -53,11 +60,8 @@ export function currentVersions(repo: Repo): Map<string, string> {
   const tempFolder = mkdtempSync(join(tmpdir(), 'plm-'));
   try {
     const env = { GIT_INDEX_FILE: join(tempFolder, 'index') };
-    git(repo.root, ['add', '-A', '--', ...topFolders], env);
-    const hashes = objectHashes(repo.root, git(repo.root, ['write-tree'], env));
-    const pathOf = (id: string) => repo.entries.get(id)?.path;
-    const usesOfId = (id: string) => usesOf(repo.entries.get(id));
-    return computeVersions(repo.entries.keys(), hashes, pathOf, usesOfId);
+    git(repo.root, ['add', '-A', '--no-warn-embedded-repo', '--', ...topFolders], env);
+    return versionsFromHashes(repo, objectHashes(repo.root, git(repo.root, ['write-tree'], env)));
   } finally {
     rmSync(tempFolder, { recursive: true, force: true });
   }
@@ -75,7 +79,8 @@ export function versionAt(root: string, commit: string, id: string): string | un
 
 export interface Snapshot { repo: Repo; versions: Map<string, string> }
 
-// TE-05.1: the repository and its versions at a commit, loaded from a temporary worktree.
+// TE-05.1: the repository at a commit, loaded from a temporary worktree, with versions from the
+// commit itself, since worktrees lack submodules and LFS content.
 export function snapshotAt(root: string, commit: string): Snapshot {
   try {
     git(root, ['rev-parse', '--verify', '--quiet', `${commit}^{commit}`]);
@@ -87,7 +92,7 @@ export function snapshotAt(root: string, commit: string): Snapshot {
   try {
     git(root, ['worktree', 'add', '--detach', '-q', worktree, commit], { GIT_LFS_SKIP_SMUDGE: '1' });
     const repo = loadRepo(join(worktree, prefix));
-    return { repo, versions: currentVersions(repo) };
+    return { repo, versions: versionsFromHashes(repo, objectHashes(root, commit)) };
   } finally {
     rmSync(worktree, { recursive: true, force: true });
     git(root, ['worktree', 'prune']);

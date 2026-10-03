@@ -168,3 +168,18 @@ test('CO-04.1, CO-04.2, TE-05.1, TE-06.2: configurations resolve, report coverag
   expect(json('impact', 'HEAD').configurations).toEqual(['tail', 'wing']);
   expect(validate(loadRepo(root))).toMatchObject([{ file: 'configurations/tail.yaml', code: 'unknown-root' }]);
 });
+
+test('TE-01.1, TE-01.2: a nested repository counts by its commit, without warnings', () => {
+  const root = fixture();
+  const firmware = join(root, 'A-wing/P-spar/src');
+  write(root, { 'A-wing/P-spar/src/main.c': 'int main() {}\n' });
+  git(firmware, ['init', '-q']);
+  commit(firmware);
+  const before = currentVersions(loadRepo(root)).get('P');
+  expect(plm(root, 'show', 'P').stderr).toBe('');
+  write(root, { 'A-wing/P-spar/src/main.c': 'int main() { return 0; }\n' });
+  commit(firmware);
+  expect(currentVersions(loadRepo(root)).get('P')).not.toBe(before);
+  commit(root);
+  expect(JSON.parse(plm(root, '--format', 'json', 'impact', 'HEAD').stdout).data).toMatchObject({ changed: [], propagated: [] });
+});

@@ -26,10 +26,10 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Positions let editors and CI point to the problem; stable codes allow filtering and suppression.
 
 **CO-02.5** Built-in types shall be `requirement`, `part`, `assembly`, `test-case` and `test-run`.
-*Rationale:* Programs add further types by schema (CO-02.1).
+*Rationale:* Others come by schema (CO-02.1).
 
 **CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, and `tests` from `test-run` to any type.
-*Rationale:* Fixed semantics keep reports comparable across programs.
+*Rationale:* Fixed semantics keep reports comparable.
 
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.
 *Rationale:* One index format serves the CLI, VS Code and the browser without a search server.
@@ -44,9 +44,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **TE-01.2** Hashes of the working tree shall be computed by staging into a temporary Git index, so LFS filters apply and uncommitted and committed states yield identical versions.
 *Rationale:* Engineers need suspect states before committing; identical results avoid spurious differences between local runs and CI.
-
-**TE-01.3** Versions shall be cached in `.plm/cache` keyed by tree hash and used items' versions.
-*Rationale:* Recomputing deep assemblies on every command would be slow; the key changes whenever the result could.
 
 **TE-02.1** Confirming a link shall write the target's current version to the link's `version` field in `meta/<ID>.yaml`; a link without `version` is unconfirmed.
 *Rationale:* Keeping the version next to the link makes confirmations reviewable as ordinary diffs.
@@ -81,7 +78,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 ## CLI
 
 **CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>[..<head>]` and `report trace|coverage|compliance [<item>]`, finding the repository by searching upward for `plm.yaml`.
-*Rationale:* Commander is the established Node.js CLI library.
+*Rationale:* Commander is the established choice.
 
 **CL-01.2** `confirm` shall accept a source item and optionally a link type and target, confirming all links of the source by default.
 *Rationale:* After review, engineers typically confirm all links of an item at once.
@@ -89,14 +86,14 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-02.1** `plm new <type> [title]` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements in its `requirements/` folder, test cases in `tests/`, and print the new ID.
 *Rationale:* Repository templates let programs prefill attributes and conventions.
 
-**CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters, so parallel branches cannot collide.
+**CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
 
 **CL-02.3** `plm retire <ID>` shall set `status: retired`; validation shall warn about links to retired items.
 *Rationale:* Retired items may still be referenced by earlier releases; warnings show links that need attention.
 
 **CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types.
-*Rationale:* Users can create items right away.
+*Rationale:* Items can follow at once.
 
 **CL-03.1** `plm test record <test-case> --sut <ID> --result pass|fail|inconclusive [--log <file>...]` shall create a test run in `runs/` with date, result and copies of the log files.
 *Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for.
@@ -128,7 +125,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Typing IDs by hand is error-prone; search finds targets by title or text.
 
 **VS-02.1** A tree view shall show composition from the top-level items, with type icons and status badges.
-*Rationale:* Badges show maturity at a glance.
+*Rationale:* Badges show maturity.
 
 **VS-03.1** Opening an item's `requirements/` folder shall show a read-only webview of its requirements as numbered sections with ID, status and rendered Markdown; clicking a requirement opens its form.
 *Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements as one document.
@@ -138,15 +135,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **VS-04.2** "Show change" shall open the diff from TE-03.2 in the VS Code diff editor; "Confirm" shall perform TE-02.1.
 *Rationale:* The built-in diff editor is familiar and handles text and YAML well.
-
-**VS-05.1** A custom editor shall render `.step`, `.stp`, `.stl`, `.gltf` and `.glb` with three.js, converting STEP through occt-import-js in the webview.
-*Rationale:* Converting in the webview needs no CAD license or external tool.
-
-**VS-05.2** The viewer shall provide orbit, pan, zoom, fit to view and the STEP assembly tree.
-*Rationale:* These are the minimum interactions to identify parts and review geometry.
-
-**VS-05.3** For LFS pointers not fetched, the viewer shall offer to fetch the file.
-*Rationale:* Engineers often clone without LFS content to save time and space.
 
 **VS-06.1** A command shall record a manual test run through a form, applying CL-03.1 to CL-03.3.
 *Rationale:* Manual and automated runs must produce identical evidence.
@@ -168,12 +156,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CI-02.2** CI shall request review from the owners of affected items through the host API, mapping `owner` to host usernames.
 *Rationale:* Owners know their items best and must accept changes affecting them.
 
-**CI-03.1** CI shall convert each STEP artifact to Draco-compressed glTF binary using occt-import-js and glTF-Transform, with tessellation tolerance from `plm.yaml`.
-*Rationale:* Draco compression greatly reduces mesh size; the tolerance trades accuracy for size per program.
-
-**CI-03.2** Converted models shall not be committed but cached by the STEP file's blob hash and published with the site.
-*Rationale:* Derived files are reproducible, so committing them would only bloat the repository.
-
 **CI-04.1** CI shall build the site on every push and deploy it under `<site>/<branch>/`, removing sites of deleted branches, and under `<site>/<commit>/` for each release, keeping those.
 *Rationale:* Every branch can be reviewed in the browser; release sites preserve released states.
 
@@ -184,9 +166,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **SI-01.2** Each item shall have a page with attributes, text, artifact downloads, nested and used items, links with their state, and history: the commits touching its files, with date, author, message and merge request.
 *Rationale:* Reviewers need the complete picture of an item, including why it changed.
-
-**SI-01.4** 3D models shall be shown with three.js using the converted models from CI-03.1.
-*Rationale:* Converted models load fast in browsers without CAD tools.
 
 **SI-02.1** For each top-level item the site shall show a traceability matrix (requirements against satisfying, implementing and verifying items), coverage per TE-06.2, and a compliance matrix (certification basis requirements against evidence).
 *Rationale:* These matrices are the evidence reviewed in certification and program reviews.

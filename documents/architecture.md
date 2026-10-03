@@ -22,15 +22,12 @@ meta/<ID>.yaml                owner, status, links
 
 * **Items** (CR-01) have a stable ID and a type with its own schema: requirement, part, assembly, COTS part, harness, interface, software, test case, test run. Items are folders named `<ID>-<title>`. Retired items are kept (CR-04).
 * **Composition** (CR-02): folders nest; `uses` lists items reused from elsewhere, e.g. standard parts.
-* **Artifacts** (CR-03) are files in the item directory; binaries use Git LFS with locking. CAD is stored natively plus a STEP export; CI derives lightweight glTF for viewing.
+* **Artifacts** (CR-03) are files in the item directory; binaries use Git LFS with locking. CAD is stored natively plus a STEP export.
 * **Relationships** (CR-06, CR-08) are typed links in `meta/<ID>.yaml` (`satisfies`, `verifies`, `implements`, …). Links may target other repositories at a pinned commit, e.g. software.
 * **Requirements** are items, stored in the `requirements/` folder of the item they specify, so one link and suspect mechanism covers all disciplines; VS Code shows them as a document. Certification basis paragraphs are requirement items, enabling compliance tracing.
 
-## Traceability engine
+## Releases
 
-* An item's **version** is a hash of its folder's **Git tree hash**, covering nested items, and the versions of items it uses. Changes propagate to all ancestors.
-* Confirming a link stores the target's version with the link (CR-07). Links, owner and status live in `meta/`, outside item directories, so confirming, changing status or reassigning changes no version.
-* A link is **suspect** when the target's version has changed; `git diff` shows what changed. Any change, even a typo fix, raises suspects; re-confirmation is part of review (CR-09).
 * Protected branches forbid history rewriting, so stored hashes stay resolvable.
 * A **release** is a reviewed merge into the protected branch (CR-12, CR-14). An item's released versions are its versions on that branch; earlier ones are retrieved by commit. Nothing is frozen: items evolve independently.
 
@@ -51,7 +48,6 @@ Core library, traceability engine, CLI, VS Code extension, CI integration and st
 | Versioning | Git, Git LFS |
 | Data | YAML, JSON Schema (Ajv) |
 | CLI | Commander |
-| 3D | three.js, occt-import-js |
 | Static site | Astro |
 | Tooling | npm, ESLint, Prettier, Vitest |
 | CI | GitHub Actions, GitLab CI |

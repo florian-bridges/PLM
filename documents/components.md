@@ -61,9 +61,6 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **VS-04** The extension shall show an item's links with their suspect state and let users re-confirm them. (CR-06, CR-07; US-1, US-3)
 *Rationale:* Suspects are resolved where the engineer works, without switching tools.
 
-**VS-05** The extension shall display STEP, STL and glTF models. (CR-03, CR-05; US-2, US-3)
-*Rationale:* Seeing the geometry helps identify items and review changes without opening a CAD tool.
-
 **VS-06** The extension shall let users enter manual test results. (CR-09; US-5)
 *Rationale:* Not every test is automated; manual results need the same traceable record.
 
@@ -75,15 +72,12 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **CI-02** CI shall post the impact analysis on each merge request and request review from owners of affected items. (CR-13, CR-14, CR-18; US-7)
 *Rationale:* Reviewers see the consequences of a change where they approve it, and owners are involved automatically.
 
-**CI-03** CI shall derive viewable glTF from CAD artifacts. (CR-05; US-2, US-6)
-*Rationale:* Native CAD files are large and need licensed tools; glTF loads quickly in VS Code and browsers.
-
 **CI-04** CI shall publish the static site for each branch and release. (CR-05, CR-10; US-6)
 *Rationale:* Publishing per branch and release gives every state a stable read-only view.
 
 ## Static site (SI)
 
-**SI-01** The site shall let users search and browse items, artifacts, links, 3D models and item history. (CR-05, CR-15; US-6)
+**SI-01** The site shall let users search and browse items, artifacts, links and item history. (CR-05, CR-15; US-6)
 *Rationale:* Reviewers, managers and authorities need access without installing tools or cloning repositories.
 
 **SI-02** The site shall show traceability, coverage and compliance matrices for the product or an item in it. (CR-10; US-6)

@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { expect, test } from 'vitest';
@@ -18,15 +18,16 @@ const commit = (root: string) => {
   git(root, ['add', '-A']);
   git(root, ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'change']);
 };
-// Wing assembly A with spar P, satisfying requirement R.
+// Wing A with nested spar P satisfying the wing's requirement R; the wing uses bolt L.
 const fixture = () => {
   const root = mkdtempSync(join(tmpdir(), 'plm-test-'));
   write(root, {
     'plm.yaml': 'prefixes:\n  part: PRT-\n',
-    'items/A/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nchildren: [P]\n',
-    'items/P/item.yaml': 'id: P\ntype: part\ntitle: Spar\n',
-    'items/R/item.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 3g.\n',
-    'meta/A.yaml': '# reviewed by stress\nlinks:\n  - type: satisfies\n    target: R\n',
+    'A-wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nuses: [L]\n',
+    'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\n',
+    'A-wing/requirements/R-load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 3g.\n',
+    'L-bolt/item.yaml': 'id: L\ntype: part\ntitle: Bolt\n',
+    'meta/P.yaml': '# reviewed by stress\nlinks:\n  - type: satisfies\n    target: R\n',
   });
   git(root, ['init', '-q']);
   commit(root);
@@ -34,19 +35,21 @@ const fixture = () => {
 };
 const plm = (root: string, ...args: string[]) => spawnSync(process.execPath, ['src/cli.ts', '-C', root, ...args], { encoding: 'utf8' });
 
-test('TE-01.1: a child change propagates to ancestors only', () => {
+test('TE-01.1: nested and used item changes propagate to ancestors only', () => {
   const root = fixture();
   const before = currentVersions(loadRepo(root));
-  write(root, { 'items/P/item.yaml': 'id: P\ntype: part\ntitle: Main spar\n' });
+  write(root, { 'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\n' });
   const after = currentVersions(loadRepo(root));
   expect(after.get('P')).not.toBe(before.get('P'));
   expect(after.get('A')).not.toBe(before.get('A'));
   expect(after.get('R')).toBe(before.get('R'));
+  write(root, { 'L-bolt/item.yaml': 'id: L\ntype: part\ntitle: Hi-Lok\n' });
+  expect(currentVersions(loadRepo(root)).get('A')).not.toBe(after.get('A'));
 });
 
 test('TE-01.2: uncommitted and committed states yield identical versions', () => {
   const root = fixture();
-  write(root, { 'items/P/drawing.txt': 'rev 2' });
+  write(root, { 'A-wing/P-spar/drawing.txt': 'rev 2' });
   const working = currentVersions(loadRepo(root));
   commit(root);
   expect(versionAt(root, 'HEAD', 'A')).toBe(working.get('A'));
@@ -55,42 +58,45 @@ test('TE-01.2: uncommitted and committed states yield identical versions', () =>
 test('CO-02.1, CO-02.2, CO-02.4: findings with codes and positions', () => {
   const root = fixture();
   write(root, {
-    'items/P/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nchildren: [A]\n',
-    'items/X/item.yaml': 'id: Y\ntype: part\ntitle: Rib\n',
+    'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\n',
+    'X-rib/item.yaml': 'id: Y\ntype: part\ntitle: Rib\n',
+    'A-wing/requirements/Q.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
     'meta/P.yaml': 'links:\n  - type: verifies\n    target: R\n',
   });
   const findings = validate(loadRepo(root));
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-mismatch', 'link-type', 'schema']);
-  expect(findings.find((f) => f.code === 'schema')).toMatchObject({ file: 'items/P/item.yaml', line: 4, col: 9 });
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-mismatch', 'link-type', 'misplaced', 'schema']);
+  expect(findings.find((f) => f.code === 'schema')).toMatchObject({ file: 'A-wing/P-spar/item.yaml', line: 4, col: 9 });
 });
 
-test('TE-02.1, TE-03.1, TE-03.2: confirm, then a target change makes the link suspect', () => {
+test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes the link suspect', () => {
   const root = fixture();
   let repo = loadRepo(root);
   expect(linkStates(repo, currentVersions(repo))[0].state).toBe('unconfirmed');
-  confirm(repo, currentVersions(repo), [], 'A');
-  expect(readFileSync(join(root, 'meta/A.yaml'), 'utf8')).toContain('# reviewed by stress'); // CO-01.1
+  confirm(repo, currentVersions(repo), [], 'P');
+  expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toContain('# reviewed by stress'); // CO-01.1
+  expect(git(root, ['hash-object', 'A-wing/requirements/R-load.yaml'])).toBe(linkStates(loadRepo(root), new Map())[0].link.version);
 
-  write(root, { 'items/R/item.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
+  write(root, { 'A-wing/requirements/R-load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
   repo = loadRepo(root);
   const [state] = linkStates(repo, currentVersions(repo));
   expect(state.state).toBe('suspect');
   expect(changeSince(repo, state.link).diff).toContain('+text: Carry 4g.');
+
+  write(root, { 'A-wing/requirements/R-load.yaml': 'id: R\ntype: requirement\n' });
+  repo = loadRepo(root);
+  expect(() => confirm(repo, currentVersions(repo), validate(repo), 'P')).toThrow(Refused);
 });
 
-test('TE-02.2: confirmation is refused while the target is invalid', () => {
-  const root = fixture();
-  write(root, { 'items/R/item.yaml': 'id: R\ntype: requirement\n' });
-  const repo = loadRepo(root);
-  expect(() => confirm(repo, currentVersions(repo), validate(repo), 'A')).toThrow(Refused);
-});
-
-test('CL-02.1, CL-02.2, CL-02.4: init, then new items get a prefixed Crockford Base32 ID', () => {
+test('CL-02.1, CL-02.2, CL-02.4: init, then new items nest in the working folder', () => {
   const root = join(mkdtempSync(join(tmpdir(), 'plm-test-')), 'new');
   expect(plm(root, 'init').status).toBe(0);
   expect(plm(root, 'init').status).toBe(2);
-  const id = plm(root, 'new', 'part', '--title', 'Rib').stdout.trim();
-  expect(id).toMatch(/^PRT-[0-9A-HJKMNP-TV-Z]{6}$/);
+  const dir = join(root, `${plm(root, 'new', 'assembly', 'My aircraft').stdout.trim()}-my-aircraft`);
+  const part = plm(dir, 'new', 'part', 'Main spar').stdout.trim();
+  expect(part).toMatch(/^PRT-[0-9A-HJKMNP-TV-Z]{6}$/);
+  expect(existsSync(join(dir, `${part}-main-spar/item.yaml`))).toBe(true);
+  const req = plm(dir, 'new', 'requirement', 'Carry 3g').stdout.trim();
+  expect(existsSync(join(dir, `requirements/${req}-carry-3g.yaml`))).toBe(true);
   expect(validate(loadRepo(root))).toEqual([]);
 });
 

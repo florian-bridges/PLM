@@ -1,8 +1,8 @@
 // CO-02: validate items, links and composition.
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, linksOf, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, linksOf, nameMatches, usesOf, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
 // CO-02.4: every finding has a position, severity and stable code.
@@ -18,22 +18,17 @@ function finding(file: YamlFile<unknown>, path: (string | number)[], code: strin
 
 // CO-02.1: built-in schema, extended by schemas/<type>.schema.json.
 function schemaFor(ajv: Ajv2020, root: string, type: string): ValidateFunction | undefined {
-  const extension = join(root, 'schemas', `${type}.schema.json`);
-  const builtin = Object.hasOwn(builtinTypes, type) ? builtinTypes[type] : undefined;
-  if (!builtin && !existsSync(extension)) return undefined;
-  if (!ajv.getSchema(type)) {
-    const parts = [baseSchema, builtin ?? {}];
-    if (existsSync(extension)) parts.push(JSON.parse(readFileSync(extension, 'utf8')));
-    ajv.addSchema({ allOf: parts, unevaluatedProperties: false }, type);
-  }
-  return ajv.getSchema(type);
+  const file = join(root, 'schemas', `${type}.schema.json`);
+  const parts = [Object.hasOwn(builtinTypes, type) && builtinTypes[type], existsSync(file) && JSON.parse(readFileSync(file, 'utf8'))].filter(Boolean);
+  if (parts.length && !ajv.getSchema(type)) ajv.addSchema({ allOf: [baseSchema, ...parts], unevaluatedProperties: false }, type);
+  return parts.length ? ajv.getSchema(type) : undefined;
 }
 
 export function validate(repo: Repo): Finding[] {
   const ajv = new Ajv2020({ allErrors: true, strictTypes: false });
   const findings: Finding[] = [];
   const lowerIds = new Map<string, string>();
-  for (const entry of repo.entries.values()) {
+  for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
     const { id, item, meta } = entry;
     const check = schemaFor(ajv, repo.root, String(item.data.type));
     if (!check) findings.push(finding(item, ['type'], 'unknown-type', `Unknown item type "${item.data.type}"`));
@@ -46,12 +41,16 @@ export function validate(repo: Repo): Finding[] {
     }
 
     // CO-02.2
-    if (item.data.id !== id) findings.push(finding(item, ['id'], 'id-mismatch', `id "${item.data.id}" differs from directory ${id}`));
+    const name = basename(entry.path);
+    if (!nameMatches(name, id)) findings.push(finding(item, ['id'], 'id-mismatch', `${name} does not start with id ${id}`));
+    if ((item.data.type === 'requirement') !== entry.path.endsWith('.yaml')) {
+      findings.push(finding(item, ['type'], 'misplaced', 'Requirements belong in requirements folders, and only there'));
+    }
     const other = lowerIds.get(id.toLowerCase());
-    if (other) findings.push(finding(item, ['id'], 'id-case', `${id} differs from ${other} only in case`));
+    if (other) findings.push(finding(item, ['id'], 'id-clash', `${id} clashes with ${other}`));
     lowerIds.set(id.toLowerCase(), id);
-    childrenOf(entry).forEach((child, i) => {
-      if (!repo.entries.has(child)) findings.push(finding(item, ['children', i], 'unknown-child', `Unknown child ${child}`));
+    usesOf(entry).forEach((used, i) => {
+      if (!repo.entries.has(used)) findings.push(finding(item, ['uses', i], 'unknown-use', `Unknown used item ${used}`));
     });
     linksOf(entry).forEach((link, i) => {
       const target = repo.entries.get(link.target)?.item.data;
@@ -73,8 +72,8 @@ function cycles(repo: Repo): Finding[] {
   const visit = (id: string) => {
     state.set(id, 'open');
     const entry = repo.entries.get(id)!;
-    childrenOf(entry).forEach((child, i) => {
-      if (state.get(child) === 'open') findings.push(finding(entry.item, ['children', i], 'cycle', `${id} → ${child} closes a composition cycle`));
+    childrenOf(entry).forEach((child) => {
+      if (state.get(child) === 'open') findings.push(finding(entry.item, ['uses'], 'cycle', `${id} → ${child} closes a composition cycle`));
       else if (!state.has(child) && repo.entries.has(child)) visit(child);
     });
     state.set(id, 'done');

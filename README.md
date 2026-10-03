@@ -62,23 +62,38 @@ Without `npm link`, run the CLI from source with `node src/cli.ts`.
 A product repository is a Git repository with a `plm.yaml` defining ID prefixes. Create one in an empty folder:
 
 ```sh
-mkdir wing && cd wing
+mkdir my-product && cd my-product
 plm init
 ```
 
-Each item lives in `items/<ID>/item.yaml` with its artifacts beside it; its status and links are in `meta/<ID>.yaml`.
-
-Create a requirement and a part, link them, and confirm the link, which records the requirement's current version. `plm new` prints the new ID:
+Items are folders named `<ID>-<title>`, nested to form the product structure. Each holds its `item.yaml`, its artifacts and a `requirements/` folder with one file per requirement. Status and links are kept in `meta/<ID>.yaml`. `plm new` creates an item inside the item folder you are in, or at the top of the repository, and prints its ID:
 
 ```sh
-REQ=$(plm new requirement --title "Wing shall carry 3g")
-PRT=$(plm new part --title "Main spar")
+AC=$(plm new assembly "My aircraft")
+cd $AC-my-aircraft
+REQ=$(plm new requirement "Carry 3g")
+PRT=$(plm new part "Main spar")
+```
+
+```
+my-product/
+  plm.yaml
+  meta/
+  ASM-J8G0S2-my-aircraft/
+    item.yaml
+    requirements/REQ-A6SVG9-carry-3g.yaml
+    PRT-975P5Y-main-spar/item.yaml
+```
+
+Link the part to the requirement and confirm the link, which records the requirement's current version:
+
+```sh
 plm link $PRT satisfies $REQ
 plm confirm $PRT
 git add -A && git commit -m "Spar satisfies load requirement"
 ```
 
-After editing the requirement's `item.yaml`, list suspect links with what changed since confirmation, validate the repository, and show the part with its version and links:
+After editing the requirement file, list suspect links with what changed since confirmation, validate the repository, and show the part with its version and links:
 
 ```sh
 plm suspects --diff
@@ -86,4 +101,6 @@ plm validate
 plm show $PRT
 ```
 
-Use `-C <dir>` to work on another repository and `--format json` for machine-readable output. Exit codes: 0 success, 1 findings, 2 usage error, 3 internal error.
+To reuse an item elsewhere, such as a standard part, list its ID under `uses:` in the `item.yaml` of the assembly using it.
+
+`plm` works from any folder inside the repository. Use `-C <dir>` to run it as if in another folder and `--format json` for machine-readable output. Exit codes: 0 success, 1 findings, 2 usage error, 3 internal error.

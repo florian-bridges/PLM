@@ -2,17 +2,16 @@
 // CL-01.1: the `plm` command-line program.
 import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { Command, CommanderError } from 'commander';
 import { parseDocument, stringify } from 'yaml';
 import { changeSince, confirm, linkStates } from './links.ts';
 import { entry, loadRepo, readYaml, Refused, UsageError, writeYaml, type Repo } from './repo.ts';
-import { builtinTypes } from './schemas.ts';
 import { validate } from './validate.ts';
 import { currentVersions, git } from './version.ts';
 
 const program = new Command('plm')
-  .option('-C, --repo <dir>', 'repository root', '.')
+  .option('-C, --repo <dir>', 'working folder', '.')
   .option('--format <format>', 'text or json', 'text')
   .exitOverride();
 const repo = () => loadRepo(program.opts().repo);
@@ -41,10 +40,11 @@ program.command('show <id>').description('show an item, its version and links').
 });
 
 program.command('link <source> <type> <target>').description('add an unconfirmed link').action((source: string, type: string, target: string) => {
-  const { meta } = entry(repo(), source);
+  const r = repo();
+  const { meta } = entry(r, source);
   if (meta.doc.hasIn(['links'])) meta.doc.addIn(['links'], { type, target });
   else meta.doc.setIn(['links'], [{ type, target }]);
-  writeYaml(program.opts().repo, meta);
+  writeYaml(r.root, meta);
 });
 
 // CL-01.2: confirm all links of the source unless a type or target is given.
@@ -54,7 +54,7 @@ program.command('confirm <source> [type] [target]').description('confirm links')
   output(links.map((l) => `confirmed ${source} ${l.type} ${l.target}`).join('\n'), links);
 });
 
-program.command('suspects').option('--diff', 'show what changed').description('list suspect and unconfirmed links').action(({ diff }) => {
+program.command('suspects').description('list suspect and unconfirmed links').option('--diff', 'show what changed').action(({ diff }) => {
   const r = repo();
   const states = linkStates(r, currentVersions(r)).filter((s) => s.state !== 'current')
     .map((s) => ({ ...s, ...(diff && s.state === 'suspect' ? changeSince(r, s.link) : {}) }));
@@ -72,13 +72,19 @@ program.command('init').description('create a product repository').action(() => 
   writeFileSync(join(root, 'plm.yaml'), stringify({ prefixes }));
 });
 
-// CL-02.1: create item and meta files from a template.
-program.command('new <type>').option('--title <title>', 'item title', '').description('create an item').action((type: string, { title }) => {
+// CL-02.1: create item and meta files from a template, inside the item folder containing the working folder.
+program.command('new <type> [title]').description('create an item in the current item folder').action((type: string, title = '') => {
   const r = repo();
-  if (!Object.hasOwn(builtinTypes, type) && !existsSync(join(r.root, 'schemas', `${type}.schema.json`))) throw new UsageError(`Unknown type ${type}`);
+  const here = relative(r.root, resolve(program.opts().repo));
+  // Parents load first, so the last match is innermost.
+  const parent = [...r.entries.values()].filter((e) => !e.path.endsWith('.yaml') && (here === e.path || here.startsWith(`${e.path}/`))).at(-1);
   const id = newId(r, type);
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const name = slug ? `${id}-${slug}` : id;
+  const folder = parent ? `${parent.path}/` : '';
+  if (type === 'requirement' && !parent) throw new UsageError('Create requirements inside an item folder');
   const item = readYaml(r.root, `templates/${type}.yaml`);
-  item.path = `items/${id}/item.yaml`;
+  item.path = type === 'requirement' ? `${folder}requirements/${name}.yaml` : `${folder}${name}/item.yaml`;
   for (const [key, value] of Object.entries({ id, type, title })) item.doc.setIn([key], value);
   writeYaml(r.root, item);
   writeYaml(r.root, { ...item, path: `meta/${id}.yaml`, doc: parseDocument('status: draft\n') });

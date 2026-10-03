@@ -4,22 +4,19 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## Core library
 
-**CO-01.1** The core shall read `plm.yaml` (repository settings), `items/<ID>/item.yaml`, `meta/<ID>.yaml` and `configurations/<name>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
+**CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<ID>-<title>/item.yaml` with their `requirements/<ID>-<title>.yaml`, `meta/<ID>.yaml` and `configurations/<name>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
 *Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files.
 
-**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `children` and `external_ids`. `meta/<ID>.yaml` shall hold `owner`, `status`, `revision` and `links`.
+**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `external_ids`. `meta/<ID>.yaml` shall hold `owner`, `status`, `revision` and `links`.
 *Rationale:* Separating content from administrative data keeps versions stable when links, ownership or status change (TE-01.1).
 
 **CO-01.3** The core shall list artifacts as file paths without reading their contents, and detect Git LFS pointers that are not fetched.
 *Rationale:* Artifacts can be gigabytes; reading them on demand keeps loading fast and works without fetched LFS files.
 
-**CO-01.4** The core shall load a repository of 10,000 items in under 5 seconds on a current laptop.
-*Rationale:* The core runs on every command, edit and CI job; slow loading would slow down all components.
-
 **CO-02.1** The core shall validate `item.yaml` with Ajv against the JSON Schema (2020-12) of its type; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
 *Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add their own attributes.
 
-**CO-02.2** The core shall report as errors: an `id` differing from its directory name, IDs differing only in case, unknown child or link targets, link types not allowed between the source and target types, and composition cycles.
+**CO-02.2** The core shall report as errors: names not starting with their `id`, requirements outside `requirements/` folders and other items inside, duplicate IDs or IDs differing only in case, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late, for example on case-insensitive file systems.
 
 **CO-02.3** The core shall report files above the size limit in `plm.yaml` that are not stored in Git LFS.
@@ -40,8 +37,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-03.2** Queries shall combine free text with filters `type:`, `status:`, `owner:` and `config:`.
 *Rationale:* Filters answer typical questions, such as all unreleased parts of an owner, faster than text alone.
 
-**CO-04.1** A configuration file shall name a root item and the optional children it includes; children marked `optional: true` in `item.yaml` are excluded unless listed.
-*Rationale:* Optional children express variants in the composition itself, so a configuration lists only what differs.
+**CO-04.1** A configuration file shall name a root item and the optional items it includes; items marked `optional: true` are excluded unless listed.
+*Rationale:* Optional items express variants in the composition itself, so a configuration lists only what differs.
 
 **CO-04.2** Resolution shall walk the composition from the root and return each selected item with its version, reporting listed items that are unreachable.
 *Rationale:* Reports and baselines need exact versions; unreachable entries reveal configuration errors.
@@ -63,13 +60,13 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## Traceability engine
 
-**TE-01.1** An item's version shall be the SHA-256 hex digest of its directory's Git tree hash followed by its children's versions in listed order.
-*Rationale:* Git tree hashes already capture all files, including LFS pointers; adding children's versions propagates changes to ancestors.
+**TE-01.1** An item's version shall be the SHA-256 hex digest of its folder's Git tree hash followed by the versions of the items it uses, in listed order; a requirement's version shall be its file's Git blob hash.
+*Rationale:* Git hashes capture all files, including nested items and LFS pointers; adding used items' versions propagates their changes.
 
-**TE-01.2** Tree hashes of the working tree shall be computed by staging into a temporary Git index, so LFS filters apply and uncommitted and committed states yield identical versions.
+**TE-01.2** Hashes of the working tree shall be computed by staging into a temporary Git index, so LFS filters apply and uncommitted and committed states yield identical versions.
 *Rationale:* Engineers need suspect states before committing; identical results avoid spurious differences between local runs and CI.
 
-**TE-01.3** Versions shall be cached in `.plm/cache` keyed by tree hash and child versions.
+**TE-01.3** Versions shall be cached in `.plm/cache` keyed by tree hash and used items' versions.
 *Rationale:* Recomputing deep assemblies on every command would be slow; the key changes whenever the result could.
 
 **TE-02.1** Confirming a link shall write the target's current version to the link's `version` field in `meta/<ID>.yaml`; a link without `version` is unconfirmed.
@@ -101,13 +98,13 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>..<head>` and `report trace|coverage|compliance`.
-*Rationale:* Commander is the established Node.js CLI library; the commands map directly to the component requirements.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>..<head>` and `report trace|coverage|compliance`, finding the repository by searching upward for `plm.yaml`.
+*Rationale:* Commander is the established Node.js CLI library.
 
 **CL-01.2** `confirm` shall accept a source item and optionally a link type and target, confirming all links of the source by default.
 *Rationale:* After review, engineers typically confirm all links of an item at once.
 
-**CL-02.1** `plm new <type>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, and print the new ID.
+**CL-02.1** `plm new <type> [title]` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements in its `requirements/` folder, and print the new ID.
 *Rationale:* Repository templates let programs prefill attributes and conventions.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters, so parallel branches cannot collide.

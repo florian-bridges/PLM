@@ -6,7 +6,7 @@ export const baseSchema = {
   required: ['id', 'type', 'title'],
   properties: {
     id: str, type: str, title: str, text: str,
-    children: { type: 'array', items: str },
+    uses: { type: 'array', items: str },
     external_ids: { type: 'object', additionalProperties: str },
   },
 };

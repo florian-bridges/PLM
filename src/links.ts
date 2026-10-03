@@ -21,7 +21,7 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
     .filter(({ link }) => (!type || link.type === type) && (!target || link.target === target));
   for (const { link } of selected) {
     // TE-02.2
-    const broken = findings.some((f) => f.severity === 'error' && f.file === `items/${link.target}/item.yaml`);
+    const broken = findings.some((f) => f.severity === 'error' && f.file === repo.entries.get(link.target)?.item.path);
     if (broken || !versions.has(link.target)) throw new Refused(`${link.target} fails validation; fix it before confirming`);
   }
   for (const { link, index } of selected) e.meta.doc.setIn(['links', index, 'version'], versions.get(link.target));
@@ -31,8 +31,8 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
 
 // TE-03.2: diff of the target's subtree since the latest commit at which it had the confirmed version.
 export function changeSince(repo: Repo, link: Link): { commit?: string; diff: string } {
-  const commits = git(repo.root, ['rev-list', 'HEAD', '--', 'items']).split('\n').filter(Boolean);
+  const commits = git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean);
   const commit = commits.find((c) => versionAt(repo.root, c, link.target) === link.version);
   if (!commit) return { diff: '' };
-  return { commit, diff: git(repo.root, ['diff', commit, '--', ...subtree(repo, link.target).map((id) => `items/${id}`)]) };
+  return { commit, diff: git(repo.root, ['diff', commit, '--', ...subtree(repo, link.target).map((id) => repo.entries.get(id)!.path)]) };
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // CL-01.1: the `plm` command-line program.
 import { randomBytes } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Command, CommanderError } from 'commander';
 import { parseDocument, stringify } from 'yaml';
@@ -9,7 +9,7 @@ import { changeSince, confirm, linkStates } from './links.ts';
 import { entry, loadRepo, readYaml, Refused, UsageError, writeYaml, type Repo } from './repo.ts';
 import { builtinTypes } from './schemas.ts';
 import { validate } from './validate.ts';
-import { currentVersions } from './version.ts';
+import { currentVersions, git } from './version.ts';
 
 const program = new Command('plm')
   .option('-C, --repo <dir>', 'repository root', '.')
@@ -60,6 +60,16 @@ program.command('suspects').option('--diff', 'show what changed').description('l
     .map((s) => ({ ...s, ...(diff && s.state === 'suspect' ? changeSince(r, s.link) : {}) }));
   output(states.map((s) => `${s.state} ${s.source} ${s.link.type} ${s.link.target}${s.diff ? `\n${s.diff}` : ''}`).join('\n'), states);
   if (states.length) exitCode = 1;
+});
+
+// CL-02.4: initialize a product repository.
+program.command('init').description('create a product repository').action(() => {
+  const root = program.opts().repo;
+  if (existsSync(join(root, 'plm.yaml'))) throw new UsageError('plm.yaml already exists');
+  mkdirSync(root, { recursive: true });
+  git(root, ['init', '-q']);
+  const prefixes = { requirement: 'REQ-', specification: 'SPEC-', part: 'PRT-', assembly: 'ASM-', 'test-case': 'TC-' };
+  writeFileSync(join(root, 'plm.yaml'), stringify({ prefixes }));
 });
 
 // CL-02.1: create item and meta files from a template.

@@ -116,6 +116,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-02.3** `plm retire <ID>` shall set `status: retired`; validation shall warn about links to retired items.
 *Rationale:* Retired items may still be referenced by baselines; warnings show links that need attention.
 
+**CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types.
+*Rationale:* Users can create items right away.
+
 **CL-03.1** `plm test record <test-case> --sut <ID> --result pass|fail|inconclusive` shall create a test run item with date, environment and attached log files.
 *Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for.
 

@@ -85,8 +85,10 @@ test('TE-02.2: confirmation is refused while the target is invalid', () => {
   expect(() => confirm(repo, currentVersions(repo), validate(repo), 'A')).toThrow(Refused);
 });
 
-test('CL-02.1, CL-02.2: new items get a prefixed Crockford Base32 ID', () => {
-  const root = fixture();
+test('CL-02.1, CL-02.2, CL-02.4: init, then new items get a prefixed Crockford Base32 ID', () => {
+  const root = join(mkdtempSync(join(tmpdir(), 'plm-test-')), 'new');
+  expect(plm(root, 'init').status).toBe(0);
+  expect(plm(root, 'init').status).toBe(2);
   const id = plm(root, 'new', 'part', '--title', 'Rib').stdout.trim();
   expect(id).toMatch(/^PRT-[0-9A-HJKMNP-TV-Z]{6}$/);
   expect(validate(loadRepo(root))).toEqual([]);

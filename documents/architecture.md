@@ -54,7 +54,7 @@ Core library, traceability engine, CLI, VS Code extension, CI integration and st
 | CLI | Commander |
 | 3D | three.js, occt-import-js |
 | Static site | Astro |
-| Tooling | pnpm, ESLint, Prettier, Vitest |
+| Tooling | npm, ESLint, Prettier, Vitest |
 | CI | GitHub Actions, GitLab CI |
 
 VS Code extensions require TypeScript; one codebase then serves CLI, extension and site.

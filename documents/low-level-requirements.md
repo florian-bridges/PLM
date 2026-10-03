@@ -28,6 +28,12 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.4** Each finding shall carry file, line, column, severity and a stable code.
 *Rationale:* Positions let editors and CI point to the problem; stable codes allow filtering and suppression.
 
+**CO-02.5** Built-in types shall be `requirement`, `specification`, `part`, `assembly` and `test-case`.
+*Rationale:* Programs add further types by schema (CO-02.1).
+
+**CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, and `verifies` from `test-case` to `requirement`.
+*Rationale:* Fixed semantics keep reports comparable across programs.
+
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.
 *Rationale:* One index format serves the CLI, VS Code and the browser without a search server.
 

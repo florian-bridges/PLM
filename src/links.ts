@@ -1,0 +1,38 @@
+// TE-02, TE-03: link confirmation and suspect links.
+import { entry, linksOf, Refused, subtree, writeYaml, type Link, type Repo } from './repo.ts';
+import type { Finding } from './validate.ts';
+import { git, versionAt } from './version.ts';
+
+export interface LinkState { source: string; link: Link; state: 'current' | 'suspect' | 'unconfirmed' }
+
+// TE-03.1
+export function linkStates(repo: Repo, versions: Map<string, string>): LinkState[] {
+  return [...repo.entries.values()].flatMap((e) => linksOf(e).map((link): LinkState => ({
+    source: e.id,
+    link,
+    state: !link.version ? 'unconfirmed' : link.version === versions.get(link.target) ? 'current' : 'suspect',
+  })));
+}
+
+// TE-02.1: store each target's current version with the link.
+export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, type?: string, target?: string): Link[] {
+  const e = entry(repo, source);
+  const selected = linksOf(e).map((link, index) => ({ link, index }))
+    .filter(({ link }) => (!type || link.type === type) && (!target || link.target === target));
+  for (const { link } of selected) {
+    // TE-02.2
+    const broken = findings.some((f) => f.severity === 'error' && f.file === `items/${link.target}/item.yaml`);
+    if (broken || !versions.has(link.target)) throw new Refused(`${link.target} fails validation; fix it before confirming`);
+  }
+  for (const { link, index } of selected) e.meta.doc.setIn(['links', index, 'version'], versions.get(link.target));
+  if (selected.length) writeYaml(repo.root, e.meta);
+  return selected.map(({ link }) => link);
+}
+
+// TE-03.2: diff of the target's subtree since the latest commit at which it had the confirmed version.
+export function changeSince(repo: Repo, link: Link): { commit?: string; diff: string } {
+  const commits = git(repo.root, ['rev-list', 'HEAD', '--', 'items']).split('\n').filter(Boolean);
+  const commit = commits.find((c) => versionAt(repo.root, c, link.target) === link.version);
+  if (!commit) return { diff: '' };
+  return { commit, diff: git(repo.root, ['diff', commit, '--', ...subtree(repo, link.target).map((id) => `items/${id}`)]) };
+}

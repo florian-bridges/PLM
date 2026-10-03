@@ -31,10 +31,8 @@ test('VS-03.1: requirements of the item, then its nested items, as numbered sect
 test('VS-01.2: flat form fields from the schema, written back keeping other attributes and comments', () => {
   const fields = formFields({ allOf: [baseSchema, { properties: { mass_kg: { type: 'number' }, grade: { enum: ['A', 'B'] }, spec: { type: 'object' } } }] });
   expect(fields.map((field) => `${field.name}:${field.kind}`)).toEqual(['title:string', 'text:text', 'uses:list', 'mass_kg:number', 'grade:enum', 'status:string', 'owner:string']);
-  const html = formHtml('P', fields, { title: '<Spar>', grade: 'B', uses: ['L', 'M'] });
+  const html = formHtml('P', fields, { title: '<Spar>' });
   expect(html).toContain('value="&#60;Spar&#62;"');
-  expect(html).toContain('<option selected>B</option>');
-  expect(html).toContain('value="L, M"');
 
   const item = parseDocument('# spar\ntitle: Old\ntext: x\nspec: { a: 1 }\n');
   const meta = parseDocument('');

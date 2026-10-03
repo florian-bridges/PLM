@@ -1,9 +1,8 @@
 // TE-05: impact of a change between a base commit and a head commit or the working tree.
 import { linkStates, type LinkState } from './links.ts';
-import { selection } from './repo.ts';
 import { git, type Snapshot } from './version.ts';
 
-export interface Impact { changed: string[]; propagated: string[]; suspects: LinkState[]; runs: string[]; configurations: string[] }
+export interface Impact { changed: string[]; propagated: string[]; suspects: LinkState[]; runs: string[] }
 
 // TE-05.1: files changed from the base, including untracked files when the head is the working tree.
 export function changedFiles(root: string, base: string, head?: string): string[] {
@@ -26,15 +25,10 @@ export function impact(base: Snapshot, head: Snapshot, files: string[]): Impact 
   const suspects = linkStates(head.repo, head.versions).filter(becameSuspect);
   const isRun = (id: string) => head.repo.entries.get(id)?.item.data.type === 'test-run';
 
-  const changed = changedIds.filter((id) => ownersOfChangedFiles.has(id));
-  const selects = (root?: string) => (root && head.repo.entries.has(root) ? selection(head.repo, root) : []);
-  const affected = [...head.repo.configurations].filter(([, file]) => files.includes(file.path) || selects(file.data.root).some((id) => changed.includes(id)));
-
   return {
-    changed,
+    changed: changedIds.filter((id) => ownersOfChangedFiles.has(id)),
     propagated: changedIds.filter((id) => !ownersOfChangedFiles.has(id)),
     suspects,
     runs: [...new Set(suspects.map((state) => state.source))].filter(isRun),
-    configurations: affected.map(([name]) => name),
   };
 }

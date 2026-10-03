@@ -125,13 +125,4 @@ plm report coverage $AC
 
 To reuse an item elsewhere, such as a standard part, list its ID under `uses:` in the `item.yaml` of the assembly using it.
 
-Product variants are root assemblies sharing items through `uses`. A file `configurations/<name>.yaml` containing `root: <ID>` names a variant; list its items with versions, or report its coverage:
-
-```sh
-plm configuration export
-plm report coverage --config export
-```
-
-`plm impact` also lists the configurations affected by a change.
-
 `plm` works from any folder inside the repository. Use `-C <dir>` to run it as if in another folder and `--format json` for machine-readable output. Exit codes: 0 success, 1 findings, 2 usage error, 3 internal error.

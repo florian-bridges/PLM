@@ -18,7 +18,6 @@ plm.yaml                      repository settings
 tests/<ID>-<title>/           test cases
 runs/<ID>-<title>/            test runs with their logs
 meta/<ID>.yaml                owner, status, links
-configurations/<name>.yaml    product variants: root items
 ```
 
 * **Items** (CR-01) have a stable ID and a type with its own schema: requirement, part, assembly, COTS part, harness, interface, software, test case, test run. Items are folders named `<ID>-<title>`. Retired items are kept (CR-04).
@@ -35,9 +34,8 @@ configurations/<name>.yaml    product variants: root items
 * Protected branches forbid history rewriting, so stored hashes stay resolvable.
 * A **release** is a reviewed merge into the protected branch (CR-12, CR-14). An item's released versions are its versions on that branch; earlier ones are retrieved by commit. Nothing is frozen: items evolve independently.
 
-## Configurations, change and verification
+## Change and verification
 
-* **Variants** are root assemblies sharing items through `uses`; configuration files name them.
 * **Change requests** use the host's issues and merge requests; the host provides permissions and approvals (CR-13, CR-14, CR-17).
 * **Test runs** record SUT version, result and logs. Test cases and runs live outside item folders, so adding them changes no product version. Tests execute externally (CI, HIL rigs) and report via the CLI; manual results are entered in VS Code.
 

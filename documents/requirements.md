@@ -37,12 +37,8 @@ The tool shall associate verification evidence with the item versions it verifie
 *Rationale:* Certification credit depends on evidence for the exact version certified. Changes after a test must be detected to decide on re-verification.
 
 **CR-10 — Reporting**
-The tool shall report traceability, verification coverage and compliance status for a configuration.
-*Rationale:* Program reviews and certification authorities assess status per configuration: what is traced, verified and shown compliant.
-
-**CR-11 — Configurations**
-The tool shall represent multiple valid product configurations and their item versions, and compare them between releases.
-*Rationale:* Aircraft are built in variants and evolve through releases. Comparing configurations shows what changed between deliveries or certification steps.
+The tool shall report traceability, verification coverage and compliance status for the product or any item in it.
+*Rationale:* Program reviews and certification authorities assess status for the aircraft and its systems: what is traced, verified and shown compliant.
 
 **CR-12 — Release**
 The tool shall release changes by merging them into a protected branch, track item maturity and retrieve any earlier released definition.

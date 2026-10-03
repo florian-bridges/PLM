@@ -119,6 +119,7 @@ test('CL-03.1–CL-03.3, TE-06.1, TE-06.2: recorded runs verify requirements unt
   const coverage = () => JSON.parse(plm(root, '--format', 'json', 'report', 'coverage', 'A').stdout).data[0].state;
   const record = (result: string) => plm(root, 'test', 'record', 'T', '--sut', 'A', '--result', result, '--log', join(root, 'rig.log'));
   expect(coverage()).toBe('unverified');
+  expect(JSON.parse(plm(root, '--format', 'json', 'report', 'coverage', 'P').stdout).data).toEqual([]);
   write(root, {
     'tests/T-load/item.yaml': 'id: T\ntype: test-case\ntitle: Load test\n',
     'meta/T.yaml': 'links:\n  - type: verifies\n    target: R\n',
@@ -151,23 +152,10 @@ test('TE-05.1, TE-05.2: impact of a change on items, links and test runs', () =>
   const impact = (range: string) => JSON.parse(plm(root, '--format', 'json', 'impact', range).stdout).data;
   const expected = { changed: ['R'], propagated: ['A'], suspects: [{ source: 'X', link: { type: 'tests', target: 'A' } }], runs: ['X'] };
   expect(impact('HEAD')).toMatchObject(expected);
+  expect(Object.keys(impact('HEAD'))).toEqual(Object.keys(expected));
   commit(root);
   expect(impact('HEAD~1..HEAD')).toMatchObject(expected);
   expect(plm(root, 'impact', 'nonsense').status).toBe(2);
-});
-
-test('CO-04.1, CO-04.2, TE-05.1, TE-06.2: configurations resolve, report coverage and are affected by changes', () => {
-  const root = fixture();
-  write(root, { 'configurations/wing.yaml': 'root: A\n', 'configurations/spar.yaml': 'root: P\n' });
-  commit(root);
-  const json = (...args: string[]) => JSON.parse(plm(root, '--format', 'json', ...args).stdout).data;
-  expect(json('configuration', 'wing').map((item: { id: string }) => item.id).sort()).toEqual(['A', 'L', 'P', 'R']);
-  expect(json('configuration', 'wing')[0].version).toBe(currentVersions(loadRepo(root)).get('A'));
-  expect(json('report', 'coverage', '--config', 'wing')).toMatchObject([{ requirement: 'R', state: 'unverified' }]);
-  expect(json('report', 'coverage', '--config', 'spar')).toEqual([]);
-  write(root, { 'L-bolt/item.yaml': 'id: L\ntype: part\ntitle: Hi-Lok\n', 'configurations/tail.yaml': 'root: Z\n' });
-  expect(json('impact', 'HEAD').configurations).toEqual(['tail', 'wing']);
-  expect(validate(loadRepo(root))).toMatchObject([{ file: 'configurations/tail.yaml', code: 'unknown-root' }]);
 });
 
 test('TE-01.1, TE-01.2: a nested repository counts by its commit, without warnings', () => {

@@ -4,7 +4,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## Core library
 
-**CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<ID>-<title>/item.yaml` with their `requirements/<ID>-<title>.yaml`, test cases `tests/<ID>-<title>/item.yaml`, test runs `runs/<ID>-<title>/item.yaml`, `meta/<ID>.yaml` and `configurations/<name>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
+**CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<ID>-<title>/item.yaml` with their `requirements/<ID>-<title>.yaml`, test cases `tests/<ID>-<title>/item.yaml`, test runs `runs/<ID>-<title>/item.yaml` and `meta/<ID>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
 *Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files.
 
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown) and `uses`. `meta/<ID>.yaml` shall hold `owner`, `status` and `links`.
@@ -34,14 +34,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.
 *Rationale:* One index format serves the CLI, VS Code and the browser without a search server.
 
-**CO-03.2** Queries shall combine free text with filters `type:`, `status:`, `owner:` and `config:`.
+**CO-03.2** Queries shall combine free text with filters `type:`, `status:` and `owner:`.
 *Rationale:* Filters answer typical questions, such as all unreleased parts of an owner, faster than text alone.
-
-**CO-04.1** A configuration file shall name the `root` item of one product variant.
-*Rationale:* Variants as root items sharing parts through `uses` need no second selection mechanism, and each variant has its own version.
-
-**CO-04.2** Resolution shall return the root's subtree and the requirements of its items with their versions; validation shall report unknown roots.
-*Rationale:* Reports and comparisons need exact versions, including the requirements they cover.
 
 ## Traceability engine
 
@@ -72,7 +66,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-04.2** The engine shall fetch aliased repositories into `.plm/repos/` and use the Git object hash of `<path>` at the pinned commit as the version, or the item version if the alias is a PLM repository.
 *Rationale:* Software repositories are usually not PLM repositories; object hashes give them versions without imposing the item model.
 
-**TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links that became suspect, test runs whose evidence is no longer current, and configurations selecting a changed item or whose file changed.
+**TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links that became suspect, and test runs whose evidence is no longer current.
 *Rationale:* These are the questions a change board asks before approval.
 
 **TE-05.2** A link shall have become suspect when its confirmed version equals the target's version at base but not at head.
@@ -81,12 +75,12 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-06.1** A requirement shall count as verified when a test case `verifies` it through a current link and that test case's latest run, by date, with current `executes` and `tests` links has result `pass`.
 *Rationale:* Evidence counts only for the versions tested and the latest result; reusing the suspect mechanism avoids a second staleness check.
 
-**TE-06.2** Coverage shall be reported per configuration or item subtree as verified, verification pending (verifying test case without current passing run) and unverified (no verifying test case).
+**TE-06.2** Coverage shall be reported for the repository or an item subtree as verified, verification pending (verifying test case without current passing run) and unverified (no verifying test case).
 *Rationale:* Pending verification differs from a missing test and needs a different action.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>[..<head>]`, `configuration <name>` and `report trace|coverage|compliance [--config <name>]`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>[..<head>]` and `report trace|coverage|compliance [<item>]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Commander is the established Node.js CLI library.
 
 **CL-01.2** `confirm` shall accept a source item and optionally a link type and target, confirming all links of the source by default.
@@ -133,8 +127,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-01.4** Link targets shall be selected through the core search.
 *Rationale:* Typing IDs by hand is error-prone; search finds targets by title or text.
 
-**VS-02.1** A tree view shall show composition from the configuration chosen in its title bar, or all top-level items, with type icons and status badges.
-*Rationale:* Engineers work on one variant at a time; badges show maturity at a glance.
+**VS-02.1** A tree view shall show composition from the top-level items, with type icons and status badges.
+*Rationale:* Badges show maturity at a glance.
 
 **VS-03.1** Opening an item's `requirements/` folder shall show a read-only webview of its requirements as numbered sections with ID, status and rendered Markdown; clicking a requirement opens its form.
 *Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements as one document.
@@ -194,7 +188,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **SI-01.4** 3D models shall be shown with three.js using the converted models from CI-03.1.
 *Rationale:* Converted models load fast in browsers without CAD tools.
 
-**SI-02.1** For each configuration the site shall show a traceability matrix (requirements against satisfying, implementing and verifying items), coverage per TE-06.2, and a compliance matrix (certification basis requirements against evidence).
+**SI-02.1** For each top-level item the site shall show a traceability matrix (requirements against satisfying, implementing and verifying items), coverage per TE-06.2, and a compliance matrix (certification basis requirements against evidence).
 *Rationale:* These matrices are the evidence reviewed in certification and program reviews.
 
 **SI-02.2** Each matrix shall be exportable as CSV.

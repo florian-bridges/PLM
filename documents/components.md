@@ -4,7 +4,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 ## Core library (CO)
 
-**CO-01** The core shall load items, artifacts, links and configurations from a repository. (CR-01–CR-03; US-2, US-3)
+**CO-01** The core shall load items, artifacts and links from a repository. (CR-01–CR-03; US-2, US-3)
 *Rationale:* All components need the same view of the repository; one loader avoids inconsistent interpretations.
 
 **CO-02** The core shall validate items against their type's schema and report broken links and composition cycles. (CR-04; US-1–US-5)
@@ -12,9 +12,6 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 **CO-03** The core shall search items by ID, type, attribute and text. (CR-05; US-2, US-6)
 *Rationale:* Search is the entry point to a large product for all users and components.
-
-**CO-04** The core shall resolve a configuration to the item versions it selects. (CR-11; US-6, US-7)
-*Rationale:* Reports, product trees and comparisons all operate on a configuration, so resolving it belongs in the shared core.
 
 ## Traceability engine (TE)
 
@@ -55,7 +52,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **VS-01** The extension shall provide forms to create and edit items and links, validated while typing. (CR-04; US-1–US-5)
 *Rationale:* Engineers should not need to know the YAML schemas; forms with live validation lower the entry barrier.
 
-**VS-02** The extension shall show the product tree of the repository or a configuration. (CR-02, CR-05, CR-11; US-2)
+**VS-02** The extension shall show the product tree of the repository. (CR-02, CR-05; US-2)
 *Rationale:* The product tree is how engineers think about the product and is their main navigation.
 
 **VS-03** The extension shall show a requirement hierarchy as a readable document. (CR-05, CR-06; US-1)
@@ -89,10 +86,10 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **SI-01** The site shall let users search and browse items, artifacts, links, 3D models and item history. (CR-05, CR-15; US-6)
 *Rationale:* Reviewers, managers and authorities need access without installing tools or cloning repositories.
 
-**SI-02** The site shall show traceability, coverage and compliance matrices for a configuration. (CR-10, CR-11; US-6)
+**SI-02** The site shall show traceability, coverage and compliance matrices for the product or an item in it. (CR-10; US-6)
 *Rationale:* Matrices are the established evidence format for coverage and compliance reviews.
 
-**SI-03** The site shall compare two releases. (CR-11; US-6)
+**SI-03** The site shall compare two releases. (CR-12; US-6)
 *Rationale:* Comparisons show what changed between deliveries or certification steps.
 
 **SI-04** The site shall be accessible only to users authorized on the Git host. (CR-17; US-7)

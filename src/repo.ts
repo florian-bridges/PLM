@@ -117,7 +117,7 @@ export function entry(repo: Repo, id: string): Entry {
   return found;
 }
 
-// The item, its nested and used items, each listed once.
+// TE-03.2, TE-06.2: the item, its nested and used items, each listed once.
 export function subtree(repo: Repo, id: string, seen = new Set<string>()): string[] {
   if (seen.has(id) || !repo.entries.has(id)) return [];
   seen.add(id);

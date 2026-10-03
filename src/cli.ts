@@ -6,7 +6,7 @@ import { Command, CommanderError, Option } from 'commander';
 import { parseDocument, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { addLink, changeSince, confirm, coverage, fromRun, linkStates, recordRun, type LinkState } from './links.ts';
-import { entry, homeFolders, isRequirementFile, loadRepo, nameFor, newId, readYaml, Refused, UsageError, writeYaml, type Named } from './repo.ts';
+import { entry, homeFolders, innermostItem, isRequirementFile, loadRepo, nameFor, newId, readYaml, Refused, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
 import { search } from './search.ts';
 import { validate } from './validate.ts';
@@ -112,10 +112,7 @@ program.command('init').description('create a product repository').action(() => 
 // CL-02.1
 program.command('new <type> [title]').description('create an item in the current item folder').action((type: string, title = '') => {
   const repo = openRepo();
-  const here = relative(repo.root, resolve(workingFolder()));
-  const contains = (folder: string) => here === folder || here.startsWith(`${folder}/`);
-  // Parents load first, so the last match is innermost.
-  const parent = [...repo.entries.values()].filter((candidate) => !isRequirementFile(candidate.path) && contains(candidate.path)).at(-1);
+  const parent = repo.entries.get(innermostItem(repo, relative(repo.root, resolve(workingFolder()))) ?? '');
   if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item folder`);
 
   const id = newId(repo, type);
@@ -157,7 +154,7 @@ program.command('report').command('coverage [item]').description('report require
     const repo = openRepo();
     const root = item ? entry(repo, item).id : undefined;
     const rows = coverage(repo, linkStates(repo, currentVersions(repo)), root);
-        const line = (row: (typeof rows)[number]) => [row.state, label({ id: row.requirement, title: row.title }), row.run && label(row.run), ...(row.outdated ? ['outdated', ...row.outdated.map(label)] : [])];
+    const line = (row: (typeof rows)[number]) => [row.state, label({ id: row.requirement, title: row.title }), row.run && label(row.run), ...(row.outdated ? ['outdated', ...row.outdated.map(label)] : [])];
     output(rows.map((row) => line(row).filter(Boolean).join(' ')).join('\n'), rows);
     if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
   });

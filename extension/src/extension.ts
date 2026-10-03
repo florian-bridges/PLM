@@ -36,6 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
   // VS-02.1
   const icons: Record<string, string> = { assembly: 'layers', part: 'package' };
   const treeChanged = new vscode.EventEmitter<void>();
+  const linksChanged = new vscode.EventEmitter<void>();
   const tree: vscode.TreeDataProvider<Entry> = {
     onDidChangeTreeData: treeChanged.event,
     getTreeItem: (found) => Object.assign(new vscode.TreeItem(`${found.id} ${found.item.data.title}`, vscode.TreeItemCollapsibleState[childrenOf(found).length ? 'Collapsed' : 'None']), {
@@ -43,6 +44,12 @@ export function activate(context: vscode.ExtensionContext) {
       command: { title: 'Open', command: 'vscode.open', arguments: [fileUri(found.item.path)] },
     }),
     getChildren: (row) => productTree(open(), row?.id),
+  };
+
+  const refresh = () => {
+    refreshDiagnostics();
+    treeChanged.fire();
+    linksChanged.fire();
   };
 
   // VS-03.1
@@ -53,9 +60,8 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   // VS-04.1
-  const changed = new vscode.EventEmitter<void>();
   const links: vscode.TreeDataProvider<LinkRow> = {
-    onDidChangeTreeData: changed.event,
+    onDidChangeTreeData: linksChanged.event,
     getTreeItem: (row) => Object.assign(new vscode.TreeItem(row.label), { description: row.state.state, contextValue: row.state.state }),
     getChildren: () => {
       const repo = open();
@@ -81,13 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
   const confirmItem = (row: LinkRow) => {
     const repo = open();
     confirm(repo, currentVersions(repo), validate(repo), row.state.source);
-    changed.fire();
-  };
-
-  const refresh = () => {
-    refreshDiagnostics();
-    treeChanged.fire();
-    changed.fire();
+    refresh();
   };
 
   // VS-01.2
@@ -132,7 +132,7 @@ export function activate(context: vscode.ExtensionContext) {
     picker.onDidAccept(() => {
       addLink(repo, source, type, picker.selectedItems[0].label);
       picker.dispose();
-      changed.fire();
+      refresh();
     });
     update();
     picker.show();
@@ -157,18 +157,18 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   context.subscriptions.push(
-    register('plm.editItem', editItem),
-    register('plm.addLink', addLinkToActive),
-    register('plm.recordTestRun', recordTestRun),
     diagnostics,
     vscode.window.registerTreeDataProvider('plm.tree', tree),
     vscode.window.registerTreeDataProvider('plm.links', links),
     vscode.workspace.registerTextDocumentContentProvider('plm-git', gitFiles),
+    register('plm.editItem', editItem),
+    register('plm.addLink', addLinkToActive),
     register('plm.showRequirements', showRequirements),
     register('plm.showChange', showChange),
     register('plm.confirm', confirmItem),
+    register('plm.recordTestRun', recordTestRun),
     vscode.workspace.onDidSaveTextDocument(refresh),
-    vscode.window.onDidChangeActiveTextEditor(() => changed.fire()),
+    vscode.window.onDidChangeActiveTextEditor(() => linksChanged.fire()),
   );
   refreshDiagnostics();
 }

@@ -38,6 +38,7 @@ const fixture = () => {
   return root;
 };
 const plm = (root: string, ...args: string[]) => spawnSync(process.execPath, ['src/cli.ts', '-C', root, ...args], { encoding: 'utf8' });
+const json = (root: string, ...args: string[]) => JSON.parse(plm(root, '--format', 'json', ...args).stdout).data;
 
 test('TE-01.1: nested and used item changes propagate to ancestors only', () => {
   const root = fixture();
@@ -127,10 +128,9 @@ test('CL-05.1–CL-05.3: JSON output, exit codes and titles next to IDs', () => 
   expect(plm(root, 'validate').status).toBe(0);
   const suspects = plm(root, '--format', 'json', 'suspects');
   expect(suspects.status).toBe(1);
-  expect(JSON.parse(suspects.stdout)).toMatchObject({ schema: 2, data: [{ state: 'unconfirmed' }] });
+  expect(JSON.parse(suspects.stdout)).toMatchObject({ schema: 2, data: [{ state: 'unconfirmed', source: 'P', title: 'Spar', targetTitle: 'Load' }] });
   expect(plm(root, 'nonsense').status).toBe(2);
   expect(plm(root, 'suspects').stdout).toBe('unconfirmed P (Spar) satisfies R (Load)\n');
-  expect(JSON.parse(plm(root, '--format', 'json', 'suspects').stdout).data[0]).toMatchObject({ source: 'P', title: 'Spar', targetTitle: 'Load' });
   expect(plm(root, 'report', 'coverage').stdout).toBe('unverified R (Load)\n');
   write(root, { 'A-wing/requirements/R-load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
   expect(plm(root, 'impact', 'HEAD').stdout).toBe('changed R (Load)\npropagated A (Wing)\n');
@@ -138,11 +138,11 @@ test('CL-05.1–CL-05.3: JSON output, exit codes and titles next to IDs', () => 
 
 test('CO-01.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verify requirements until the SUT changes', () => {
   const root = fixture();
-  const coverage = () => JSON.parse(plm(root, '--format', 'json', 'report', 'coverage', 'A').stdout).data[0].state;
+  const coverage = () => json(root, 'report', 'coverage', 'A')[0].state;
   const record = (result: string) => plm(root, 'test', 'record', 'T', '--sut', 'A', '--result', result, '--log', join(root, 'rig.log'));
   expect(coverage()).toBe('unverified');
   const wing = currentVersions(loadRepo(root)).get('A');
-  expect(JSON.parse(plm(root, '--format', 'json', 'report', 'coverage', 'P').stdout).data).toEqual([]);
+  expect(json(root, 'report', 'coverage', 'P')).toEqual([]);
   write(root, {
     'A-wing/tests/T-load-test/item.yaml': 'id: T\ntype: test-case\ntitle: Load test\n',
     'meta/T.yaml': 'links:\n  - type: verifies\n    target: R\n',
@@ -160,7 +160,7 @@ test('CO-01.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verif
   expect(validate(loadRepo(root))).toEqual([]);
   expect(coverage()).toBe('verified');
   write(root, { 'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\n' });
-  expect(JSON.parse(plm(root, '--format', 'json', 'report', 'coverage', 'A').stdout).data[0]).toEqual({ requirement: 'R', title: 'Load', state: 'pending', outdated: [{ id: run, title: 'T on A' }] });
+  expect(json(root, 'report', 'coverage', 'A')[0]).toEqual({ requirement: 'R', title: 'Load', state: 'pending', outdated: [{ id: run, title: 'T on A' }] });
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
 });
@@ -176,7 +176,7 @@ test('TE-05.1, TE-05.2: impact of a change on items, links and test runs', () =>
   confirm(repo, currentVersions(repo), [], 'X');
   commit(root);
   write(root, { 'A-wing/requirements/R-load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
-  const impact = (range: string) => JSON.parse(plm(root, '--format', 'json', 'impact', range).stdout).data;
+  const impact = (range: string) => json(root, 'impact', range);
   const expected = { changed: [{ id: 'R', title: 'Load' }], propagated: [{ id: 'A', title: 'Wing' }], suspects: [], runs: [{ id: 'X', title: 'Run' }] };
   expect(impact('HEAD')).toMatchObject(expected);
   expect(Object.keys(impact('HEAD'))).toEqual(Object.keys(expected));
@@ -197,7 +197,7 @@ test('TE-01.1, TE-01.2: a nested repository counts by its commit, without warnin
   commit(firmware);
   expect(currentVersions(loadRepo(root)).get('P')).not.toBe(before);
   commit(root);
-  expect(JSON.parse(plm(root, '--format', 'json', 'impact', 'HEAD').stdout).data).toMatchObject({ changed: [], propagated: [] });
+  expect(json(root, 'impact', 'HEAD')).toMatchObject({ changed: [], propagated: [] });
 });
 
 test('CO-03.1, CO-03.2, CL-01.1: search all words by prefix with filters, then link to a result', () => {

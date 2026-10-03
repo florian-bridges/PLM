@@ -83,12 +83,13 @@ test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes th
   expect(git(root, ['hash-object', 'A-wing/requirements/R-load.yaml'])).toBe(link().version);
   const head = git(root, ['rev-parse', '--short', 'HEAD']);
   expect(link()).toMatchObject({ title: 'Load', by: 'Tess', on: new Date().toISOString().slice(0, 10), commit: head });
+  commit(root);
 
   write(root, { 'A-wing/requirements/R-load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
   repo = loadRepo(root);
   const [state] = linkStates(repo, currentVersions(repo));
   expect(state.state).toBe('suspect');
-  expect(changeSince(repo, state.link).diff).toContain('+text: Carry 4g.');
+  expect(changeSince(repo, state.link)).toMatchObject({ commit: head, diff: expect.stringContaining('+text: Carry 4g.') });
   confirm(repo, currentVersions(repo), [], 'P');
   expect(link()).not.toHaveProperty('commit');
   git(root, ['config', '--unset', 'user.name']);

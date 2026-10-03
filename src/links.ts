@@ -19,12 +19,13 @@ export function linkStates(repo: Repo, versions: Map<string, string>): LinkState
 // TE-03.1
 export const fromRun = (repo: Repo, state: LinkState) => repo.entries.get(state.source)?.item.data.type === 'test-run';
 
+const tryGit = (repo: Repo, args: string[]) => { try { return git(repo.root, args); } catch { return ''; } };
+
 // TE-02.1, TE-02.2
 export function confirmation(repo: Repo, target: string, version: string | undefined): Omit<Link, 'type' | 'target'> {
-  const tryGit = (args: string[]) => { try { return git(repo.root, args); } catch { return ''; } };
-  const by = tryGit(['config', 'user.name']);
+  const by = tryGit(repo, ['config', 'user.name']);
   if (!by) throw new Refused('Set git user.name before confirming');
-  const hash = tryGit(['rev-parse', '--verify', '-q', '--short', 'HEAD']);
+  const hash = tryGit(repo, ['rev-parse', '--verify', '-q', '--short', 'HEAD']);
   const exact = hash && versionAt(repo.root, 'HEAD', target) === version;
   return { title: String(entry(repo, target).item.data.title), version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }) };
 }
@@ -50,8 +51,9 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
 
 // TE-03.2
 export function changeSince(repo: Repo, link: Link): { commit?: string; diff: string } {
-  const commits = git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean);
-  const commit = commits.find((candidate) => versionAt(repo.root, candidate, link.target) === link.version);
+  const known = link.commit && tryGit(repo, ['rev-parse', '--verify', '-q', `${link.commit}^{commit}`]);
+  const commit = known ? link.commit : git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean)
+    .find((candidate) => versionAt(repo.root, candidate, link.target) === link.version);
   if (!commit) return { diff: '' };
   const paths = subtree(repo, link.target).map((id) => entry(repo, id).path);
   return { commit, diff: git(repo.root, ['diff', commit, '--', ...paths]) };

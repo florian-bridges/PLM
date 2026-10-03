@@ -54,8 +54,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none. Links from test runs are evidence, not links to review: suspect lists shall omit them, and a run with a suspect link is outdated.
 *Rationale:* Separating unconfirmed from suspect distinguishes new, unreviewed links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
 
-**TE-03.2** To show what changed, the engine shall find the latest commit at which the target had the confirmed version and return the diff of the target's subtree since then.
-*Rationale:* The user must judge whether the change matters; the diff shows exactly what happened since confirmation.
+**TE-03.2** To show what changed, the engine shall return the diff of the target's subtree since the link's `commit` or, if it is missing or unknown, since the latest commit at which the target had the confirmed version.
+*Rationale:* The user must judge whether the change matters; the diff shows exactly what happened since confirmation. The stored commit avoids searching history, which is needed only for uncommitted confirmations or squashed branches.
 
 **TE-04.1** `plm.yaml` shall map repository aliases to a URL and pinned commit; links shall target `<alias>:<path>`.
 *Rationale:* One pin per alias updates all links into a repository in a single reviewed change.

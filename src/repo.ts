@@ -11,7 +11,8 @@ export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; 
 // `path`: item folder or requirement file.
 export interface Entry { id: string; path: string; nested: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
 export interface Settings { prefixes?: Record<string, string> }
-export interface Repo { root: string; settings: Settings; entries: Map<string, Entry>; duplicates: Entry[] }
+export interface Configuration { root?: string }
+export interface Repo { root: string; settings: Settings; entries: Map<string, Entry>; duplicates: Entry[]; configurations: Map<string, YamlFile<Configuration>> }
 
 export class UsageError extends Error {}
 export class Refused extends Error {}
@@ -47,7 +48,7 @@ const topLevelHomeFolders = [homeFolders['test-case'], homeFolders['test-run']];
 
 export function loadRepo(start: string): Repo {
   const root = findRoot(start);
-  const repo: Repo = { root, settings: readYaml<Settings>(root, 'plm.yaml').data, entries: new Map(), duplicates: [] };
+  const repo: Repo = { root, settings: readYaml<Settings>(root, 'plm.yaml').data, entries: new Map(), duplicates: [], configurations: new Map() };
 
   const addEntry = (path: string): Entry => {
     const item = readYaml<Item>(root, isRequirementFile(path) ? path : `${path}/item.yaml`);
@@ -80,6 +81,11 @@ export function loadRepo(start: string): Repo {
   };
 
   walk('');
+  if (existsSync(join(root, 'configurations'))) {
+    for (const file of readdirSync(join(root, 'configurations')).filter((name) => name.endsWith('.yaml')).sort()) {
+      repo.configurations.set(basename(file, '.yaml'), readYaml(root, `configurations/${file}`));
+    }
+  }
   return repo;
 }
 
@@ -104,4 +110,19 @@ export function subtree(repo: Repo, id: string, seen = new Set<string>()): strin
   seen.add(id);
   const children = childrenOf(repo.entries.get(id));
   return [id, ...children.flatMap((child) => subtree(repo, child, seen))];
+}
+
+// CO-04.2: the root's subtree and the requirements of its items.
+export function selection(repo: Repo, root: string): string[] {
+  const items = subtree(repo, root);
+  const itemPaths = new Set(items.map((id) => entry(repo, id).path));
+  const owningItemPath = (requirement: Entry) => dirname(dirname(requirement.path));
+  const requirements = [...repo.entries.values()].filter((candidate) => isRequirementFile(candidate.path) && itemPaths.has(owningItemPath(candidate)));
+  return [...items, ...requirements.map((requirement) => requirement.id)];
+}
+
+export function configurationRoot(repo: Repo, name: string): string {
+  const root = repo.configurations.get(name)?.data.root;
+  if (!root) throw new UsageError(`Unknown configuration ${name}`);
+  return entry(repo, root).id;
 }

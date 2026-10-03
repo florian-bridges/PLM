@@ -74,6 +74,11 @@ export function validate(repo: Repo): Finding[] {
       }
     });
   }
+  // CO-04.2
+  for (const configuration of repo.configurations.values()) {
+    const { root } = configuration.data;
+    if (!root || !repo.entries.has(root)) findings.push(finding(configuration, ['root'], 'unknown-root', `Unknown configuration root ${root}`));
+  }
   return [...findings, ...cycles(repo)];
 }
 

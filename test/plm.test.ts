@@ -154,3 +154,17 @@ test('TE-05.1, TE-05.2: impact of a change on items, links and test runs', () =>
   expect(impact('HEAD~1..HEAD')).toMatchObject(expected);
   expect(plm(root, 'impact', 'nonsense').status).toBe(2);
 });
+
+test('CO-04.1, CO-04.2, TE-05.1, TE-06.2: configurations resolve, report coverage and are affected by changes', () => {
+  const root = fixture();
+  write(root, { 'configurations/wing.yaml': 'root: A\n', 'configurations/spar.yaml': 'root: P\n' });
+  commit(root);
+  const json = (...args: string[]) => JSON.parse(plm(root, '--format', 'json', ...args).stdout).data;
+  expect(json('configuration', 'wing').map((item: { id: string }) => item.id).sort()).toEqual(['A', 'L', 'P', 'R']);
+  expect(json('configuration', 'wing')[0].version).toBe(currentVersions(loadRepo(root)).get('A'));
+  expect(json('report', 'coverage', '--config', 'wing')).toMatchObject([{ requirement: 'R', state: 'unverified' }]);
+  expect(json('report', 'coverage', '--config', 'spar')).toEqual([]);
+  write(root, { 'L-bolt/item.yaml': 'id: L\ntype: part\ntitle: Hi-Lok\n', 'configurations/tail.yaml': 'root: Z\n' });
+  expect(json('impact', 'HEAD').configurations).toEqual(['tail', 'wing']);
+  expect(validate(loadRepo(root))).toMatchObject([{ file: 'configurations/tail.yaml', code: 'unknown-root' }]);
+});

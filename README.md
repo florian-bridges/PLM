@@ -46,7 +46,7 @@ Proof of concept: a `plm` CLI with the core library and traceability engine. Ite
 
 A release is a reviewed merge into the protected `main` branch; there are no revisions or baselines, and an item's earlier released versions are its states at earlier commits of `main`.
 
-Not yet implemented: configurations, search, ReqIF, VS Code extension, static site and CI.
+Not yet implemented: search, ReqIF, VS Code extension, static site and CI.
 
 ## Getting started
 
@@ -124,5 +124,14 @@ plm report coverage $AC
 `plm report coverage` lists each requirement as verified, pending (a test case exists but has no current passing run) or unverified. A change to the tested item makes its runs suspect, and its requirements fall back to pending.
 
 To reuse an item elsewhere, such as a standard part, list its ID under `uses:` in the `item.yaml` of the assembly using it.
+
+Product variants are root assemblies sharing items through `uses`. A file `configurations/<name>.yaml` containing `root: <ID>` names a variant; list its items with versions, or report its coverage:
+
+```sh
+plm configuration export
+plm report coverage --config export
+```
+
+`plm impact` also lists the configurations affected by a change.
 
 `plm` works from any folder inside the repository. Use `-C <dir>` to run it as if in another folder and `--format json` for machine-readable output. Exit codes: 0 success, 1 findings, 2 usage error, 3 internal error.

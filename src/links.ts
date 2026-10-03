@@ -1,6 +1,5 @@
 // TE-02, TE-03, TE-06: link confirmation, suspect links and verification coverage.
-import { dirname } from 'node:path';
-import { entry, linksOf, Refused, subtree, writeYaml, type Entry, type Link, type Repo } from './repo.ts';
+import { entry, linksOf, Refused, selection, subtree, writeYaml, type Entry, type Link, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { git, versionAt } from './version.ts';
 
@@ -58,9 +57,8 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
     if (!previous || String(run.item.data.date) > String(previous.item.data.date)) latestRun.set(testCase, run);
   }
 
-  const itemPaths = root ? new Set(subtree(repo, root).map((id) => entry(repo, id).path)) : undefined;
-  const owningItemPath = (requirement: Entry) => dirname(dirname(requirement.path));
-  const inScope = (requirement: Entry) => !itemPaths || itemPaths.has(owningItemPath(requirement));
+  const selected = root ? new Set(selection(repo, root)) : undefined;
+  const inScope = (requirement: Entry) => !selected || selected.has(requirement.id);
   const requirements = [...repo.entries.values()].filter((candidate) => candidate.item.data.type === 'requirement' && inScope(candidate));
 
   return requirements.map((requirement) => {

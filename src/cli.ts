@@ -7,7 +7,7 @@ import { Command, CommanderError, Option } from 'commander';
 import { Document, parseDocument, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { changeSince, confirm, coverage, linkStates } from './links.ts';
-import { entry, homeFolders, isRequirementFile, loadRepo, readYaml, Refused, UsageError, writeYaml, type Repo } from './repo.ts';
+import { configurationRoot, entry, homeFolders, isRequirementFile, loadRepo, readYaml, Refused, selection, UsageError, writeYaml, type Repo } from './repo.ts';
 import { results } from './schemas.ts';
 import { validate } from './validate.ts';
 import { currentVersions, git, snapshotAt, versionAt } from './version.ts';
@@ -90,8 +90,17 @@ program.command('impact <range>').description('list items, links and test runs a
     ...result.propagated.map((id) => `propagated ${id}`),
     ...result.suspects.map((state) => `suspect ${state.source} ${state.link.type} ${state.link.target}`),
     ...result.runs.map((id) => `outdated run ${id}`),
+    ...result.configurations.map((name) => `affected configuration ${name}`),
   ];
   output(lines.join('\n'), result);
+});
+
+// CO-04.2
+program.command('configuration <name>').description('list the items a configuration selects, with versions').action((name: string) => {
+  const repo = openRepo();
+  const versions = currentVersions(repo);
+  const items = selection(repo, configurationRoot(repo, name)).map((id) => ({ id, version: versions.get(id) }));
+  output(items.map((item) => `${item.id} ${item.version}`).join('\n'), items);
 });
 
 // CL-02.4: initialize a product repository.
@@ -154,14 +163,16 @@ program.command('test').command('record <test-case>').description('record a test
     output(id, { id });
   });
 
-// TE-06.2: requirement coverage, optionally of one item's subtree.
-program.command('report').command('coverage [item]').description('report requirement verification').action((item?: string) => {
-  const repo = openRepo();
-  const root = item ? entry(repo, item).id : undefined;
-  const rows = coverage(repo, linkStates(repo, currentVersions(repo)), root);
-  output(rows.map((row) => [row.state, row.requirement, row.run].filter(Boolean).join(' ')).join('\n'), rows);
-  if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
-});
+// TE-06.2: requirement coverage, optionally of one item's subtree or a configuration.
+program.command('report').command('coverage [item]').description('report requirement verification')
+  .option('--config <name>', 'report the requirements of a configuration')
+  .action((item: string | undefined, options: { config?: string }) => {
+    const repo = openRepo();
+    const root = options.config ? configurationRoot(repo, options.config) : item ? entry(repo, item).id : undefined;
+    const rows = coverage(repo, linkStates(repo, currentVersions(repo)), root);
+    output(rows.map((row) => [row.state, row.requirement, row.run].filter(Boolean).join(' ')).join('\n'), rows);
+    if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
+  });
 
 // CL-02.2
 function newId(repo: Repo, type: string): string {

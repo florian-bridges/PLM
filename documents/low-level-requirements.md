@@ -37,11 +37,11 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-03.2** Queries shall combine free text with filters `type:`, `status:`, `owner:` and `config:`.
 *Rationale:* Filters answer typical questions, such as all unreleased parts of an owner, faster than text alone.
 
-**CO-04.1** A configuration file shall name a root item and the optional items it includes; items marked `optional: true` are excluded unless listed.
-*Rationale:* Optional items express variants in the composition itself, so a configuration lists only what differs.
+**CO-04.1** A configuration file shall name the `root` item of one product variant.
+*Rationale:* Variants as root items sharing parts through `uses` need no second selection mechanism, and each variant has its own version.
 
-**CO-04.2** Resolution shall walk the composition from the root and return each selected item with its version, reporting listed items that are unreachable.
-*Rationale:* Reports and comparisons need exact versions; unreachable entries reveal configuration errors.
+**CO-04.2** Resolution shall return the root's subtree and the requirements of its items with their versions; validation shall report unknown roots.
+*Rationale:* Reports and comparisons need exact versions, including the requirements they cover.
 
 **CO-05.1** Import shall map SPEC-OBJECTs to requirement items, a SPECIFICATION to the `requirements/` folder of an item chosen at import, and SPEC-RELATIONs to unconfirmed links.
 *Rationale:* These are ReqIF's equivalents of requirements, documents and links. Imported links start unconfirmed because ReqIF carries no versions.
@@ -87,7 +87,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-04.2** The engine shall fetch aliased repositories into `.plm/repos/` and use the Git object hash of `<path>` at the pinned commit as the version, or the item version if the alias is a PLM repository.
 *Rationale:* Software repositories are usually not PLM repositories; object hashes give them versions without imposing the item model.
 
-**TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links that became suspect, test runs whose evidence is no longer current, and affected configurations.
+**TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links that became suspect, test runs whose evidence is no longer current, and configurations selecting a changed item or whose file changed.
 *Rationale:* These are the questions a change board asks before approval.
 
 **TE-05.2** A link shall have become suspect when its confirmed version equals the target's version at base but not at head.
@@ -101,7 +101,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>[..<head>]` and `report trace|coverage|compliance`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>[..<head>]`, `configuration <name>` and `report trace|coverage|compliance [--config <name>]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Commander is the established Node.js CLI library.
 
 **CL-01.2** `confirm` shall accept a source item and optionally a link type and target, confirming all links of the source by default.

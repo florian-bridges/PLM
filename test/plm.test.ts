@@ -32,6 +32,7 @@ const fixture = () => {
     'meta/P.yaml': '# reviewed by stress\nlinks:\n  - type: satisfies\n    target: R\n',
   });
   git(root, ['init', '-q']);
+  git(root, ['config', 'user.name', 'Tess']);
   commit(root);
   return root;
 };
@@ -77,13 +78,21 @@ test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes th
   expect(linkStates(repo, currentVersions(repo))[0].state).toBe('unconfirmed');
   confirm(repo, currentVersions(repo), [], 'P');
   expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toContain('# reviewed by stress'); // CO-01.1
-  expect(git(root, ['hash-object', 'A-wing/requirements/R-load.yaml'])).toBe(linkStates(loadRepo(root), new Map())[0].link.version);
+  const link = () => linkStates(loadRepo(root), new Map())[0].link;
+  expect(git(root, ['hash-object', 'A-wing/requirements/R-load.yaml'])).toBe(link().version);
+  const head = git(root, ['rev-parse', '--short', 'HEAD']);
+  expect(link()).toMatchObject({ title: 'Load', by: 'Tess', on: new Date().toISOString().slice(0, 10), commit: head });
 
   write(root, { 'A-wing/requirements/R-load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
   repo = loadRepo(root);
   const [state] = linkStates(repo, currentVersions(repo));
   expect(state.state).toBe('suspect');
   expect(changeSince(repo, state.link).diff).toContain('+text: Carry 4g.');
+  confirm(repo, currentVersions(repo), [], 'P');
+  expect(link()).not.toHaveProperty('commit');
+  git(root, ['config', '--unset', 'user.name']);
+  const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null' };
+  expect(spawnSync(process.execPath, ['src/cli.ts', '-C', root, 'confirm', 'P'], { env }).status).toBe(1);
 
   write(root, { 'A-wing/requirements/R-load.yaml': 'id: R\ntype: requirement\n' });
   repo = loadRepo(root);
@@ -135,6 +144,7 @@ test('CO-01.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verif
   expect(record('maybe').status).toBe(2);
   const run = record('pass').stdout.trim();
   expect(existsSync(join(root, `runs/${run}/rig.log`))).toBe(true);
+  expect(readFileSync(join(root, `meta/${run}.yaml`), 'utf8')).toContain(`commit: ${git(root, ['rev-parse', '--short', 'HEAD'])}`);
   expect(validate(loadRepo(root))).toEqual([]);
   expect(coverage()).toBe('verified');
   write(root, { 'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\n' });

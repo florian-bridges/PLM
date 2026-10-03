@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { basename, dirname, join, resolve } from 'node:path';
 import { Document, LineCounter, parseDocument } from 'yaml';
 
-export interface Link { type: string; target: string; version?: string }
+export interface Link { type: string; target: string; title?: string; version?: string; by?: string; on?: string; commit?: string }
 export interface Item { id: string; type: string; title: string; [attribute: string]: unknown }
 export interface Meta { links?: Link[] }
 

@@ -45,11 +45,11 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-01.2** Hashes of the working tree shall be computed by staging into a temporary Git index, so LFS filters apply and uncommitted and committed states yield identical versions.
 *Rationale:* Engineers need suspect states before committing; identical results avoid spurious differences between local runs and CI.
 
-**TE-02.1** Confirming a link shall write the target's current version to the link's `version` field in `meta/<ID>.yaml`; a link without `version` is unconfirmed.
-*Rationale:* Keeping the version next to the link makes confirmations reviewable as ordinary diffs.
+**TE-02.1** Confirming a link shall write to the link in `meta/<ID>.yaml` the target's current `version` and `title`, the confirming Git `user.name` as `by`, the date as `on`, and as `commit` the short hash of HEAD if the target has the confirmed version there; a link without `version` is unconfirmed.
+*Rationale:* Keeping the version next to the link makes confirmations reviewable as ordinary diffs; title, confirmer, date and commit show what was reviewed without looking up hashes. Uncommitted targets have no commit to name.
 
-**TE-02.2** Confirmation shall be refused while the target fails validation.
-*Rationale:* Confirming against a broken item would record a meaningless state.
+**TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset.
+*Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review.
 
 **TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none. Links from test runs are evidence, not links to review: suspect lists shall omit them, and a run with a suspect link is outdated.
 *Rationale:* Separating unconfirmed from suspect distinguishes new, unreviewed links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
@@ -98,7 +98,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-03.1** `plm test record <test-case> --sut <ID> --result pass|fail|inconclusive [--log <file>...]` shall create a test run in `runs/` with date, result and copies of the log files.
 *Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for.
 
-**CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation with the versions at the commit given by `--commit` (default `HEAD`).
+**CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation per TE-02.1 with the versions at the commit given by `--commit` (default `HEAD`), recorded as `commit`.
 *Rationale:* The run must record exactly which version was tested; the commit makes this reproducible on rigs.
 
 **CL-03.3** Recording shall be refused while the system under test or test case differs from that commit.

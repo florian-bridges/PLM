@@ -87,7 +87,7 @@ my-product/
     PRT-975P5Y-main-spar/item.yaml
 ```
 
-Link the part to the requirement and confirm the link, which records the requirement's current version:
+Link the part to the requirement and confirm the link, which records the requirement's current version and title, who confirmed it and when, and the commit if the requirement is committed:
 
 ```sh
 plm link $PRT satisfies $REQ

@@ -17,7 +17,17 @@ export function linkStates(repo: Repo, versions: Map<string, string>): LinkState
 // TE-03.1: links from test runs are evidence, not links to review.
 export const fromRun = (repo: Repo, state: LinkState) => repo.entries.get(state.source)?.item.data.type === 'test-run';
 
-// TE-02.1: store each target's current version with the link.
+// TE-02.1, TE-02.2: the fields a confirmation records.
+export function confirmation(repo: Repo, target: string, version: string | undefined, commit = 'HEAD'): Omit<Link, 'type' | 'target'> {
+  const tryGit = (args: string[]) => { try { return git(repo.root, args); } catch { return ''; } };
+  const by = tryGit(['config', 'user.name']);
+  if (!by) throw new Refused('Set git user.name before confirming');
+  const hash = tryGit(['rev-parse', '--verify', '-q', '--short', commit]);
+  const exact = hash && versionAt(repo.root, commit, target) === version;
+  return { title: String(entry(repo, target).item.data.title), version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }) };
+}
+
+// TE-02.1
 export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, type?: string, target?: string): Link[] {
   const sourceEntry = entry(repo, source);
   const matches = (link: Link) => (!type || link.type === type) && (!target || link.target === target);
@@ -28,7 +38,11 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
     const broken = findings.some((finding) => finding.severity === 'error' && finding.file === targetFile);
     if (broken || !versions.has(link.target)) throw new Refused(`${link.target} fails validation; fix it before confirming`);
   }
-  for (const { link, index } of selected) sourceEntry.meta.doc.setIn(['links', index, 'version'], versions.get(link.target));
+  const confirmations = selected.map(({ link, index }) => [index, confirmation(repo, link.target, versions.get(link.target))] as const);
+  for (const [index, fields] of confirmations) {
+    sourceEntry.meta.doc.deleteIn(['links', index, 'commit']);
+    for (const [key, value] of Object.entries(fields)) sourceEntry.meta.doc.setIn(['links', index, key], value);
+  }
   if (selected.length) writeYaml(repo.root, sourceEntry.meta);
   return selected.map(({ link }) => link);
 }

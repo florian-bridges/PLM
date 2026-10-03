@@ -6,7 +6,7 @@ import { basename, join, relative, resolve } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { Document, parseDocument, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { changeSince, confirm, coverage, fromRun, linkStates } from './links.ts';
+import { changeSince, confirm, confirmation, coverage, fromRun, linkStates } from './links.ts';
 import { entry, homeFolders, isRequirementFile, loadRepo, readYaml, Refused, UsageError, writeYaml, type Repo } from './repo.ts';
 import { results } from './schemas.ts';
 import { validate } from './validate.ts';
@@ -138,8 +138,8 @@ program.command('test').command('record <test-case>').description('record a test
     const current = currentVersions(repo);
     const testedVersion = (id: string) => versionAt(repo.root, options.commit, entry(repo, id).id);
     const links = [
-      { type: 'executes', target: testCase, version: testedVersion(testCase) },
-      { type: 'tests', target: options.sut, version: testedVersion(options.sut) },
+      { type: 'executes', target: testCase, ...confirmation(repo, testCase, testedVersion(testCase), options.commit) },
+      { type: 'tests', target: options.sut, ...confirmation(repo, options.sut, testedVersion(options.sut), options.commit) },
     ];
     // CL-03.3
     const changed = links.find((link) => link.version !== current.get(link.target));

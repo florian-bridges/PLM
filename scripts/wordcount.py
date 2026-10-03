@@ -3,16 +3,20 @@
 
 Test words count toward the source limit.
 
-Words are whitespace-separated tokens. Binary files are skipped.
+Words are whitespace-separated tokens containing a letter or digit, so
+punctuation-only tokens such as `{`, `});` or `|` do not count and line
+breaks cost nothing. Binary files are skipped.
 Exits with status 1 if a given word limit is exceeded.
 """
 
 import argparse
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+WORD = re.compile(r"\w")
 
 
 def tracked_files(directories, include_untracked):
@@ -28,7 +32,8 @@ def count_words(path):
     data = (REPO_ROOT / path).read_bytes()
     if b"\0" in data:
         return None  # binary
-    return len(data.decode("utf-8", errors="replace").split())
+    tokens = data.decode("utf-8", errors="replace").split()
+    return sum(1 for token in tokens if WORD.search(token))
 
 
 def summarize(directories, limit, include_untracked, verbose):

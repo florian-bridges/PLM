@@ -133,8 +133,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-01.4** Link targets shall be selected through the core search.
 *Rationale:* Typing IDs by hand is error-prone; search finds targets by title or text.
 
-**VS-02.1** A tree view shall show composition from the top-level items, with type icons and status badges.
-*Rationale:* Badges show maturity.
+**VS-02.1** A tree view shall show composition, nested and used items, from the top-level items, with type icons and status badges; selecting an item opens its `item.yaml`.
+*Rationale:* Badges show maturity. Used items appear under each item using them, as they count toward its version.
 
 **VS-03.1** Opening an item's `requirements/` folder shall show a read-only webview of its requirements as numbered sections with ID, status and rendered Markdown; clicking a requirement opens its form.
 *Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements as one document.

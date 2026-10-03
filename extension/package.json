@@ -1,5 +1,5 @@
 {
-  "//": "VS-01.1, VS-04.1, VS-04.2",
+  "//": "VS-01.1, VS-02.1, VS-04.1, VS-04.2",
   "name": "plm-vscode",
   "displayName": "PLM",
   "version": "0.1.0",
@@ -9,7 +9,7 @@
   "main": "./dist/extension.js",
   "activationEvents": ["workspaceContains:plm.yaml"],
   "contributes": {
-    "views": { "explorer": [{ "id": "plm.links", "name": "PLM Links" }] },
+    "views": { "explorer": [{ "id": "plm.tree", "name": "PLM Product" }, { "id": "plm.links", "name": "PLM Links" }] },
     "commands": [
       { "command": "plm.showChange", "title": "Show change", "icon": "$(diff)" },
       { "command": "plm.confirm", "title": "Confirm", "icon": "$(check)" }

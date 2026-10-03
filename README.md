@@ -44,7 +44,7 @@ Manufacturing and service management are out of scope.
 
 Proof of concept: a `plm` CLI with the core library and traceability engine. Item versions are derived from Git, links record the version they were confirmed against, and changed targets make links suspect.
 
-Not yet implemented: releases, test runs, configurations, impact analysis, search, ReqIF, VS Code extension, static site and CI.
+Not yet implemented: releases, configurations, impact analysis, search, ReqIF, VS Code extension, static site and CI.
 
 ## Getting started
 
@@ -100,6 +100,19 @@ plm suspects --diff
 plm validate
 plm show $PRT
 ```
+
+Test cases live in the top-level `tests/` folder, test runs in `runs/`, so adding them changes no product version. Create a test case, which `plm new` always puts in `tests/`, link it to the requirement, commit, then record a run against the tested item. Recording confirms the run's links against the committed versions, refuses uncommitted changes and copies the logs:
+
+```sh
+TC=$(plm new test-case "Static load")
+plm link $TC verifies $REQ
+plm confirm $TC
+git add -A && git commit -m "Static load test"
+plm test record $TC --sut $AC --result pass --log rig.log
+plm report coverage $AC
+```
+
+`plm report coverage` lists each requirement as verified, pending (a test case exists but has no current passing run) or unverified. A change to the tested item makes its runs suspect, and its requirements fall back to pending.
 
 To reuse an item elsewhere, such as a standard part, list its ID under `uses:` in the `item.yaml` of the assembly using it.
 

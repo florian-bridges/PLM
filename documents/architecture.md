@@ -15,11 +15,13 @@ plm.yaml                      repository settings
 <ID>-<title>/requirements/    the item's requirements, one file each
 <ID>-<title>/<ID>-<title>/    nested items
 <ID>-<title>/...              the item's artifacts
+tests/<ID>-<title>/           test cases
+runs/<ID>-<title>/            test runs with their logs
 meta/<ID>.yaml                owner, status, revision, links
 configurations/*.yaml         product variants
 ```
 
-* **Items** (CR-01) have a stable ID and a type with its own schema: requirement, specification, part, assembly, COTS part, harness, interface, software, test case, test run. Items are folders named `<ID>-<title>`. Retired items are kept (CR-04).
+* **Items** (CR-01) have a stable ID and a type with its own schema: requirement, part, assembly, COTS part, harness, interface, software, test case, test run. Items are folders named `<ID>-<title>`. Retired items are kept (CR-04).
 * **Composition** (CR-02): folders nest; `uses` lists items reused from elsewhere, e.g. standard parts.
 * **Artifacts** (CR-03) are files in the item directory; binaries use Git LFS with locking. CAD is stored natively plus a STEP export; CI derives lightweight glTF for viewing.
 * **Relationships** (CR-06, CR-08) are typed links in `meta/<ID>.yaml` (`satisfies`, `verifies`, `implements`, …). Links may target other repositories at a pinned commit, e.g. software.
@@ -38,7 +40,7 @@ configurations/*.yaml         product variants
 * **Baselines** are Git tags (CR-11).
 * **Variants** are configuration files selecting items.
 * **Change requests** use the host's issues and merge requests; the host provides permissions and approvals (CR-13, CR-14, CR-17).
-* **Test runs** record SUT version, result and logs. Tests execute externally (CI, HIL rigs) and report via the CLI; manual results are entered in VS Code.
+* **Test runs** record SUT version, result and logs. Test cases and runs live outside item folders, so adding them changes no product version. Tests execute externally (CI, HIL rigs) and report via the CLI; manual results are entered in VS Code.
 
 ## Components
 

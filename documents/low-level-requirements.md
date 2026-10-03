@@ -4,7 +4,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## Core library
 
-**CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<ID>-<title>/item.yaml` with their `requirements/<ID>-<title>.yaml`, `meta/<ID>.yaml` and `configurations/<name>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
+**CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<ID>-<title>/item.yaml` with their `requirements/<ID>-<title>.yaml`, test cases `tests/<ID>-<title>/item.yaml`, test runs `runs/<ID>-<title>/item.yaml`, `meta/<ID>.yaml` and `configurations/<name>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
 *Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files.
 
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `external_ids`. `meta/<ID>.yaml` shall hold `owner`, `status`, `revision` and `links`.
@@ -16,7 +16,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.1** The core shall validate `item.yaml` with Ajv against the JSON Schema (2020-12) of its type; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
 *Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add their own attributes.
 
-**CO-02.2** The core shall report as errors: names not starting with their `id`, requirements outside `requirements/` folders and other items inside, duplicate IDs or IDs differing only in case, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
+**CO-02.2** The core shall report as errors: names not starting with their `id`, requirements, test cases and test runs outside `requirements/`, `tests/` and `runs/` folders respectively, other items inside them, duplicate IDs or IDs differing only in case, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late, for example on case-insensitive file systems.
 
 **CO-02.3** The core shall report files above the size limit in `plm.yaml` that are not stored in Git LFS.
@@ -25,10 +25,10 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.4** Each finding shall carry file, line, column, severity and a stable code.
 *Rationale:* Positions let editors and CI point to the problem; stable codes allow filtering and suppression.
 
-**CO-02.5** Built-in types shall be `requirement`, `specification`, `part`, `assembly` and `test-case`.
+**CO-02.5** Built-in types shall be `requirement`, `part`, `assembly`, `test-case` and `test-run`.
 *Rationale:* Programs add further types by schema (CO-02.1).
 
-**CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, and `verifies` from `test-case` to `requirement`.
+**CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, and `tests` from `test-run` to any type.
 *Rationale:* Fixed semantics keep reports comparable across programs.
 
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.
@@ -43,7 +43,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-04.2** Resolution shall walk the composition from the root and return each selected item with its version, reporting listed items that are unreachable.
 *Rationale:* Reports and baselines need exact versions; unreachable entries reveal configuration errors.
 
-**CO-05.1** Import shall map SPEC-OBJECTs to requirement items, a SPECIFICATION to the `requirements/` folder of an item chosen at import, in SPEC-HIERARCHY order, and SPEC-RELATIONs to unconfirmed links.
+**CO-05.1** Import shall map SPEC-OBJECTs to requirement items, a SPECIFICATION to the `requirements/` folder of an item chosen at import, and SPEC-RELATIONs to unconfirmed links.
 *Rationale:* These are ReqIF's equivalents of requirements, documents and links. Imported links start unconfirmed because ReqIF carries no versions.
 
 **CO-05.2** Import shall store each ReqIF IDENTIFIER in `external_ids.reqif`, update items matched by it and report, never delete, items missing from the file.
@@ -90,10 +90,10 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-05.1** Given two commits, the engine shall list changed items, their ancestors, links that became suspect, affected configurations and test runs whose evidence is no longer current.
 *Rationale:* These are the questions a change board asks before approval.
 
-**TE-06.1** A requirement shall count as verified when a test case `verifies` it, a test run `executes` that test case with result `pass`, and the run's `tests` link to its system under test is not suspect.
-*Rationale:* Evidence counts only for the version tested; reusing the suspect mechanism avoids a second staleness check.
+**TE-06.1** A requirement shall count as verified when a test case `verifies` it through a current link and that test case's latest run, by date, with current `executes` and `tests` links has result `pass`.
+*Rationale:* Evidence counts only for the versions tested and the latest result; reusing the suspect mechanism avoids a second staleness check.
 
-**TE-06.2** Coverage shall be reported per configuration and specification as verified, verification pending (test case without current passing run) and unverified.
+**TE-06.2** Coverage shall be reported per configuration or item subtree as verified, verification pending (verifying test case without current passing run) and unverified (no verifying test case).
 *Rationale:* Pending verification differs from a missing test and needs a different action.
 
 ## CLI
@@ -104,7 +104,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.2** `confirm` shall accept a source item and optionally a link type and target, confirming all links of the source by default.
 *Rationale:* After review, engineers typically confirm all links of an item at once.
 
-**CL-02.1** `plm new <type> [title]` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements in its `requirements/` folder, and print the new ID.
+**CL-02.1** `plm new <type> [title]` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements in its `requirements/` folder, test cases in `tests/`, and print the new ID.
 *Rationale:* Repository templates let programs prefill attributes and conventions.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters, so parallel branches cannot collide.
@@ -116,13 +116,13 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types.
 *Rationale:* Users can create items right away.
 
-**CL-03.1** `plm test record <test-case> --sut <ID> --result pass|fail|inconclusive` shall create a test run item with date, environment and attached log files.
+**CL-03.1** `plm test record <test-case> --sut <ID> --result pass|fail|inconclusive [--log <file>...]` shall create a test run in `runs/` with date, result and copies of the log files.
 *Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for.
 
-**CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation, the `tests` version taken from the commit given by `--commit` (default `HEAD`).
+**CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation with the versions at the commit given by `--commit` (default `HEAD`).
 *Rationale:* The run must record exactly which version was tested; the commit makes this reproducible on rigs.
 
-**CL-03.3** Recording shall be refused while the system under test has uncommitted changes.
+**CL-03.3** Recording shall be refused while the system under test or test case differs from that commit.
 *Rationale:* Uncommitted states cannot be reproduced and so cannot serve as evidence.
 
 **CL-04.1** `plm release <ID>` shall set `status: released` and the next revision letter, skipping I, O, Q, S, X and Z (ASME Y14.35).
@@ -157,7 +157,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-02.1** A tree view shall show composition from the configuration chosen in its title bar, or all top-level items, with type icons and status badges.
 *Rationale:* Engineers work on one variant at a time; badges show maturity at a glance.
 
-**VS-03.1** Opening a `specification` item shall show a read-only webview of its subtree as numbered sections with ID, status and rendered Markdown; clicking a requirement opens its form.
+**VS-03.1** Opening an item's `requirements/` folder shall show a read-only webview of its requirements as numbered sections with ID, status and rendered Markdown; clicking a requirement opens its form.
 *Rationale:* Read-only rendering avoids a second editor; reviewers see the document as exchanged with customers.
 
 **VS-04.1** A links view shall list the active item's outgoing and incoming links with their state.

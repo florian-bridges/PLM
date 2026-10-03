@@ -1,5 +1,6 @@
-// TE-02, TE-03: link confirmation and suspect links.
-import { entry, linksOf, Refused, subtree, writeYaml, type Link, type Repo } from './repo.ts';
+// TE-02, TE-03, TE-06: link confirmation, suspect links and verification coverage.
+import { dirname } from 'node:path';
+import { entry, linksOf, Refused, subtree, writeYaml, type Entry, type Link, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { git, versionAt } from './version.ts';
 
@@ -29,10 +30,30 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
   return selected.map(({ link }) => link);
 }
 
-// TE-03.2: diff of the target's subtree since the latest commit at which it had the confirmed version.
+// TE-03.2
 export function changeSince(repo: Repo, link: Link): { commit?: string; diff: string } {
   const commits = git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean);
   const commit = commits.find((c) => versionAt(repo.root, c, link.target) === link.version);
   if (!commit) return { diff: '' };
   return { commit, diff: git(repo.root, ['diff', commit, '--', ...subtree(repo, link.target).map((id) => repo.entries.get(id)!.path)]) };
+}
+
+export interface Coverage { requirement: string; state: 'verified' | 'pending' | 'unverified'; run?: string }
+
+// TE-06.1, TE-06.2
+export function coverage(repo: Repo, states: LinkState[], root?: string): Coverage[] {
+  const of = (type: string) => states.filter((s) => s.link.type === type);
+  const tested = new Set(of('tests').filter((s) => s.state === 'current').map((s) => s.source));
+  // Each test case's latest run with current links.
+  const latest = new Map<string, Entry>();
+  for (const s of of('executes').filter((s) => s.state === 'current' && tested.has(s.source))) {
+    const run = entry(repo, s.source);
+    if (String(run.item.data.date) > String(latest.get(s.link.target)?.item.data.date ?? '')) latest.set(s.link.target, run);
+  }
+  const scope = root && new Set(subtree(repo, root).map((id) => entry(repo, id).path));
+  return [...repo.entries.values()].filter((e) => e.item.data.type === 'requirement' && (!scope || scope.has(dirname(dirname(e.path))))).map((e) => {
+    const verifying = of('verifies').filter((s) => s.link.target === e.id);
+    const run = verifying.filter((s) => s.state === 'current').map((s) => latest.get(s.source)).find((r) => r?.item.data.result === 'pass');
+    return { requirement: e.id, state: run ? 'verified' : verifying.length ? 'pending' : 'unverified', run: run?.id };
+  });
 }

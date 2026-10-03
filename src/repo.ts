@@ -23,7 +23,7 @@ export function readYaml<T>(root: string, path: string): YamlFile<T> {
 }
 
 // Writes through the parsed document, keeping comments and formatting.
-export function writeYaml(root: string, file: YamlFile<unknown>): void {
+export function writeYaml(root: string, file: Pick<YamlFile<unknown>, 'path' | 'doc'>): void {
   mkdirSync(dirname(join(root, file.path)), { recursive: true });
   writeFileSync(join(root, file.path), String(file.doc));
 }
@@ -36,7 +36,8 @@ export function findRoot(start: string): string {
   }
 }
 
-// Item folders contain item.yaml and nest; requirements are files in their requirements folder.
+// Item folders contain item.yaml and nest; requirements are files in their requirements folder;
+// test cases and runs are item folders in the top-level tests and runs folders.
 export function loadRepo(start: string): Repo {
   const repo: Repo = { root: findRoot(start), settings: {}, entries: new Map(), duplicates: [] };
   repo.settings = readYaml<Repo['settings']>(repo.root, 'plm.yaml').data;
@@ -54,7 +55,8 @@ export function loadRepo(start: string): Repo {
       if (!d.isDirectory()) continue;
       if (parent && d.name === 'requirements') {
         for (const f of readdirSync(join(repo.root, path))) if (f.endsWith('.yaml')) add(`${path}/${f}`);
-      } else if (existsSync(join(repo.root, path, 'item.yaml'))) {
+      } else if (!dir && ['tests', 'runs'].includes(d.name)) walk(path);
+      else if (existsSync(join(repo.root, path, 'item.yaml'))) {
         const e = add(path);
         parent?.nested.push(e.id);
         walk(path, e);

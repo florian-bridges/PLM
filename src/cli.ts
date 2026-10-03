@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 // CL-01.1: the `plm` command-line program.
 import { randomBytes } from 'node:crypto';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
-import { Command, CommanderError } from 'commander';
-import { parseDocument, stringify } from 'yaml';
-import { changeSince, confirm, linkStates } from './links.ts';
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { basename, join, relative, resolve } from 'node:path';
+import { Command, CommanderError, Option } from 'commander';
+import { Document, parseDocument, stringify } from 'yaml';
+import { changeSince, confirm, coverage, linkStates } from './links.ts';
 import { entry, loadRepo, readYaml, Refused, UsageError, writeYaml, type Repo } from './repo.ts';
+import { results } from './schemas.ts';
 import { validate } from './validate.ts';
-import { currentVersions, git } from './version.ts';
+import { currentVersions, git, versionAt } from './version.ts';
 
 const program = new Command('plm')
   .option('-C, --repo <dir>', 'working folder', '.')
@@ -21,7 +22,7 @@ function output(text: string, data: unknown) {
   console.log(program.opts().format === 'json' ? JSON.stringify({ schema: 1, data }, null, 2) : text);
 }
 
-// CL-05.2: 0 success, 1 findings, 2 usage errors, 3 internal errors.
+// CL-05.2
 let exitCode = 0;
 
 program.command('validate').description('validate the repository').action(() => {
@@ -47,7 +48,7 @@ program.command('link <source> <type> <target>').description('add an unconfirmed
   writeYaml(r.root, meta);
 });
 
-// CL-01.2: confirm all links of the source unless a type or target is given.
+// CL-01.2
 program.command('confirm <source> [type] [target]').description('confirm links').action((source: string, type?: string, target?: string) => {
   const r = repo();
   const links = confirm(r, currentVersions(r), validate(r), source, type, target);
@@ -68,11 +69,11 @@ program.command('init').description('create a product repository').action(() => 
   if (existsSync(join(root, 'plm.yaml'))) throw new UsageError('plm.yaml already exists');
   mkdirSync(root, { recursive: true });
   git(root, ['init', '-q']);
-  const prefixes = { requirement: 'REQ-', specification: 'SPEC-', part: 'PRT-', assembly: 'ASM-', 'test-case': 'TC-' };
+  const prefixes = { requirement: 'REQ-', part: 'PRT-', assembly: 'ASM-', 'test-case': 'TC-', 'test-run': 'RUN-' };
   writeFileSync(join(root, 'plm.yaml'), stringify({ prefixes }));
 });
 
-// CL-02.1: create item and meta files from a template, inside the item folder containing the working folder.
+// CL-02.1
 program.command('new <type> [title]').description('create an item in the current item folder').action((type: string, title = '') => {
   const r = repo();
   const here = relative(r.root, resolve(program.opts().repo));
@@ -81,7 +82,7 @@ program.command('new <type> [title]').description('create an item in the current
   const id = newId(r, type);
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const name = slug ? `${id}-${slug}` : id;
-  const folder = parent ? `${parent.path}/` : '';
+  const folder = type === 'test-case' ? 'tests/' : parent ? `${parent.path}/` : '';
   if (type === 'requirement' && !parent) throw new UsageError('Create requirements inside an item folder');
   const item = readYaml(r.root, `templates/${type}.yaml`);
   item.path = type === 'requirement' ? `${folder}requirements/${name}.yaml` : `${folder}${name}/item.yaml`;
@@ -91,7 +92,35 @@ program.command('new <type> [title]').description('create an item in the current
   output(id, { id });
 });
 
-// CL-02.2: type prefix plus six random Crockford Base32 characters.
+// CL-03.1, CL-03.2
+program.command('test').command('record <test-case>').description('record a test run')
+  .requiredOption('--sut <id>')
+  .addOption(new Option('--result <result>').choices(results).makeOptionMandatory())
+  .option('--log <files...>', '', [])
+  .option('--commit <commit>', '', 'HEAD')
+  .action((testCase: string, o) => {
+    const r = repo();
+    const current = currentVersions(r);
+    const links = [['executes', testCase], ['tests', o.sut]].map(([type, target]) => ({ type, target, version: versionAt(r.root, o.commit, entry(r, target).id) }));
+    // CL-03.3
+    for (const l of links) if (l.version !== current.get(l.target)) throw new Refused(`${l.target} differs from ${o.commit}; commit it first`);
+    const id = newId(r, 'test-run');
+    const item = { id, type: 'test-run', title: `${testCase} on ${o.sut}`, date: new Date().toISOString(), result: o.result };
+    writeYaml(r.root, { path: `runs/${id}/item.yaml`, doc: new Document(item) });
+    writeYaml(r.root, { path: `meta/${id}.yaml`, doc: new Document({ status: 'draft', links }) });
+    for (const log of o.log) copyFileSync(log, join(r.root, 'runs', id, basename(log)));
+    output(id, { id });
+  });
+
+// TE-06.2: requirement coverage, optionally of one item's subtree.
+program.command('report').command('coverage [item]').description('report requirement verification').action((item?: string) => {
+  const r = repo();
+  const rows = coverage(r, linkStates(r, currentVersions(r)), item && entry(r, item).id);
+  output(rows.map((c) => `${c.state} ${c.requirement}${c.run ? ` ${c.run}` : ''}`).join('\n'), rows);
+  if (rows.some((c) => c.state !== 'verified')) exitCode = 1;
+});
+
+// CL-02.2
 function newId(r: Repo, type: string): string {
   const prefix = r.settings.prefixes?.[type];
   if (!prefix) throw new UsageError(`No ID prefix for type ${type} in plm.yaml`);

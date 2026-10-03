@@ -1,6 +1,6 @@
 // CO-02: validate items, links and composition.
 import { existsSync, readFileSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
 import { childrenOf, linksOf, nameMatches, usesOf, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, linkRules } from './schemas.ts';
@@ -43,8 +43,10 @@ export function validate(repo: Repo): Finding[] {
     // CO-02.2
     const name = basename(entry.path);
     if (!nameMatches(name, id)) findings.push(finding(item, ['id'], 'id-mismatch', `${name} does not start with id ${id}`));
-    if ((item.data.type === 'requirement') !== entry.path.endsWith('.yaml')) {
-      findings.push(finding(item, ['type'], 'misplaced', 'Requirements belong in requirements folders, and only there'));
+    const homes: Record<string, string> = { requirement: 'requirements', 'test-case': 'tests', 'test-run': 'runs' };
+    const folder = basename(dirname(entry.path));
+    if (homes[String(item.data.type)] ? folder !== homes[String(item.data.type)] : Object.values(homes).includes(folder)) {
+      findings.push(finding(item, ['type'], 'misplaced', 'Requirements, test cases and runs belong in their folders, and only there'));
     }
     const other = lowerIds.get(id.toLowerCase());
     if (other) findings.push(finding(item, ['id'], 'id-clash', `${id} clashes with ${other}`));

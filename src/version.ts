@@ -11,8 +11,7 @@ export function git(root: string, args: string[], env: Record<string, string> = 
   return execFileSync('git', args, { cwd: root, encoding: 'utf8', env: { ...process.env, ...env }, maxBuffer: 1 << 28 }).trim();
 }
 
-// TE-01.1: a requirement's version is its blob hash; an item's is the SHA-256 of
-// its folder's tree hash followed by the versions of the items it uses.
+// TE-01.1
 export function computeVersions(ids: Iterable<string>, hashes: Map<string, string>, pathOf: (id: string) => string | undefined, uses: (id: string) => string[]) {
   const versions = new Map<string, string>();
   const visit = (id: string, chain: string[]): string | undefined => {
@@ -39,7 +38,7 @@ function objectHashes(root: string, tree: string): Map<string, string> {
 
 // TE-01.2: stage the working tree into a temporary index, so LFS filters apply.
 export function currentVersions(repo: Repo): Map<string, string> {
-  const tops = [...repo.entries.values()].map((e) => e.path).filter((path) => !path.includes('/'));
+  const tops = [...new Set([...repo.entries.values()].map((e) => e.path.split('/')[0]))];
   if (!tops.length) return new Map();
   const dir = mkdtempSync(join(tmpdir(), 'plm-'));
   try {

@@ -60,12 +60,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-03.2** To show what changed, the engine shall return the diff of the target's subtree since the link's `commit` or, if it is missing or unknown, since the latest commit at which the target had the confirmed version.
 *Rationale:* The user must judge whether the change matters; the diff shows exactly what happened since confirmation. The stored commit avoids searching history, which is needed only for uncommitted confirmations or squashed branches.
 
-**TE-04.1** `plm.yaml` shall map repository aliases to a URL and pinned commit; links shall target `<alias>:<path>`.
-*Rationale:* One pin per alias updates all links into a repository in a single reviewed change.
-
-**TE-04.2** The engine shall fetch aliased repositories into `.plm/repos/` and use the Git object hash of `<path>` at the pinned commit as the version, or the item version if the alias is a PLM repository.
-*Rationale:* Software repositories are usually not PLM repositories; object hashes give them versions without imposing the item model.
-
 **TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links other than from test runs that became suspect, and runs that became outdated.
 *Rationale:* These are the questions a change board asks before approval.
 
@@ -91,9 +85,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
-
-**CL-02.3** `plm retire <ID>` shall set `status: retired`; validation shall warn about links to retired items.
-*Rationale:* Retired items may still be referenced by earlier releases; warnings show links that need attention.
 
 **CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types.
 *Rationale:* Items can follow at once.
@@ -181,12 +172,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **SI-02.2** Each matrix shall be exportable as CSV.
 *Rationale:* Matrices are often attached to certification documents or processed in spreadsheets.
-
-**SI-03.1** Each site shall publish `versions.json` listing every item's ID, title and version.
-*Rationale:* A small published file per site enables comparisons without a server.
-
-**SI-03.2** A compare page shall load two published `versions.json` files in the browser and list added, removed and changed items.
-*Rationale:* Comparing in the browser supports any pair of releases without precomputing all combinations.
 
 **SI-04.1** CI shall deploy only to targets enforcing host login: GitLab Pages access control, or a reverse proxy with the host's OAuth such as oauth2-proxy.
 *Rationale:* Static sites have no login of their own; the host login reuses existing permissions.

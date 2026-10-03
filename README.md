@@ -48,7 +48,7 @@ A release is a reviewed merge into the protected `main` branch; there are no rev
 
 The VS Code extension shows validation findings in the Problems panel, the product tree, requirements documents, and the links of the active item with their change and confirmation. It edits items in forms, adds links found by search and records manual test runs.
 
-Not yet implemented: `plm retire`, static site and CI.
+Not yet implemented: static site and CI.
 
 ## Open topics
 

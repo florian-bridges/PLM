@@ -23,7 +23,7 @@ meta/<ID>.yaml                owner, status, links
 * **Items** (CR-01) have a stable ID and a type with its own schema: requirement, part, assembly, COTS part, harness, interface, software, test case, test run. Items are folders named `<ID>-<title>`. Retired items are kept (CR-04).
 * **Composition** (CR-02): folders nest; `uses` lists items reused from elsewhere, e.g. standard parts.
 * **Artifacts** (CR-03) are files in the item directory; binaries use Git LFS with locking. CAD is stored natively plus a STEP export.
-* **Relationships** (CR-06, CR-08) are typed links in `meta/<ID>.yaml` (`satisfies`, `verifies`, `implements`, …). Links may target other repositories at a pinned commit, e.g. software.
+* **Relationships** (CR-06) are typed links in `meta/<ID>.yaml` (`satisfies`, `verifies`, `implements`, …).
 * **Requirements** are items, stored in the `requirements/` folder of the item they specify, so one link and suspect mechanism covers all disciplines; VS Code shows them as a document. Certification basis paragraphs are requirement items, enabling compliance tracing.
 
 ## Releases

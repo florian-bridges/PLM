@@ -24,9 +24,6 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **TE-03** The engine shall flag a link as suspect when its target's version differs from the confirmed one, and show what changed. (CR-07, CR-09; US-1, US-6)
 *Rationale:* Suspect links are the tool's core signal; showing the change lets users quickly judge whether it matters.
 
-**TE-04** The engine shall resolve links to items in other repositories at a pinned commit. (CR-08; US-4)
-*Rationale:* Software follows its own repository and release cycle; pinning a commit keeps the link exact.
-
 **TE-05** The engine shall list the items, links and verification evidence affected by a change. (CR-13; US-7)
 *Rationale:* Impact must be known before approving a change, both locally and in CI, so the analysis belongs in the engine.
 
@@ -38,7 +35,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **CL-01** The CLI shall expose validation, search, link confirmation, impact analysis and reports. (CR-04–CR-07, CR-10, CR-13; US-1–US-7)
 *Rationale:* A CLI makes every function scriptable and usable in CI and on rigs without an editor.
 
-**CL-02** The CLI shall create items from type templates and retire them. (CR-04; US-2, US-3)
+**CL-02** The CLI shall create items from type templates. (CR-04; US-2, US-3)
 *Rationale:* Templates give new items a valid structure, reducing manual errors and review effort.
 
 **CL-03** The CLI shall record test runs with SUT version, result and logs. (CR-09; US-5)
@@ -82,9 +79,6 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 **SI-02** The site shall show traceability, coverage and compliance matrices for the product or an item in it. (CR-10; US-6)
 *Rationale:* Matrices are the established evidence format for coverage and compliance reviews.
-
-**SI-03** The site shall compare two releases. (CR-12; US-6)
-*Rationale:* Comparisons show what changed between deliveries or certification steps.
 
 **SI-04** The site shall be accessible only to users authorized on the Git host. (CR-17; US-7)
 *Rationale:* The site exposes the full definition, so it must respect the same permissions as the repository.

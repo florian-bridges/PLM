@@ -28,10 +28,6 @@ The tool shall trace items and artifacts using typed relationships.
 Relationships shall reference specific versions of the related items.
 *Rationale:* A link is only valid for the version it was established against. Without versions, changes silently invalidate traceability.
 
-**CR-08 — External sources**
-The tool shall trace items and artifacts managed in other repositories or tools.
-*Rationale:* Software, supplier and analysis data live in their own repositories and tools; tracing must reach them without copying.
-
 **CR-09 — Verification**
 The tool shall associate verification evidence with the item versions it verifies and identify when later versions are no longer verified.
 *Rationale:* Certification credit depends on evidence for the exact version certified. Changes after a test must be detected to decide on re-verification.

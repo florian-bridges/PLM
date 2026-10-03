@@ -10,7 +10,7 @@ Breaks the aircraft into assemblies and subassemblies, attaches CAD models, rele
 Defines custom electronics, COTS components with their documentation, and wiring; manages interfaces to the structure. (CR-01, CR-03, CR-04)
 
 **US-4 — Software engineer**
-Develops software for avionics components in separate repositories, traced to requirements. (CR-01, CR-06, CR-08)
+Develops software for avionics components in separate repositories, traced to requirements. (CR-01, CR-06)
 
 **US-5 — Verification engineer**
 Defines test cases for systems under test and records executed runs with their artifacts. (CR-09, CR-19)

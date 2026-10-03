@@ -50,7 +50,6 @@ Not yet implemented: `plm retire`, search, VS Code extension, static site and CI
 
 ## Open topics
 
-* **Build records.** Software items record the source commit, CI build and `sha256` of their binary as plain attributes; validation should check the hash against the binary.
 * **Requirement parameters.** Values live in requirement text; machine-readable values with units would need a schema extension and checks against design data.
 
 ## Getting started

@@ -46,14 +46,15 @@ Proof of concept: a `plm` CLI with the core library and traceability engine. Ite
 
 A release is a reviewed merge into the protected `main` branch; there are no revisions or baselines, and an item's earlier released versions are its states at earlier commits of `main`.
 
-The VS Code extension shows validation findings in the Problems panel, the product tree, requirements documents and the links of the active item, with their change and confirmation, adds links found by search and records manual test runs.
+The VS Code extension shows validation findings in the Problems panel, the product tree, requirements documents, and the links of the active item with their change and confirmation. It edits items in forms, adds links found by search and records manual test runs.
 
-Not yet implemented: `plm retire`, static site and CI; in VS Code item forms.
+Not yet implemented: `plm retire`, static site and CI.
 
 ## Open topics
 
 * **YAML syntax errors.** Validation does not report YAML parse errors, such as a duplicate key in `meta/<ID>.yaml`: the file shows no finding, and confirming its links fails when writing it.
 * **Duplication in the core and CLI.** Review `src/` for logic duplicated between modules and the CLI; moving `test record` into the core (VS-06.1) is the first case.
+* **VS Code form limits.** Forms edit only string, number, enum and string list attributes, `status` and `owner`; nested attributes are edited in YAML. Items are created with `plm new`, and a changed title leaves the folder name stale until `plm rename`. Both could move into the extension once the word budget allows.
 
 ## Getting started
 
@@ -257,5 +258,5 @@ plm report coverage $AC
 * `plm search <words>` finds items whose ID, title, text or attributes contain all words, also as word beginnings; `type:`, `status:` and `owner:` filter, e.g. `plm search mass type:requirement`.
 * `plm impact <base>[..<head>]` compares a commit with another commit or, by default, the working tree, e.g. `plm impact main..my-branch` before merging.
 * `plm report coverage [item]` reports the requirements of the repository or of an item's subtree as verified, pending or unverified.
-* The VS Code extension is built with `npm run build:ext` and, for now, run from source with `code --extensionDevelopmentPath=<plm>/extension <product repository>`. It validates on save. The PLM Product view in the Explorer shows nested and used items with their status, and Show requirements on an item renders its requirements and those of its nested items as one document; the PLM Links view lists the links of the item containing the open file; suspect links offer Show change, and Confirm confirms all links of the link's source item. Add link (+) picks a link type allowed for the item and searches for the target. `PLM: Record test run` in the Command Palette records a run like `plm test record`, picking test case, system under test, result and logs.
+* The VS Code extension is built with `npm run build:ext` and, for now, run from source with `code --extensionDevelopmentPath=<plm>/extension <product repository>`. It validates on save. The PLM Product view in the Explorer shows nested and used items with their status, and Show requirements on an item renders its requirements and those of its nested items as one document; the PLM Links view lists the links of the item containing the open file; suspect links offer Show change, and Confirm confirms all links of the link's source item. Add link (+) picks a link type allowed for the item and searches for the target. Edit item (pencil in the product tree, or `PLM: Edit item` for the open file's item) opens a form generated from the type's schema that shows schema errors while typing and writes on Save. `PLM: Record test run` in the Command Palette records a run like `plm test record`, picking test case, system under test, result and logs.
 * `--format json` gives machine-readable output. Exit codes: 0 success, 1 findings, 2 usage error, 3 internal error.

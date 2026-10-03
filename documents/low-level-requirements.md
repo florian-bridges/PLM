@@ -124,8 +124,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-01.1** The extension shall reuse the core library and run in the extension host without a separate server, bundled by esbuild into one CommonJS file and activated in workspaces containing `plm.yaml`.
 *Rationale:* One core avoids duplicated logic and diverging results between editor and CI. A bundle needs no installed dependencies; other workspaces stay unaffected.
 
-**VS-01.2** Item editing shall use a webview form generated from the type's JSON Schema, writing changes to `item.yaml` and `meta/<ID>.yaml` through the core.
-*Rationale:* Forms generated from schemas support new and program-specific types without extension code.
+**VS-01.2** Editing the active item or a product tree item shall open a webview form generated from the type's JSON Schema, with fields for its string, number, enum and string array attributes and for `status` and `owner`. The form shall show schema errors while typing; saving shall write `item.yaml` and `meta/<ID>.yaml` through the core, keeping other attributes and comments.
+*Rationale:* Forms generated from schemas support new and program-specific types without extension code. Flat fields cover the built-in types; nested attributes are edited in YAML.
 
 **VS-01.3** Diagnostics shall be updated in the Problems panel within one second of saving a file.
 *Rationale:* Immediate feedback catches errors while the context is fresh. Validation reads files from disk, so unsaved edits are not seen.

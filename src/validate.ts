@@ -27,8 +27,13 @@ function schemaFor(ajv: Ajv2020, root: string, type: string): ValidateFunction |
   return ajv.getSchema(type);
 }
 
+const newAjv = () => new Ajv2020({ allErrors: true, strictTypes: false });
+
+// VS-01.2: the type's validator, whose schema generates the item form.
+export const itemSchema = (root: string, type: string) => schemaFor(newAjv(), root, type);
+
 export function validate(repo: Repo): Finding[] {
-  const ajv = new Ajv2020({ allErrors: true, strictTypes: false });
+  const ajv = newAjv();
   const findings: Finding[] = [];
   for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
     const { id, item, meta } = entry;

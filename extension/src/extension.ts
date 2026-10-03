@@ -3,12 +3,12 @@ import { existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
 import { addLink, changeSince, confirm, linkStates, recordRun } from '../../src/links.ts';
-import { childrenOf, entry, findRoot, innermostItem, loadRepo, type Entry, type Repo } from '../../src/repo.ts';
+import { childrenOf, entry, findRoot, innermostItem, loadRepo, writeYaml, type Entry, type Repo } from '../../src/repo.ts';
 import { allows, linkRules, results } from '../../src/schemas.ts';
 import { search } from '../../src/search.ts';
-import { validate } from '../../src/validate.ts';
+import { itemSchema, validate } from '../../src/validate.ts';
 import { currentVersions, git } from '../../src/version.ts';
-import { changedPaths, linkRows, productTree, requirementsMarkdown, type LinkRow } from './logic.ts';
+import { applyForm, changedPaths, formData, formFields, formHtml, linkRows, productTree, requirementsMarkdown, type LinkRow } from './logic.ts';
 
 export function activate(context: vscode.ExtensionContext) {
   const folder = vscode.workspace.workspaceFolders?.[0];
@@ -84,6 +84,35 @@ export function activate(context: vscode.ExtensionContext) {
     changed.fire();
   };
 
+  const refresh = () => {
+    refreshDiagnostics();
+    treeChanged.fire();
+    changed.fire();
+  };
+
+  // VS-01.2
+  const editItem = (row?: Entry) => {
+    const repo = open();
+    const id = row?.id ?? activeItem(repo);
+    if (!id) return;
+    const found = entry(repo, id);
+    const check = itemSchema(root, found.item.data.type);
+    if (!check) throw new Error(`Unknown item type ${found.item.data.type}`);
+    const fields = formFields(check.schema as Parameters<typeof formFields>[0]);
+    const panel = vscode.window.createWebviewPanel('plm.form', id, vscode.ViewColumn.Active, { enableScripts: true });
+    panel.webview.html = formHtml(`${id} ${found.item.data.title}`, fields, { ...found.item.data, ...found.meta.data });
+    panel.webview.onDidReceiveMessage(({ save, values }) => {
+      const [item, meta] = [found.item.doc.clone(), found.meta.doc.clone()];
+      applyForm(item, meta, fields, formData(fields, values));
+      check(item.toJS());
+      panel.webview.postMessage((check.errors ?? []).map((error) => `${error.instancePath.slice(1) || 'item'} ${error.message}`).join('\n'));
+      if (!save) return;
+      writeYaml(root, { path: found.item.path, doc: item });
+      writeYaml(root, { path: found.meta.path, doc: meta });
+      refresh();
+    });
+  };
+
   // VS-01.4: the quick pick shows the core search results unfiltered.
   const addLinkToActive = async () => {
     const repo = open();
@@ -128,6 +157,7 @@ export function activate(context: vscode.ExtensionContext) {
   });
 
   context.subscriptions.push(
+    register('plm.editItem', editItem),
     register('plm.addLink', addLinkToActive),
     register('plm.recordTestRun', recordTestRun),
     diagnostics,
@@ -137,7 +167,7 @@ export function activate(context: vscode.ExtensionContext) {
     register('plm.showRequirements', showRequirements),
     register('plm.showChange', showChange),
     register('plm.confirm', confirmItem),
-    vscode.workspace.onDidSaveTextDocument(() => { refreshDiagnostics(); treeChanged.fire(); changed.fire(); }),
+    vscode.workspace.onDidSaveTextDocument(refresh),
     vscode.window.onDidChangeActiveTextEditor(() => changed.fire()),
   );
   refreshDiagnostics();

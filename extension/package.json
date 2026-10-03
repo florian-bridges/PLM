@@ -1,5 +1,5 @@
 {
-  "//": "VS-01.1, VS-01.4, VS-02.1, VS-03.1, VS-04.1, VS-04.2, VS-06.1",
+  "//": "VS-01.1, VS-01.2, VS-01.4, VS-02.1, VS-03.1, VS-04.1, VS-04.2, VS-06.1",
   "name": "plm-vscode",
   "displayName": "PLM",
   "version": "0.1.0",
@@ -11,6 +11,7 @@
   "contributes": {
     "views": { "explorer": [{ "id": "plm.tree", "name": "PLM Product" }, { "id": "plm.links", "name": "PLM Links" }] },
     "commands": [
+      { "command": "plm.editItem", "category": "PLM", "title": "Edit item", "icon": "$(edit)" },
       { "command": "plm.addLink", "title": "Add link", "icon": "$(add)" },
       { "command": "plm.recordTestRun", "title": "PLM: Record test run" },
       { "command": "plm.showRequirements", "title": "Show requirements", "icon": "$(book)" },
@@ -20,6 +21,7 @@
     "menus": {
       "view/title": [{ "command": "plm.addLink", "when": "view == plm.links", "group": "navigation" }],
       "view/item/context": [
+        { "command": "plm.editItem", "when": "view == plm.tree", "group": "inline" },
         { "command": "plm.showRequirements", "when": "view == plm.tree", "group": "inline" },
         { "command": "plm.showChange", "when": "view == plm.links && viewItem == suspect", "group": "inline" },
         { "command": "plm.confirm", "when": "view == plm.links", "group": "inline" }

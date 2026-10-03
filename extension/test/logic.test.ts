@@ -1,7 +1,9 @@
 import { expect, test } from 'vitest';
+import { parseDocument } from 'yaml';
 import type { LinkState } from '../../src/links.ts';
-import type { Entry, Repo } from '../../src/repo.ts';
-import { changedPaths, linkRows, productTree, requirementsMarkdown } from '../src/logic.ts';
+import type { Repo } from '../../src/repo.ts';
+import { baseSchema } from '../../src/schemas.ts';
+import { applyForm, changedPaths, formData, formFields, formHtml, linkRows, productTree, requirementsMarkdown } from '../src/logic.ts';
 
 const fakeRepo = (...entries: { id: string; [field: string]: unknown }[]) => ({ entries: new Map(entries.map((found) => [found.id, {
   path: found.id, nested: [], requirements: [], item: { data: { title: found.id.toLowerCase(), text: `${found.id} text` } }, meta: { data: { status: 'draft' } }, ...found,
@@ -29,4 +31,20 @@ test('VS-03.1: requirements of the item, then its nested items, as numbered sect
   const repo = fakeRepo({ id: 'A', requirements: ['R'], nested: ['P'] }, { id: 'R' }, { id: 'P', requirements: ['Q'] }, { id: 'Q' });
   expect(requirementsMarkdown(repo, 'A', (found) => `#${found.id}`)).toBe('# 1 [A](#A) a *draft*\n\nA text\n\n## 1.1 [R](#R) r *draft*\n\nR text\n\n'
     + '## 1.2 [P](#P) p *draft*\n\nP text\n\n### 1.2.1 [Q](#Q) q *draft*\n\nQ text\n\n');
+});
+
+test('VS-01.2: flat form fields from the schema, written back keeping other attributes and comments', () => {
+  const fields = formFields({ allOf: [baseSchema, { properties: { mass_kg: { type: 'number' }, grade: { enum: ['A', 'B'] }, spec: { type: 'object' } } }] });
+  expect(fields.map((field) => `${field.name}:${field.kind}`)).toEqual(['title:string', 'text:text', 'uses:list', 'mass_kg:number', 'grade:enum', 'status:string', 'owner:string']);
+  const html = formHtml('P', fields, { title: '<Spar>', grade: 'B', uses: ['L', 'M'] });
+  expect(html).toContain('value="&#60;Spar&#62;"');
+  expect(html).toContain('<option selected>B</option>');
+  expect(html).toContain('value="L, M"');
+
+  const item = parseDocument('# spar\ntitle: Old\ntext: x\nspec: { a: 1 }\n');
+  const meta = parseDocument('');
+  applyForm(item, meta, fields, formData(fields, { title: 'Spar', text: ' ', uses: 'L, M,', mass_kg: '1.5', status: 'released' }));
+  expect(item.toJS()).toEqual({ title: 'Spar', spec: { a: 1 }, uses: ['L', 'M'], mass_kg: 1.5 });
+  expect(String(item)).toContain('# spar');
+  expect(meta.toJS()).toEqual({ status: 'released' });
 });

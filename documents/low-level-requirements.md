@@ -145,8 +145,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-04.2** "Show change" shall open the files changed since the commit from TE-03.2 in the VS Code multi-file diff editor; "Confirm" shall confirm all links of the item per CL-01.2.
 *Rationale:* The built-in diff editor is familiar and handles text and YAML well. Confirming per item matches the CLI.
 
-**VS-06.1** A command shall record a manual test run through a form, applying CL-03.1 to CL-03.3.
-*Rationale:* Manual and automated runs must produce identical evidence.
+**VS-06.1** A command shall record a manual test run, picking test case, system under test, result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
+*Rationale:* Manual and automated runs must produce identical evidence; one recording function in the core guarantees it.
 
 ## CI integration
 

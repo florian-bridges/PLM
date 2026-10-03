@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 // CL-01.1
-import { randomBytes } from 'node:crypto';
-import { copyFileSync, existsSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, relative, resolve } from 'node:path';
+import { existsSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
-import { Document, parseDocument, stringify } from 'yaml';
+import { parseDocument, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { changeSince, confirm, confirmation, coverage, fromRun, linkStates, type LinkState } from './links.ts';
-import { entry, homeFolders, isRequirementFile, loadRepo, nameFor, readYaml, Refused, UsageError, writeYaml, type Named, type Repo } from './repo.ts';
+import { changeSince, confirm, coverage, fromRun, linkStates, recordRun, type LinkState } from './links.ts';
+import { entry, homeFolders, isRequirementFile, loadRepo, nameFor, newId, readYaml, Refused, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
 import { validate } from './validate.ts';
-import { currentVersions, git, snapshotAt, versionAt } from './version.ts';
+import { currentVersions, git, snapshotAt } from './version.ts';
 
 const program = new Command('plm')
   .option('-C, --repo <dir>', 'working folder', '.')
@@ -140,29 +139,13 @@ program.command('rename <id> <title>').description('retitle an item and rename i
   renameSync(join(repo.root, path), join(repo.root, dirname(path), name));
 });
 
-// CL-03.1, CL-03.2
+// CL-03.1
 program.command('test').command('record <test-case>').description('record a test run')
   .requiredOption('--sut <id>')
   .addOption(new Option('--result <result>').choices(results).makeOptionMandatory())
   .option('--log <files...>', '', [])
   .action((testCase: string, options: { sut: string; result: string; log: string[] }) => {
-    const repo = openRepo();
-    const current = currentVersions(repo);
-    const testedVersion = (id: string) => versionAt(repo.root, 'HEAD', entry(repo, id).id);
-    const links = [
-      { type: 'executes', target: testCase, ...confirmation(repo, testCase, testedVersion(testCase)) },
-      { type: 'tests', target: options.sut, ...confirmation(repo, options.sut, testedVersion(options.sut)) },
-    ];
-    // CL-03.3
-    const changed = links.find((link) => link.version !== current.get(link.target));
-    if (changed) throw new Refused(`${changed.target} differs from HEAD; commit it first`);
-
-    const id = newId(repo, 'test-run');
-    const folder = `${homeFolders['test-run']}/${id}`;
-    const item = { id, type: 'test-run', title: `${testCase} on ${options.sut}`, date: new Date().toISOString(), result: options.result };
-    writeYaml(repo.root, { path: `${folder}/item.yaml`, doc: new Document(item) });
-    writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: new Document({ status: 'draft', links }) });
-    for (const log of options.log) copyFileSync(log, join(repo.root, folder, basename(log)));
+    const id = recordRun(openRepo(), testCase, options.sut, options.result, options.log);
     output(id, { id });
   });
 
@@ -176,15 +159,6 @@ program.command('report').command('coverage [item]').description('report require
     output(rows.map((row) => line(row).filter(Boolean).join(' ')).join('\n'), rows);
     if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
   });
-
-// CL-02.2
-function newId(repo: Repo, type: string): string {
-  const prefix = repo.settings.prefixes?.[type];
-  if (!prefix) throw new UsageError(`No ID prefix for type ${type} in plm.yaml`);
-  const crockfordBase32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-  const characters = Array.from(randomBytes(6), (byte) => crockfordBase32[byte & 31]);
-  return prefix + characters.join('');
-}
 
 try {
   program.parse();

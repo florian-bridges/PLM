@@ -1,7 +1,10 @@
-// TE-02, TE-03, TE-06
-import { entry, linksOf, named, Refused, selection, subtree, writeYaml, type Entry, type Link, type Named, type Repo } from './repo.ts';
+// TE-02, TE-03, TE-06, CL-03
+import { copyFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
+import { Document } from 'yaml';
+import { entry, homeFolders, linksOf, named, newId, Refused, selection, subtree, writeYaml, type Entry, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
-import { git, versionAt } from './version.ts';
+import { currentVersions, git, versionAt } from './version.ts';
 
 export interface LinkState { source: string; title: string; link: Link; targetTitle: string; state: 'current' | 'suspect' | 'unconfirmed' }
 
@@ -47,6 +50,27 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
   }
   if (selected.length) writeYaml(repo.root, sourceEntry.meta);
   return selected.map(({ link }) => link);
+}
+
+// CL-03.1, CL-03.2
+export function recordRun(repo: Repo, testCase: string, sut: string, result: string, logs: string[]): string {
+  const current = currentVersions(repo);
+  const testedVersion = (id: string) => versionAt(repo.root, 'HEAD', entry(repo, id).id);
+  const links = [
+    { type: 'executes', target: testCase, ...confirmation(repo, testCase, testedVersion(testCase)) },
+    { type: 'tests', target: sut, ...confirmation(repo, sut, testedVersion(sut)) },
+  ];
+  // CL-03.3
+  const changed = links.find((link) => link.version !== current.get(link.target));
+  if (changed) throw new Refused(`${changed.target} differs from HEAD; commit it first`);
+
+  const id = newId(repo, 'test-run');
+  const folder = `${homeFolders['test-run']}/${id}`;
+  const item = { id, type: 'test-run', title: `${testCase} on ${sut}`, date: new Date().toISOString(), result };
+  writeYaml(repo.root, { path: `${folder}/item.yaml`, doc: new Document(item) });
+  writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: new Document({ status: 'draft', links }) });
+  for (const log of logs) copyFileSync(log, join(repo.root, folder, basename(log)));
+  return id;
 }
 
 // TE-03.2

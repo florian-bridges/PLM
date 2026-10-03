@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, expect, test } from 'vitest';
-import { changeSince, confirm, linkStates } from '../src/links.ts';
+import { changeSince, confirm, linkStates, recordRun } from '../src/links.ts';
 import { loadRepo, Refused } from '../src/repo.ts';
 import { validate } from '../src/validate.ts';
 import { currentVersions, git, versionAt } from '../src/version.ts';
@@ -150,7 +150,7 @@ test('CO-01.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verif
   expect(currentVersions(loadRepo(root)).get('A')).not.toBe(wing);
   expect(plm(root, 'confirm', 'T').status).toBe(0);
   expect(coverage()).toBe('pending');
-  expect(record('pass').status).toBe(1);
+  expect(() => recordRun(loadRepo(root), 'T', 'A', 'pass', [])).toThrow(Refused);
   commit(root);
   expect(record('maybe').status).toBe(2);
   const run = record('pass').stdout.trim();

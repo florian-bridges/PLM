@@ -1,4 +1,5 @@
 // CO-01.1, CO-01.2
+import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { Document, LineCounter, parseDocument } from 'yaml';
@@ -96,6 +97,15 @@ export const linksOf = (entry: Entry): Link[] => list(entry.meta.data.links);
 export const innermostItem = (repo: Repo, file: string) => [...repo.entries.values()]
   .filter((candidate) => file === candidate.path || file.startsWith(`${candidate.path}/`))
   .sort((a, b) => b.path.length - a.path.length)[0]?.id;
+
+// CL-02.2
+export function newId(repo: Repo, type: string): string {
+  const prefix = repo.settings.prefixes?.[type];
+  if (!prefix) throw new UsageError(`No ID prefix for type ${type} in plm.yaml`);
+  const crockfordBase32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  const characters = Array.from(randomBytes(6), (byte) => crockfordBase32[byte & 31]);
+  return prefix + characters.join('');
+}
 
 // CL-05.3
 export interface Named { id: string; title: string }

@@ -46,9 +46,9 @@ Proof of concept: a `plm` CLI with the core library and traceability engine. Ite
 
 A release is a reviewed merge into the protected `main` branch; there are no revisions or baselines, and an item's earlier released versions are its states at earlier commits of `main`.
 
-The VS Code extension shows validation findings in the Problems panel, the product tree, requirements documents and the links of the active item, with their change and confirmation.
+The VS Code extension shows validation findings in the Problems panel, the product tree, requirements documents and the links of the active item, with their change and confirmation, and records manual test runs.
 
-Not yet implemented: `plm retire`, search, static site and CI; in VS Code item forms and manual test runs.
+Not yet implemented: `plm retire`, search, static site and CI; in VS Code item forms and link target search.
 
 ## Open topics
 
@@ -256,5 +256,5 @@ plm report coverage $AC
 * To reuse an item, such as a standard part, list its ID under `uses:` in the `item.yaml` of the assembly using it.
 * `plm impact <base>[..<head>]` compares a commit with another commit or, by default, the working tree, e.g. `plm impact main..my-branch` before merging.
 * `plm report coverage [item]` reports the requirements of the repository or of an item's subtree as verified, pending or unverified.
-* The VS Code extension is built with `npm run build:ext` and, for now, run from source with `code --extensionDevelopmentPath=<plm>/extension <product repository>`. It validates on save. The PLM Product view in the Explorer shows nested and used items with their status, and Show requirements on an item renders its requirements and those of its nested items as one document; the PLM Links view lists the links of the item containing the open file; suspect links offer Show change, and Confirm confirms all links of the link's source item.
+* The VS Code extension is built with `npm run build:ext` and, for now, run from source with `code --extensionDevelopmentPath=<plm>/extension <product repository>`. It validates on save. The PLM Product view in the Explorer shows nested and used items with their status, and Show requirements on an item renders its requirements and those of its nested items as one document; the PLM Links view lists the links of the item containing the open file; suspect links offer Show change, and Confirm confirms all links of the link's source item. `PLM: Record test run` in the Command Palette records a run like `plm test record`, picking test case, system under test, result and logs.
 * `--format json` gives machine-readable output. Exit codes: 0 success, 1 findings, 2 usage error, 3 internal error.

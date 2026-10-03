@@ -1,9 +1,10 @@
-// VS-01–VS-04: VS Code glue; the logic is in logic.ts and the core.
+// VS-01–VS-06: VS Code glue; the logic is in logic.ts and the core.
 import { existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
-import { changeSince, confirm, linkStates } from '../../src/links.ts';
+import { changeSince, confirm, linkStates, recordRun } from '../../src/links.ts';
 import { childrenOf, findRoot, innermostItem, loadRepo, type Entry } from '../../src/repo.ts';
+import { results } from '../../src/schemas.ts';
 import { validate } from '../../src/validate.ts';
 import { currentVersions, git } from '../../src/version.ts';
 import { changedPaths, linkRows, productTree, requirementsMarkdown, type LinkRow } from './logic.ts';
@@ -73,23 +74,38 @@ export function activate(context: vscode.ExtensionContext) {
     return vscode.commands.executeCommand('vscode.changes', `${row.state.link.target} since ${commit}`, files);
   };
   const confirmItem = (row: LinkRow) => {
-    try {
-      const repo = open();
-      confirm(repo, currentVersions(repo), validate(repo), row.state.source);
-      changed.fire();
-    } catch (error) {
-      vscode.window.showErrorMessage((error as Error).message);
-    }
+    const repo = open();
+    confirm(repo, currentVersions(repo), validate(repo), row.state.source);
+    changed.fire();
   };
 
+  // VS-06.1
+  const recordTestRun = async () => {
+    const repo = open();
+    const pickItem = (types: (type: string) => boolean, placeHolder: string) => vscode.window.showQuickPick([...repo.entries.values()]
+      .filter((found) => types(found.item.data.type)).map((found) => ({ label: found.id, description: found.item.data.title })), { placeHolder });
+    const testCase = await pickItem((type) => type === 'test-case', 'Test case');
+    const sut = testCase && await pickItem((type) => !['test-case', 'test-run'].includes(type), 'System under test');
+    const result = sut && await vscode.window.showQuickPick(results, { placeHolder: 'Result' });
+    if (!result) return;
+    const logs = await vscode.window.showOpenDialog({ canSelectMany: true, openLabel: 'Attach logs' }) ?? [];
+    vscode.window.showInformationMessage(`Recorded ${recordRun(repo, testCase.label, sut.label, result, logs.map((log) => log.fsPath))}`);
+  };
+
+  // Core refusals, such as uncommitted changes, become error messages.
+  const register = <T extends unknown[]>(name: string, command: (...args: T) => unknown) => vscode.commands.registerCommand(name, async (...args: T) => {
+    try { await command(...args); } catch (error) { vscode.window.showErrorMessage((error as Error).message); }
+  });
+
   context.subscriptions.push(
+    register('plm.recordTestRun', recordTestRun),
     diagnostics,
     vscode.window.registerTreeDataProvider('plm.tree', tree),
     vscode.window.registerTreeDataProvider('plm.links', links),
     vscode.workspace.registerTextDocumentContentProvider('plm-git', gitFiles),
-    vscode.commands.registerCommand('plm.showRequirements', showRequirements),
-    vscode.commands.registerCommand('plm.showChange', showChange),
-    vscode.commands.registerCommand('plm.confirm', confirmItem),
+    register('plm.showRequirements', showRequirements),
+    register('plm.showChange', showChange),
+    register('plm.confirm', confirmItem),
     vscode.workspace.onDidSaveTextDocument(() => { refreshDiagnostics(); treeChanged.fire(); changed.fire(); }),
     vscode.window.onDidChangeActiveTextEditor(() => changed.fire()),
   );

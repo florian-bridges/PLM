@@ -50,6 +50,11 @@ The VS Code extension shows validation findings in the Problems panel, the produ
 
 Not yet implemented: `plm retire`, search, static site and CI; in VS Code the requirements document, item forms and manual test runs.
 
+## Open topics
+
+* **YAML syntax errors.** Validation does not report YAML parse errors, such as a duplicate key in `meta/<ID>.yaml`: the file shows no finding, and confirming its links fails when writing it.
+* **Duplication in the core and CLI.** Review `src/` for logic duplicated between modules and the CLI; moving `test record` into the core (VS-06.1) is the first case.
+
 ## Getting started
 
 Requires Node.js 22.18 or later and Git.

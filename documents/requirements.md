@@ -60,10 +60,6 @@ The tool shall require changes to be reviewed and approved before release.
 The tool shall preserve the history of engineering decisions, changes, configurations and artifacts, including who made each change, when and why.
 *Rationale:* Authorities and accident investigations may ask years later why a design decision was taken. Recording who, when and why answers them.
 
-**CR-16 — Data exchange**
-The tool shall import and export engineering data with external tools and partners in standard formats.
-*Rationale:* Customers, suppliers and authorities use other tools. Standard formats such as ReqIF avoid manual re-entry and lock-in.
-
 **CR-17 — Access control**
 The tool shall control who can read and change engineering data.
 *Rationale:* Aerospace data is subject to export control (ITAR, EAR) and intellectual property agreements; partners must see only what they are entitled to.

@@ -1,4 +1,4 @@
-// CO-02.1, CO-02.5: built-in item type schemas (JSON Schema 2020-12).
+// CO-01.2, CO-02.1, CO-02.5: built-in item type schemas (JSON Schema 2020-12).
 const str = { type: 'string' };
 export const results = ['pass', 'fail', 'inconclusive'];
 
@@ -8,7 +8,6 @@ export const baseSchema = {
   properties: {
     id: str, type: str, title: str, text: str,
     uses: { type: 'array', items: str },
-    external_ids: { type: 'object', additionalProperties: str },
   },
 };
 

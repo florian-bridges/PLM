@@ -16,9 +16,6 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **CO-04** The core shall resolve a configuration to the item versions it selects. (CR-11; US-6, US-7)
 *Rationale:* Reports, product trees and comparisons all operate on a configuration, so resolving it belongs in the shared core.
 
-**CO-05** The core shall import and export requirements as ReqIF. (CR-16; US-1)
-*Rationale:* ReqIF is the standard exchange format supported by DOORS and Polarion, the tools customers and suppliers commonly use.
-
 ## Traceability engine (TE)
 
 **TE-01** The engine shall compute each item's version from its content, including nested items, and the versions of items it uses. (CR-07, CR-12; US-2, US-5)

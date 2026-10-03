@@ -7,7 +7,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<ID>-<title>/item.yaml` with their `requirements/<ID>-<title>.yaml`, test cases `tests/<ID>-<title>/item.yaml`, test runs `runs/<ID>-<title>/item.yaml`, `meta/<ID>.yaml` and `configurations/<name>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
 *Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files.
 
-**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `external_ids`. `meta/<ID>.yaml` shall hold `owner`, `status` and `links`.
+**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown) and `uses`. `meta/<ID>.yaml` shall hold `owner`, `status` and `links`.
 *Rationale:* Separating content from administrative data keeps versions stable when links, ownership or status change (TE-01.1).
 
 **CO-01.3** The core shall list artifacts as file paths without reading their contents, and detect Git LFS pointers that are not fetched.
@@ -42,21 +42,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **CO-04.2** Resolution shall return the root's subtree and the requirements of its items with their versions; validation shall report unknown roots.
 *Rationale:* Reports and comparisons need exact versions, including the requirements they cover.
-
-**CO-05.1** Import shall map SPEC-OBJECTs to requirement items, a SPECIFICATION to the `requirements/` folder of an item chosen at import, and SPEC-RELATIONs to unconfirmed links.
-*Rationale:* These are ReqIF's equivalents of requirements, documents and links. Imported links start unconfirmed because ReqIF carries no versions.
-
-**CO-05.2** Import shall store each ReqIF IDENTIFIER in `external_ids.reqif`, update items matched by it and report, never delete, items missing from the file.
-*Rationale:* Customers re-import our exports, so their IDs must survive round trips; deleting would silently lose data.
-
-**CO-05.3** XHTML shall be converted to Markdown and back; conversions losing formatting shall be reported.
-*Rationale:* Markdown is readable and diffable in Git; reporting losses makes round-trip limitations visible.
-
-**CO-05.4** Attribute names and enumerations shall be mapped by per-tool profiles in `exchange/<profile>.yaml`, with profiles for DOORS and Polarion provided.
-*Rationale:* DOORS and Polarion name and encode attributes differently; profiles keep tool specifics out of the code.
-
-**CO-05.5** Export shall write `.reqif` or `.reqifz` with attachments and validate it against the ReqIF 1.2 XSD.
-*Rationale:* Attachments travel in `.reqifz`; schema validation catches export errors before partners do.
 
 ## Traceability engine
 
@@ -152,7 +137,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Engineers work on one variant at a time; badges show maturity at a glance.
 
 **VS-03.1** Opening an item's `requirements/` folder shall show a read-only webview of its requirements as numbered sections with ID, status and rendered Markdown; clicking a requirement opens its form.
-*Rationale:* Read-only rendering avoids a second editor; reviewers see the document as exchanged with customers.
+*Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements as one document.
 
 **VS-04.1** A links view shall list the active item's outgoing and incoming links with their state.
 *Rationale:* Incoming links show what depends on an item before it is changed.

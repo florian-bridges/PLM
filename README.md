@@ -46,7 +46,7 @@ Proof of concept: a `plm` CLI with the core library and traceability engine. Ite
 
 A release is a reviewed merge into the protected `main` branch; there are no revisions or baselines, and an item's earlier released versions are its states at earlier commits of `main`.
 
-Not yet implemented: search, ReqIF, VS Code extension, static site and CI.
+Not yet implemented: search, VS Code extension, static site and CI.
 
 ## Getting started
 

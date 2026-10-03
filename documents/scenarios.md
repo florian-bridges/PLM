@@ -1,7 +1,7 @@
 # User Scenarios
 
 **US-1 — Requirements engineer**
-Writes requirement documents from aircraft to equipment level, traced top to bottom, and exchanges them with customers and suppliers. (CR-04, CR-06, CR-07, CR-16)
+Writes requirement documents from aircraft to equipment level, traced top to bottom. (CR-04, CR-06, CR-07)
 
 **US-2 — Structure engineer**
 Breaks the aircraft into assemblies and subassemblies, attaches CAD models, releases changes by merge and searches for items. (CR-02, CR-03, CR-05, CR-12)

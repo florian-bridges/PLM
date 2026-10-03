@@ -57,16 +57,17 @@ test('TE-01.2: uncommitted and committed states yield identical versions', () =>
   expect(versionAt(root, 'HEAD', 'A')).toBe(working.get('A'));
 });
 
-test('CO-02.1, CO-02.2, CO-02.4: findings with codes and positions', () => {
+test('CO-01.2, CO-02.1, CO-02.2, CO-02.4: findings with codes and positions', () => {
   const root = fixture();
   write(root, {
     'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\n',
     'X-rib/item.yaml': 'id: Y\ntype: part\ntitle: Rib\n',
+    'L-bolt/item.yaml': 'id: L\ntype: part\ntitle: Bolt\nexternal_ids: { reqif: B1 }\n',
     'A-wing/requirements/Q.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
     'meta/P.yaml': 'links:\n  - type: verifies\n    target: R\n',
   });
   const findings = validate(loadRepo(root));
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-mismatch', 'link-type', 'misplaced', 'schema']);
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-mismatch', 'link-type', 'misplaced', 'schema', 'schema']);
   expect(findings.find((f) => f.code === 'schema')).toMatchObject({ file: 'A-wing/P-spar/item.yaml', line: 4, col: 9 });
 });
 

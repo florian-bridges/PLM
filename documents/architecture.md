@@ -25,7 +25,7 @@ configurations/<name>.yaml    product variants: root items
 * **Composition** (CR-02): folders nest; `uses` lists items reused from elsewhere, e.g. standard parts.
 * **Artifacts** (CR-03) are files in the item directory; binaries use Git LFS with locking. CAD is stored natively plus a STEP export; CI derives lightweight glTF for viewing.
 * **Relationships** (CR-06, CR-08) are typed links in `meta/<ID>.yaml` (`satisfies`, `verifies`, `implements`, …). Links may target other repositories at a pinned commit, e.g. software.
-* **Requirements** are items, stored in the `requirements/` folder of the item they specify, so one link and suspect mechanism covers all disciplines; VS Code shows them as a document. ReqIF import and export connect DOORS and Polarion (CR-16). Certification basis paragraphs are requirement items, enabling compliance tracing.
+* **Requirements** are items, stored in the `requirements/` folder of the item they specify, so one link and suspect mechanism covers all disciplines; VS Code shows them as a document. Certification basis paragraphs are requirement items, enabling compliance tracing.
 
 ## Traceability engine
 

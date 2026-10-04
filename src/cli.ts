@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // CL-01.1
 import { existsSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
-import { parseDocument, stringify } from 'yaml';
+import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { addLink, confirm, coverage, fromRun, linkStates, recordRun, type LinkState } from './links.ts';
-import { entry, homeFolders, innermostItem, isRequirementFile, loadRepo, nameFor, newId, readYaml, Refused, UsageError, writeYaml, type Named } from './repo.ts';
+import { entry, isRequirementFile, loadRepo, nameFor, newItem, Refused, refuseTaken, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
 import { search } from './search.ts';
 import { validate } from './validate.ts';
@@ -104,27 +104,8 @@ program.command('init').description('create a product repository').action(() => 
 });
 
 // CL-02.1
-const refuseTaken = (root: string, path: string) => {
-  if (existsSync(join(root, path))) throw new UsageError(`${path} exists`);
-};
-
 program.command('new <type> <title>').description('create an item in the current item folder').action((type: string, title: string) => {
-  const repo = openRepo();
-  const cwd = relative(repo.root, resolve(workingFolder()));
-  const parent = repo.entries.get(innermostItem(repo, cwd) ?? '');
-  if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item folder`);
-
-  const id = newId(repo, type);
-  const home = [parent?.path, homeFolders[type]].filter(Boolean).join('/');
-  const inGroup = type === 'requirement' && cwd.startsWith(`${home}/`);
-  const path = [inGroup ? cwd : home, nameFor(id, title)].filter(Boolean).join('/');
-
-  const item = readYaml(repo.root, `templates/${type}.yaml`);
-  item.path = type === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`;
-  refuseTaken(repo.root, item.path);
-  for (const [key, value] of Object.entries({ id, type, title })) item.doc.setIn([key], value);
-  writeYaml(repo.root, item);
-  writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: parseDocument('status: draft\n') });
+  const id = newItem(openRepo(), type, title, workingFolder());
   output(id, { id });
 });
 

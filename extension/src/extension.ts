@@ -2,7 +2,7 @@
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
 import { addLink, changeSince, confirm, linkStates, recordRun } from '../../src/links.ts';
-import { childrenOf, entry, findRoot, innermostItem, loadRepo, writeYaml, type Entry, type Repo } from '../../src/repo.ts';
+import { childrenOf, entry, findRoot, innermostItem, loadRepo, newItem, writeYaml, type Entry, type Repo } from '../../src/repo.ts';
 import { allows, linkRules, results } from '../../src/schemas.ts';
 import { search } from '../../src/search.ts';
 import { itemSchema, validate } from '../../src/validate.ts';
@@ -82,7 +82,7 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   // VS-01.2
-  const editItem = (row?: Entry) => {
+  const editItem = (row?: Pick<Entry, 'id'>) => {
     const repo = open();
     const id = row?.id ?? activeItem(repo);
     if (!id) return;
@@ -102,6 +102,15 @@ export function activate(context: vscode.ExtensionContext) {
       writeYaml(root, { path: found.meta.path, doc: meta });
       refresh();
     });
+  };
+
+  // VS-01.5
+  const createItem = async (at?: Entry | vscode.Uri) => {
+    const type = await vscode.window.showQuickPick(Object.keys(open().settings.prefixes ?? {}));
+    const title = type && await vscode.window.showInputBox({ prompt: 'Title' });
+    if (!title) return;
+    editItem({ id: newItem(open(), type, title, at instanceof vscode.Uri ? at.fsPath : join(root, at?.path ?? '')) });
+    refresh();
   };
 
   // VS-01.4
@@ -152,6 +161,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerTreeDataProvider('plm.tree', tree),
     vscode.window.registerTreeDataProvider('plm.links', links),
     register('plm.editItem', editItem),
+    register('plm.newItem', createItem),
     register('plm.addLink', addLinkToActive),
     register('plm.showRequirements', showRequirements),
     register('plm.showChange', showChange),

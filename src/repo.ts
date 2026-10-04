@@ -1,7 +1,7 @@
 // CO-01.1, CO-01.2
 import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { Document, LineCounter, parseDocument } from 'yaml';
 
 export interface Link { type: string; target: string; title?: string; version?: string; by?: string; on?: string; commit?: string }
@@ -103,6 +103,30 @@ export function newId(repo: Repo, type: string): string {
   const crockfordBase32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
   const characters = Array.from(randomBytes(6), (byte) => crockfordBase32[byte & 31]);
   return prefix + characters.join('');
+}
+
+// CL-02.1
+export const refuseTaken = (root: string, path: string) => {
+  if (existsSync(join(root, path))) throw new UsageError(`${path} exists`);
+};
+
+export function newItem(repo: Repo, type: string, title: string, folder: string): string {
+  const cwd = relative(repo.root, resolve(folder));
+  const parent = repo.entries.get(innermostItem(repo, cwd) ?? '');
+  if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item folder`);
+
+  const id = newId(repo, type);
+  const home = [parent?.path, homeFolders[type]].filter(Boolean).join('/');
+  const inGroup = type === 'requirement' && cwd.startsWith(`${home}/`);
+  const path = [inGroup ? cwd : home, nameFor(id, title)].filter(Boolean).join('/');
+
+  const item = readYaml(repo.root, `templates/${type}.yaml`);
+  item.path = type === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`;
+  refuseTaken(repo.root, item.path);
+  for (const [key, value] of Object.entries({ id, type, title })) item.doc.setIn([key], value);
+  writeYaml(repo.root, item);
+  writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: parseDocument('status: draft\n') });
+  return id;
 }
 
 // CL-05.3

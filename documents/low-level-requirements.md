@@ -10,8 +10,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
 *Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
 
-**CO-01.3** The core shall list artifacts as file paths without reading their contents, and detect Git LFS pointers that are not fetched.
-*Rationale:* Artifacts can be gigabytes; reading them on demand keeps loading fast and works without fetched LFS files.
+**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder, except `item.yaml`, `requirements/`, `tests/` and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
+*Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
 
 **CO-02.1** The core shall validate `item.yaml` with Ajv against the JSON Schema (2020-12) of its type; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
 *Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add their own attributes.
@@ -23,13 +23,10 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Positions let editors and CI point to the problem; stable codes allow filtering and suppression.
 
 **CO-02.5** Built-in types shall be `requirement`, `part`, `assembly`, `test-case` and `test-run`.
-*Rationale:* Others come by schema (CO-02.1).
+*Rationale:* Others come by schema.
 
 **CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, and `tests` from `test-run` to any type.
 *Rationale:* Fixed semantics keep reports comparable.
-
-**CO-02.7** The core shall warn when a name is neither the item's `id` nor the slug of its `title`: lowercase, with runs of characters other than ASCII letters and digits replaced by `-`, trimmed of `-`.
-*Rationale:* Names show the structure in file browsers and on the Git host; names left from earlier titles mislead. Test runs keep their ID, as their titles repeat.
 
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.
 *Rationale:* One index format serves the CLI, VS Code and the browser without a search server.
@@ -72,13 +69,13 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 ## CLI
 
 **CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>]`, finding the repository by searching upward for `plm.yaml`.
-*Rationale:* Commander is the established choice.
+*Rationale:* Searching upward works from any subfolder.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
 *Rationale:* Links are reviewed one by one, or all at once after reviewing an item.
 
-**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements and test cases in its `requirements/` and `tests/` folders, requirements in the working folder if inside `requirements/`, and print the new ID. It and `plm rename` shall refuse names in use.
-*Rationale:* Repository templates let programs prefill attributes and conventions. Names lack the ID, so equal titles would overwrite files.
+**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements and test cases in its `requirements/` and `tests/` folders, requirements in the working folder if inside `requirements/`, and print the new ID. It shall name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
+*Rationale:* Repository templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
@@ -86,10 +83,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types.
 *Rationale:* Items can follow at once.
 
-**CL-02.5** `plm rename <ID> <title>` shall set the item's `title` and rename its folder or file to match it per CO-02.7.
-*Rationale:* Retitling and renaming in one step keeps names current; links refer to IDs and need no change.
-
-**CL-03.1** `plm test record <test-case>... --sut <ID> --result <result>... [--log <file>...]` shall create a test run in `runs/` with date, copies of the log files and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.
+**CL-03.1** `plm test record <test-case>... --sut <ID> --result <result>... [--log <file>...]` shall create a test run in `runs/<ID>/` with date, copies of the log files and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.
 *Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for. One run per rig session keeps its logs together; results per test case keep one failure from discrediting the others.
 
 **CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation per TE-02.1 with the versions at `HEAD`, recorded as `commit`.
@@ -104,7 +98,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-05.2** Exit codes shall be 0 for success, 1 for findings, 2 for usage errors and 3 for internal errors.
 *Rationale:* Separating findings from failures lets CI tell rejected changes from broken tooling.
 
-**CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. In JSON, IDs listed alone shall become `{id, title}` objects, and link states and coverage rows shall gain the `title` of their source or requirement and, for link targets, `targetTitle`.
+**CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states.
 *Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up.
 
 ## VS Code extension
@@ -118,25 +112,19 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-01.3** Diagnostics shall be updated in the Problems panel within one second of saving a file.
 *Rationale:* Immediate feedback catches errors while the context is fresh. Validation reads files from disk, so unsaved edits are not seen.
 
-**VS-01.5** A "New item" command on product tree items and Explorer folders shall pick a type, ask for a title, create the item per CL-02.1 with that item's folder or the Explorer folder as working folder, and open its form.
-*Rationale:* Explorer folders place requirements in subfolders; the form follows at once.
-
-**VS-01.6** In item and requirement files, IDs after `target:` and `uses:` shall be completed from all items, labelled and matched by title.
-*Rationale:* Users know titles, not IDs.
+**VS-01.5** A "New item" command on product tree items shall pick a type, ask for a title, create the item per CL-02.1 in that item's folder, and open its form.
+*Rationale:* Items are created where they belong in the product structure.
 
 **VS-02.1** A tree view shall show composition, nested and used items, from the top-level items, with type icons and status badges; selecting an item opens its `item.yaml`.
 *Rationale:* Badges show maturity. Used items appear under each item using them, as they count toward its version.
 
-**VS-03.1** A product tree command shall show a read-only webview of an item with a numbered section per item of its subtree (TE-06.2), each listing the item's requirements with title in bold, ID, status, coverage state and rendered Markdown text; clicking an ID opens its file.
+**VS-03.1** A product tree command shall show a read-only webview of an item with a section per item of its subtree (TE-06.2), each item once, numbered and headed by depth (1, 1.1, 1.1.1), each listing the item's requirements with title in bold, ID, status, coverage state and rendered Markdown text; clicking an ID opens its file.
 *Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements from aircraft to equipment level in the product's structure.
-
-**VS-03.2** The document shall show each subfolder of `requirements/` as a heading above its requirements.
-*Rationale:* Subfolders group requirements by topic.
 
 **VS-03.3** Each requirement shall list its links and the links to it with their state per TE-03.1 and, if not current, "Review link" (VS-04.3), and each verifying test case its latest run per TE-06.1.
 *Rationale:* Links in both directions per requirement form the traceability matrix in reading order.
 
-**VS-03.4** The document shall begin with the output of `plm report coverage <item>` and `plm suspects <item>`, and take all link states, coverage and runs from the same core functions.
+**VS-03.4** The document shall begin with each requirement's coverage state and the output of `plm suspects <item>`, and take all link states, coverage and runs from the core functions behind `plm suspects` and `plm report coverage`.
 *Rationale:* Reviewers see the item's gaps first, including links to requirements outside the subtree.
 
 **VS-04.2** "Review link" shall show one page with the link type, the source's and target's text, the diff from TE-03.2 or, if unconfirmed, the target's file, the previous confirmer and date, and the target's findings; "Confirm" shall confirm that link per CL-01.2, "Cancel" close the page.

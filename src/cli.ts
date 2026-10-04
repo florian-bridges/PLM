@@ -21,7 +21,7 @@ const openRepo = () => loadRepo(workingFolder());
 // CL-01.1, TE-06.2
 const scoped = (item?: string) => {
   const repo = openRepo();
-  return { repo, states: linkStates(repo, currentVersions(repo)), root: item && entry(repo, item).id };
+  return [repo, linkStates(repo, currentVersions(repo)), item && entry(repo, item).id] as const;
 };
 
 // CL-05.1
@@ -77,8 +77,7 @@ program.command('confirm <source> [target]').description('confirm the link to ta
 });
 
 program.command('suspects [item]').description('list suspect and unconfirmed links').action((item?: string) => {
-  const { repo, states: all, root } = scoped(item);
-  const states = suspects(repo, all, root);
+  const states = suspects(...scoped(item));
   output(states.map((state) => `${state.state} ${linkLabel(state)}`).join('\n'), states);
   if (states.length) exitCode = 1;
 });
@@ -138,8 +137,7 @@ program.command('test').command('record <test-case...>').description('record a t
 // TE-06.2
 program.command('report').command('coverage [item]').description('report requirement verification')
   .action((item?: string) => {
-    const { repo, states, root } = scoped(item);
-    const rows = coverage(repo, states, root);
+    const rows = coverage(...scoped(item));
     const lines = rows.flatMap((row) => [[row.state, label({ id: row.requirement, title: row.title })],
       ...row.tests.map((test) => ['  ' + label(test.testCase), test.run && label(test.run), test.result, test.outdated && 'outdated'])]);
     output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'), rows);

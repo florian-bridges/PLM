@@ -70,9 +70,8 @@ export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry
   return summary + subtree(repo, id).map((itemId, index) => {
     const found = entry(repo, itemId);
     let folder = '';
-    return `\n## ${index + 1} ${ref(itemId)}${status(found)}\n\n` + found.requirements.map((child) => {
-      const requirement = entry(repo, child);
-      const row = rows.find((candidate) => candidate.requirement === child)!;
+    return `\n## ${index + 1} ${ref(itemId)}${status(found)}\n\n` + rows.filter((row) => found.requirements.includes(row.requirement)).map((row) => {
+      const child = row.requirement, requirement = entry(repo, child);
       const sub = requirement.path.match(/requirements\/(.+)\//)?.[1] ?? ''; // VS-03.2
       return (folder !== (folder = sub) && sub ? `### ${sub}\n\n` : '') + `**${requirement.item.data.title}** [${child}](${link(requirement)})${status(requirement)} ${row.state}\n\n${requirement.item.data.text ?? ''}\n\n`
         + states.filter((state) => state.source === child || state.link.target === child).map(linkLine).join('')

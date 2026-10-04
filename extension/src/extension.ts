@@ -1,7 +1,7 @@
 // VS-01–VS-06: VS Code glue.
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
-import { changeSince, confirm, linkStates, recordRun } from '../../src/links.ts';
+import { changeSince, confirm, coverage, linkStates, recordRun, suspects } from '../../src/links.ts';
 import { childrenOf, entry, findRoot, innermostItem, linksOf, loadRepo, newItem, writeYaml, type Entry, type Repo } from '../../src/repo.ts';
 import { results } from '../../src/schemas.ts';
 import { itemSchema, validate } from '../../src/validate.ts';
@@ -15,6 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.executeCommand('setContext', 'plm.active', true); // VS-01.5
   const open = () => loadRepo(root);
   const fileUri = (path: string) => vscode.Uri.file(join(root, path));
+  const statesOf = (repo: Repo) => linkStates(repo, currentVersions(repo));
   // VS-01.2, VS-04.3
   const activeItem = (repo: Repo, file = vscode.window.activeTextEditor?.document.uri.fsPath) => file && innermostItem(repo, relative(root, file));
 
@@ -43,11 +44,12 @@ export function activate(context: vscode.ExtensionContext) {
     treeChanged.fire();
   };
 
-  // VS-03.1
+  // VS-03.1, VS-03.4
   const showRequirements = async (found: Entry) => {
+    const repo = open(), states = statesOf(repo);
     const link = (target: Entry) => `command:vscode.open?${encodeURIComponent(JSON.stringify([fileUri(target.item.path)]))}`;
-    const panel = vscode.window.createWebviewPanel('plm.requirements', `${found.item.data.title} requirements`, vscode.ViewColumn.Active, { enableCommandUris: ['vscode.open'] });
-    panel.webview.html = await vscode.commands.executeCommand<string>('markdown.api.render', logic.requirementsMarkdown(open(), found.id, link));
+    const panel = vscode.window.createWebviewPanel('plm.requirements', `${found.item.data.title} requirements`, vscode.ViewColumn.Active, { enableCommandUris: ['vscode.open', 'plm.reviewLink'] });
+    panel.webview.html = await vscode.commands.executeCommand<string>('markdown.api.render', logic.requirementsMarkdown(repo, found.id, link, states, coverage(repo, states, found.id), suspects(repo, states, found.id)));
   };
 
   // VS-04.2
@@ -101,14 +103,20 @@ export function activate(context: vscode.ExtensionContext) {
   // VS-06.1
   const recordTestRun = async () => {
     const repo = open();
-    const pickItem = (placeHolder: string, type?: string) => vscode.window.showQuickPick([...repo.entries.values()]
-      .filter((found) => !type || found.item.data.type === type).map((found) => ({ label: found.id, description: found.item.data.title })), { placeHolder });
-    const testCase = await pickItem('Test case', 'test-case');
-    const sut = testCase && await pickItem('System under test');
-    const result = sut && await vscode.window.showQuickPick(results, { placeHolder: 'Result' });
-    if (!result) return;
+    const items = (type?: string) => [...repo.entries.values()]
+      .filter((found) => !type || found.item.data.type === type).map((found) => ({ label: found.id, description: found.item.data.title }));
+    const testCases = (await vscode.window.showQuickPick(items('test-case'), { placeHolder: 'Test cases', canPickMany: true }))?.map((picked) => picked.label);
+    if (!testCases?.length) return;
+    const sut = await vscode.window.showQuickPick(items(), { placeHolder: 'System under test' });
+    if (!sut) return;
+    const picked: string[] = [];
+    for (const testCase of testCases) {
+      const result = await vscode.window.showQuickPick(results, { placeHolder: `Result of ${testCase}` });
+      if (!result) return;
+      picked.push(result);
+    }
     const logs = await vscode.window.showOpenDialog({ canSelectMany: true, openLabel: 'Attach logs' }) ?? [];
-    vscode.window.showInformationMessage(`Recorded ${recordRun(repo, testCase.label, sut.label, result, logs.map((log) => log.fsPath))}`);
+    vscode.window.showInformationMessage(`Recorded ${recordRun(repo, testCases, sut.label, picked, logs.map((log) => log.fsPath))}`);
   };
 
   // VS-01.6, VS-04.3
@@ -136,7 +144,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerCompletionItemProvider(yaml, { provideCompletionItems: (document, position) => logic.completesId(document.getText(new vscode.Range(0, 0, position.line, position.character)))
       ? [...open().entries.values()].map(({ id, item }) => ({ label: item.data.title, detail: id, insertText: id })) : [] }),
     vscode.languages.registerHoverProvider(yaml, { provideHover: atId((found, repo, document) => ({ contents: [Object.assign(
-      new vscode.MarkdownString(logic.hoverMarkdown(repo, linkStates(repo, currentVersions(repo)), found.id, activeItem(repo, document.uri.fsPath))), { isTrusted: { enabledCommands: ['plm.reviewLink'] } })] })) }),
+      new vscode.MarkdownString(logic.hoverMarkdown(repo, statesOf(repo), found.id, activeItem(repo, document.uri.fsPath))), { isTrusted: { enabledCommands: ['plm.reviewLink'] } })] })) }),
     vscode.languages.registerDefinitionProvider(yaml, { provideDefinition: atId((found) => new vscode.Location(fileUri(found.item.path), new vscode.Position(0, 0))) }),
     vscode.workspace.onDidSaveTextDocument(refresh),
   );

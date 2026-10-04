@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { parseDocument } from 'yaml';
-import type { LinkState } from '../../src/links.ts';
+import type { Coverage, LinkState } from '../../src/links.ts';
 import type { Repo } from '../../src/repo.ts';
 import { baseSchema } from '../../src/schemas.ts';
 import * as logic from '../src/logic.ts';
@@ -15,10 +15,15 @@ test('VS-02.1: composition from the top-level items, nested before used items', 
   expect(logic.productTree(repo, 'A').map((found) => found.id)).toEqual(['P', 'L']);
 });
 
-test('VS-03.1, VS-03.2: requirements of the item, then its nested items, as numbered sections', () => {
-  const repo = fakeRepo({ id: 'A', requirements: ['R'], nested: ['P'] }, { id: 'R', path: 'A/requirements/loads/R.yaml' }, { id: 'P', requirements: ['Q'] }, { id: 'Q' });
-  expect(logic.requirementsMarkdown(repo, 'A', (found) => `#${found.id}`)).toBe('# 1 [A](#A) a *draft*\n\nA text\n\n## loads\n\n## 1.1 [R](#R) r *draft*\n\nR text\n\n'
-    + '## 1.2 [P](#P) p *draft*\n\nP text\n\n### 1.2.1 [Q](#Q) q *draft*\n\nQ text\n\n');
+test('VS-03.1 to VS-03.4: coverage and suspects, then a section per subtree item with its requirements, links and runs', () => {
+  const repo = fakeRepo({ id: 'A', requirements: ['R'], nested: ['P'] }, { id: 'R', path: 'A/requirements/loads/R.yaml' }, { id: 'P', meta: { data: {} } }, { id: 'T' }, { id: 'U' });
+  const suspect = { source: 'R', link: { type: 'derives', target: 'X' }, state: 'suspect' } as LinkState;
+  const verifies = { source: 'T', link: { type: 'verifies', target: 'R' }, state: 'current' } as LinkState;
+  const rows = [{ requirement: 'R', title: 'r', state: 'pending', tests: [{ testCase: { id: 'T', title: 't' }, run: { id: 'U', title: 'u' }, result: 'pass', outdated: true }] }] as Coverage[];
+  const review = '[Review link](command:plm.reviewLink?%5B%22R%22%2C%22X%22%5D)';
+  expect(logic.requirementsMarkdown(repo, 'A', (found) => `#${found.id}`, [suspect, verifies], rows, [suspect])).toBe(`- pending [R](#R) r\n- suspect ${review} [R](#R) r derives X\n`
+    + `\n## 1 [A](#A) a *draft*\n\n### loads\n\n**r** [R](#R) *draft* pending\n\nR text\n\n- suspect ${review} [R](#R) r derives X\n- current [T](#T) t verifies [R](#R) r\n- [T](#T) t: [U](#U) u pass outdated\n\n`
+    + '\n## 2 [P](#P) p\n\n');
 });
 
 test('VS-01.2: flat form fields from the schema, written back keeping other attributes and comments', () => {

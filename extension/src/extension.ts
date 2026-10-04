@@ -1,12 +1,12 @@
 // VS-01–VS-06: VS Code glue.
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
-import { changeSince, confirm, linkStates, recordRun, type LinkState } from '../../src/links.ts';
-import { childrenOf, entry, findRoot, innermostItem, loadRepo, newItem, writeYaml, type Entry, type Repo } from '../../src/repo.ts';
+import { changeSince, confirm, linkStates, recordRun } from '../../src/links.ts';
+import { childrenOf, entry, findRoot, innermostItem, linksOf, loadRepo, newItem, writeYaml, type Entry, type Repo } from '../../src/repo.ts';
 import { results } from '../../src/schemas.ts';
 import { itemSchema, validate } from '../../src/validate.ts';
 import { currentVersions } from '../../src/version.ts';
-import { applyForm, formData, formFields, formHtml, completesId, hoverMarkdown, productTree, references, requirementsMarkdown } from './logic.ts';
+import { applyForm, formData, formFields, formHtml, completesId, hoverMarkdown, productTree, references, requirementsMarkdown, reviewHtml } from './logic.ts';
 
 export function activate(context: vscode.ExtensionContext) {
   const folder = vscode.workspace.workspaceFolders?.[0];
@@ -56,15 +56,17 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   // VS-04.2
-  const showChange = async (row: { state: LinkState }) => {
-    const { commit, diff } = changeSince(open(), row.state.link);
-    if (!commit) return vscode.window.showWarningMessage(`No commit has the confirmed version of ${row.state.link.target}`);
-    return vscode.window.showTextDocument(await vscode.workspace.openTextDocument({ content: diff, language: 'diff' }));
-  };
-  const confirmItem = (row: { state: LinkState }) => {
+  const reviewLink = (source: string, target: string) => {
     const repo = open();
-    confirm(repo, currentVersions(repo), validate(repo), row.state.source);
-    refresh();
+    const link = linksOf(entry(repo, source)).find((found) => found.target === target)!;
+    const change = (link.version && changeSince(repo, link).diff) || String(entry(repo, target).item.doc);
+    const panel = vscode.window.createWebviewPanel('plm.review', target, vscode.ViewColumn.Active, { enableScripts: true });
+    panel.webview.html = reviewHtml(repo, source, link, change, validate(repo));
+    panel.webview.onDidReceiveMessage(reporting((confirmed: number) => {
+      if (confirmed) confirm(repo, currentVersions(repo), validate(repo), source, target);
+      refresh();
+      panel.dispose();
+    }));
   };
 
   // VS-01.2
@@ -122,9 +124,10 @@ export function activate(context: vscode.ExtensionContext) {
   const location = (found: Entry) => new vscode.Location(fileUri(found.item.path), new vscode.Position(0, 0));
 
   // Core refusals become error messages.
-  const register = <T extends unknown[]>(name: string, command: (...args: T) => unknown) => vscode.commands.registerCommand(name, async (...args: T) => {
+  const reporting = (command: Function) => async (...args: unknown[]) => {
     try { await command(...args); } catch (error) { vscode.window.showErrorMessage((error as Error).message); }
-  });
+  };
+  const register = (name: string, command: Function) => vscode.commands.registerCommand(name, reporting(command));
 
   context.subscriptions.push(
     diagnostics,
@@ -132,8 +135,7 @@ export function activate(context: vscode.ExtensionContext) {
     register('plm.editItem', editItem),
     register('plm.newItem', createItem),
     register('plm.showRequirements', showRequirements),
-    register('plm.showChange', showChange),
-    register('plm.confirm', confirmItem),
+    register('plm.reviewLink', reviewLink),
     register('plm.recordTestRun', recordTestRun),
     vscode.languages.registerCompletionItemProvider(yaml, { provideCompletionItems: (document, position) => completesId(document.lineAt(position).text.slice(0, position.character))
       ? [...open().entries.values()].map(({ id, item }) => ({ label: item.data.title, detail: id, insertText: id })) : [] }),

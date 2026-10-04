@@ -3,7 +3,7 @@ import { parseDocument } from 'yaml';
 import type { LinkState } from '../../src/links.ts';
 import type { Repo } from '../../src/repo.ts';
 import { baseSchema } from '../../src/schemas.ts';
-import { applyForm, formData, formFields, formHtml, completesId, hoverMarkdown, productTree, references, requirementsMarkdown } from '../src/logic.ts';
+import { applyForm, formData, formFields, formHtml, completesId, hoverMarkdown, productTree, references, requirementsMarkdown, reviewHtml } from '../src/logic.ts';
 
 const fakeRepo = (...entries: { id: string; [field: string]: unknown }[]) => ({ entries: new Map(entries.map((found) => [found.id, {
   path: found.id, nested: [], requirements: [], item: { data: { title: found.id.toLowerCase(), text: `${found.id} text` } }, meta: { data: { status: 'draft' } }, ...found,
@@ -39,8 +39,10 @@ test('VS-01.6: completion after target:, uses: and dashes', () => {
   expect(['  target: R', 'uses: ', '  - P', 'title: P'].map(completesId)).toEqual([true, true, true, false]);
 });
 
-test('VS-04.3: hover with link state, items linking to or using an ID', () => {
-  const repo = fakeRepo({ id: 'A', item: { data: { links: [{ target: 'R' }] } } }, { id: 'B', item: { data: { uses: ['R'] } } }, { id: 'R', item: { data: { title: 'r', type: 'requirement' } } });
+test('VS-04.2, VS-04.3: review page, hover, references', () => {
+  const repo = fakeRepo({ id: 'A', item: { data: { text: 'a', links: [{ target: 'R' }] } } }, { id: 'B', item: { data: { uses: ['R'] } } }, { id: 'R', item: { path: 'R', data: { title: 'r', type: 'requirement', text: '<R>' } } });
+  expect(reviewHtml(repo, 'A', { type: 'satisfies', target: 'R', by: 'Ann', on: 'May' }, '+x', [{ file: 'R', message: 'bad' }, { file: 'A', message: 'other' }] as never))
+    .toMatch(/A.satisfies.R.*<pre>a<.*&#60;R&#62;.*\+x.*Ann.on.May.*bad<\/pre>\s<button.*Confirm.*Cancel/);
   expect(hoverMarkdown(repo, [{ source: 'A', link: { target: 'R' }, state: 'suspect' } as LinkState], 'R', 'A'))
     .toBe('**r**\n\nrequirement, draft\n\nsuspect [Review link](command:plm.reviewLink?%5B%22A%22%2C%22R%22%5D)');
   expect(references(repo, 'R').map((found) => found.id)).toEqual(['A', 'B']);

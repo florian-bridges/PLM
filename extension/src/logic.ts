@@ -1,7 +1,8 @@
 // VS-01, VS-02, VS-03, VS-04: editor logic without the vscode API, so vitest can test it.
 import type { Document } from 'yaml';
 import type { LinkState } from '../../src/links.ts';
-import { childrenOf, entry, linksOf, usesOf, type Entry, type Repo } from '../../src/repo.ts';
+import { childrenOf, entry, linksOf, usesOf, type Entry, type Link, type Repo } from '../../src/repo.ts';
+import type { Finding } from '../../src/validate.ts';
 
 // VS-01.2
 interface Property { type?: string; enum?: string[]; items?: { type?: string } }
@@ -86,3 +87,11 @@ export function hoverMarkdown(repo: Repo, states: LinkState[], id: string, sourc
 
 // VS-04.3
 export const references = (repo: Repo, id: string) => [...repo.entries.values()].filter((found) => [...linksOf(found).map((link) => link.target), ...usesOf(found)].includes(id));
+
+// VS-04.2
+export function reviewHtml(repo: Repo, source: string, link: Link, change: string, findings: Finding[]) {
+  const target = entry(repo, link.target);
+  return `<pre>${[`${source} ${link.type} ${link.target}`, entry(repo, source).item.data.text, target.item.data.text, change, link.by && `Confirmed by ${link.by} on ${link.on}`,
+    ...findings.filter((finding) => finding.file === target.item.path).map((finding) => finding.message)].map(escape).join('</pre><pre>')}</pre>
+<button onclick="vscode.postMessage(1)">Confirm</button><button onclick="vscode.postMessage(0)">Cancel</button><script>const vscode = acquireVsCodeApi()</script>`;
+}

@@ -1,7 +1,7 @@
 // VS-01, VS-02, VS-03, VS-04: editor logic without the vscode API, so vitest can test it.
 import type { Document } from 'yaml';
 import type { LinkState } from '../../src/links.ts';
-import { childrenOf, entry, type Entry, type Repo } from '../../src/repo.ts';
+import { childrenOf, entry, linksOf, usesOf, type Entry, type Repo } from '../../src/repo.ts';
 
 // VS-01.2
 interface Property { type?: string; enum?: string[]; items?: { type?: string } }
@@ -73,11 +73,16 @@ export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry
   return section + [...found.requirements, ...found.nested].map((child, index) => requirementsMarkdown(repo, child, link, `${number}.${index + 1}`)).join('');
 }
 
-// VS-04.1
-export interface LinkRow { label: string; state: LinkState }
+// VS-01.6
+export const completesId = (before: string) => /(target:|uses:|^\s*-)\s*[\w-]*$/.test(before);
 
-export const linkRows = (states: LinkState[], id: string): LinkRow[] => states.flatMap((state) => {
-  if (state.source === id) return [{ label: `→ ${state.link.type} ${state.link.target} (${state.targetTitle})`, state }];
-  if (state.link.target === id) return [{ label: `← ${state.source} (${state.title}) ${state.link.type}`, state }];
-  return [];
-});
+// VS-04.3
+export function hoverMarkdown(repo: Repo, states: LinkState[], id: string, source?: string) {
+  const { item, meta } = entry(repo, id);
+  const link = states.find((state) => state.source === source && state.link.target === id);
+  const review = link ? `\n\n${link.state} [Review link](command:plm.reviewLink?${encodeURIComponent(JSON.stringify([source, id]))})` : '';
+  return `**${item.data.title}**\n\n${item.data.type}, ${meta.data.status ?? ''}${review}`;
+}
+
+// VS-04.3
+export const references = (repo: Repo, id: string) => [...repo.entries.values()].filter((found) => [...linksOf(found).map((link) => link.target), ...usesOf(found)].includes(id));

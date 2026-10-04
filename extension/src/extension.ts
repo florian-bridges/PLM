@@ -1,13 +1,12 @@
 // VS-01–VS-06: VS Code glue.
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
-import { addLink, changeSince, confirm, linkStates, recordRun } from '../../src/links.ts';
+import { changeSince, confirm, linkStates, recordRun, type LinkState } from '../../src/links.ts';
 import { childrenOf, entry, findRoot, innermostItem, loadRepo, newItem, writeYaml, type Entry, type Repo } from '../../src/repo.ts';
-import { allows, linkRules, results } from '../../src/schemas.ts';
-import { search } from '../../src/search.ts';
+import { results } from '../../src/schemas.ts';
 import { itemSchema, validate } from '../../src/validate.ts';
 import { currentVersions } from '../../src/version.ts';
-import { applyForm, formData, formFields, formHtml, linkRows, productTree, requirementsMarkdown, type LinkRow } from './logic.ts';
+import { applyForm, formData, formFields, formHtml, completesId, hoverMarkdown, productTree, references, requirementsMarkdown } from './logic.ts';
 
 export function activate(context: vscode.ExtensionContext) {
   const folder = vscode.workspace.workspaceFolders?.[0];
@@ -15,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
   const root = findRoot(folder.uri.fsPath);
   const open = () => loadRepo(root);
   const fileUri = (path: string) => vscode.Uri.file(join(root, path));
-  // VS-01.4, VS-04.1
+  // VS-01.2
   const activeItem = (repo: Repo) => {
     const file = vscode.window.activeTextEditor?.document.uri.fsPath;
     return file && innermostItem(repo, relative(root, file));
@@ -35,7 +34,6 @@ export function activate(context: vscode.ExtensionContext) {
   // VS-02.1
   const icons: Record<string, string> = { assembly: 'layers', part: 'package' };
   const treeChanged = new vscode.EventEmitter<void>();
-  const linksChanged = new vscode.EventEmitter<void>();
   const tree: vscode.TreeDataProvider<Entry> = {
     onDidChangeTreeData: treeChanged.event,
     getTreeItem: (found) => Object.assign(new vscode.TreeItem(`${found.id} ${found.item.data.title}`, vscode.TreeItemCollapsibleState[childrenOf(found).length ? 'Collapsed' : 'None']), {
@@ -48,7 +46,6 @@ export function activate(context: vscode.ExtensionContext) {
   const refresh = () => {
     refreshDiagnostics();
     treeChanged.fire();
-    linksChanged.fire();
   };
 
   // VS-03.1
@@ -58,24 +55,13 @@ export function activate(context: vscode.ExtensionContext) {
     panel.webview.html = await vscode.commands.executeCommand<string>('markdown.api.render', requirementsMarkdown(open(), found.id, link));
   };
 
-  // VS-04.1
-  const links: vscode.TreeDataProvider<LinkRow> = {
-    onDidChangeTreeData: linksChanged.event,
-    getTreeItem: (row) => Object.assign(new vscode.TreeItem(row.label), { description: row.state.state, contextValue: row.state.state }),
-    getChildren: () => {
-      const repo = open();
-      const id = activeItem(repo);
-      return id ? linkRows(linkStates(repo, currentVersions(repo)), id) : [];
-    },
-  };
-
   // VS-04.2
-  const showChange = async (row: LinkRow) => {
+  const showChange = async (row: { state: LinkState }) => {
     const { commit, diff } = changeSince(open(), row.state.link);
     if (!commit) return vscode.window.showWarningMessage(`No commit has the confirmed version of ${row.state.link.target}`);
     return vscode.window.showTextDocument(await vscode.workspace.openTextDocument({ content: diff, language: 'diff' }));
   };
-  const confirmItem = (row: LinkRow) => {
+  const confirmItem = (row: { state: LinkState }) => {
     const repo = open();
     confirm(repo, currentVersions(repo), validate(repo), row.state.source);
     refresh();
@@ -113,31 +99,6 @@ export function activate(context: vscode.ExtensionContext) {
     refresh();
   };
 
-  // VS-01.4
-  const addLinkToActive = async () => {
-    const repo = open();
-    const source = activeItem(repo);
-    if (!source) return;
-    const sourceType = entry(repo, source).item.data.type;
-    const type = await vscode.window.showQuickPick(Object.keys(linkRules).filter((rule) => allows(linkRules[rule][0], sourceType)), { placeHolder: 'Link type' });
-    if (!type) return;
-    const [targetType] = linkRules[type][1];
-    const picker = vscode.window.createQuickPick();
-    const update = () => {
-      const query = `${picker.value} ${targetType === '*' ? '' : `type:${targetType}`}`;
-      picker.items = search(repo, query).map(({ id, title }) => ({ label: id, description: title, alwaysShow: true }));
-    };
-    picker.placeholder = 'Search target';
-    picker.onDidChangeValue(update);
-    picker.onDidAccept(() => {
-      addLink(repo, source, type, picker.selectedItems[0].label);
-      picker.dispose();
-      refresh();
-    });
-    update();
-    picker.show();
-  };
-
   // VS-06.1
   const recordTestRun = async () => {
     const repo = open();
@@ -151,6 +112,15 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.showInformationMessage(`Recorded ${recordRun(repo, testCase.label, sut.label, result, logs.map((log) => log.fsPath))}`);
   };
 
+  // VS-01.6, VS-04.3
+  const yaml = { pattern: '**/*.yaml' };
+  const atId = <T>(use: (repo: Repo, found: Entry) => T) => (document: vscode.TextDocument, position: vscode.Position) => {
+    const repo = open();
+    const found = repo.entries.get(document.getText(document.getWordRangeAtPosition(position, /[\w-]+/)));
+    return found && use(repo, found);
+  };
+  const location = (found: Entry) => new vscode.Location(fileUri(found.item.path), new vscode.Position(0, 0));
+
   // Core refusals become error messages.
   const register = <T extends unknown[]>(name: string, command: (...args: T) => unknown) => vscode.commands.registerCommand(name, async (...args: T) => {
     try { await command(...args); } catch (error) { vscode.window.showErrorMessage((error as Error).message); }
@@ -159,16 +129,19 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     diagnostics,
     vscode.window.registerTreeDataProvider('plm.tree', tree),
-    vscode.window.registerTreeDataProvider('plm.links', links),
     register('plm.editItem', editItem),
     register('plm.newItem', createItem),
-    register('plm.addLink', addLinkToActive),
     register('plm.showRequirements', showRequirements),
     register('plm.showChange', showChange),
     register('plm.confirm', confirmItem),
     register('plm.recordTestRun', recordTestRun),
+    vscode.languages.registerCompletionItemProvider(yaml, { provideCompletionItems: (document, position) => completesId(document.lineAt(position).text.slice(0, position.character))
+      ? [...open().entries.values()].map(({ id, item }) => ({ label: item.data.title, detail: id, insertText: id })) : [] }),
+    vscode.languages.registerHoverProvider(yaml, { provideHover: atId((repo, found) => ({ contents: [Object.assign(
+      new vscode.MarkdownString(hoverMarkdown(repo, linkStates(repo, currentVersions(repo)), found.id, activeItem(repo))), { isTrusted: { enabledCommands: ['plm.reviewLink'] } })] })) }),
+    vscode.languages.registerDefinitionProvider(yaml, { provideDefinition: atId((repo, found) => location(found)) }),
+    vscode.languages.registerReferenceProvider(yaml, { provideReferences: atId((repo, found) => references(repo, found.id).map(location)) }),
     vscode.workspace.onDidSaveTextDocument(refresh),
-    vscode.window.onDidChangeActiveTextEditor(() => linksChanged.fire()),
   );
   refreshDiagnostics();
 }

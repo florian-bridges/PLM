@@ -49,7 +49,7 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
   return links;
 }
 
-// CL-01.1, VS-01.4: a new, unconfirmed link.
+// CL-01.1: a new, unconfirmed link.
 export function addLink(repo: Repo, source: string, type: string, target: string): void {
   const { item } = entry(repo, source);
   if (item.doc.hasIn(['links'])) item.doc.addIn(['links'], { type, target });

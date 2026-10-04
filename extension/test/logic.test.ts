@@ -3,7 +3,7 @@ import { parseDocument } from 'yaml';
 import type { LinkState } from '../../src/links.ts';
 import type { Repo } from '../../src/repo.ts';
 import { baseSchema } from '../../src/schemas.ts';
-import { applyForm, formData, formFields, formHtml, linkRows, productTree, requirementsMarkdown } from '../src/logic.ts';
+import { applyForm, formData, formFields, formHtml, completesId, hoverMarkdown, productTree, references, requirementsMarkdown } from '../src/logic.ts';
 
 const fakeRepo = (...entries: { id: string; [field: string]: unknown }[]) => ({ entries: new Map(entries.map((found) => [found.id, {
   path: found.id, nested: [], requirements: [], item: { data: { title: found.id.toLowerCase(), text: `${found.id} text` } }, meta: { data: { status: 'draft' } }, ...found,
@@ -13,13 +13,6 @@ test('VS-02.1: composition from the top-level items, nested before used items', 
   const repo = fakeRepo({ id: 'A', nested: ['P'], item: { data: { uses: ['L', 'X'] } } }, { id: 'P', path: 'A/P' }, { id: 'L' }, { id: 'U', path: 'runs/U' });
   expect(productTree(repo).map((found) => found.id)).toEqual(['A', 'L']);
   expect(productTree(repo, 'A').map((found) => found.id)).toEqual(['P', 'L']);
-});
-
-test('VS-04.1: outgoing and incoming links of an item', () => {
-  const link = (source: string, target: string, state: LinkState['state']): LinkState =>
-    ({ source, title: source.toLowerCase(), link: { type: 'satisfies', target }, targetTitle: target.toLowerCase(), state });
-  const rows = linkRows([link('P', 'R', 'suspect'), link('A', 'P', 'current'), link('A', 'R', 'unconfirmed')], 'P');
-  expect(rows.map((row) => [row.label, row.state.state])).toEqual([['→ satisfies R (r)', 'suspect'], ['← A (a) satisfies', 'current']]);
 });
 
 test('VS-03.1: requirements of the item, then its nested items, as numbered sections', () => {
@@ -40,4 +33,15 @@ test('VS-01.2: flat form fields from the schema, written back keeping other attr
   expect(item.toJS()).toEqual({ title: 'Spar', spec: { a: 1 }, uses: ['L', 'M'], mass_kg: 1.5 });
   expect(String(item)).toContain('# spar');
   expect(meta.toJS()).toEqual({ status: 'released' });
+});
+
+test('VS-01.6: completion after target:, uses: and dashes', () => {
+  expect(['  target: R', 'uses: ', '  - P', 'title: P'].map(completesId)).toEqual([true, true, true, false]);
+});
+
+test('VS-04.3: hover with link state, items linking to or using an ID', () => {
+  const repo = fakeRepo({ id: 'A', item: { data: { links: [{ target: 'R' }] } } }, { id: 'B', item: { data: { uses: ['R'] } } }, { id: 'R', item: { data: { title: 'r', type: 'requirement' } } });
+  expect(hoverMarkdown(repo, [{ source: 'A', link: { target: 'R' }, state: 'suspect' } as LinkState], 'R', 'A'))
+    .toBe('**r**\n\nrequirement, draft\n\nsuspect [Review link](command:plm.reviewLink?%5B%22A%22%2C%22R%22%5D)');
+  expect(references(repo, 'R').map((found) => found.id)).toEqual(['A', 'B']);
 });

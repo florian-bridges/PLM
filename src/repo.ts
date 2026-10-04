@@ -91,7 +91,7 @@ export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
 export const childrenOf = (entry?: Entry): string[] => [...(entry?.nested ?? []), ...usesOf(entry)];
 export const linksOf = (entry: Entry): Link[] => list<Link>(entry.item.data.links).map((link) => ({ ...entry.meta.data.confirmed?.[link.target], ...link }));
 
-// TE-05.1, VS-04.1: the innermost item containing a file, given relative to the root.
+// TE-05.1, VS-01.2: the innermost item containing a file, given relative to the root.
 export const innermostItem = (repo: Repo, file: string) => [...repo.entries.values()]
   .filter((candidate) => file === candidate.path || file.startsWith(`${candidate.path}/`))
   .sort((a, b) => b.path.length - a.path.length)[0]?.id;

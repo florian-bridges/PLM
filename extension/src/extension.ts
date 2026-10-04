@@ -12,7 +12,6 @@ export function activate(context: vscode.ExtensionContext) {
   const folder = vscode.workspace.workspaceFolders?.[0];
   if (!folder) return;
   const root = findRoot(folder.uri.fsPath);
-  vscode.commands.executeCommand('setContext', 'plm.active', true); // VS-01.5
   const open = () => loadRepo(root);
   const fileUri = (path: string) => vscode.Uri.file(join(root, path));
   const statesOf = (repo: Repo) => linkStates(repo, currentVersions(repo));
@@ -92,11 +91,11 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   // VS-01.5
-  const createItem = async (at?: Entry | vscode.Uri) => {
+  const createItem = async (at?: Entry) => {
     const type = await vscode.window.showQuickPick(Object.keys(open().settings.prefixes ?? {}).filter((type) => type !== 'test-run'));
     const title = type && await vscode.window.showInputBox({ prompt: 'Title' });
     if (!title) return;
-    editItem({ id: newItem(open(), type, title, at instanceof vscode.Uri ? at.fsPath : join(root, at?.path ?? '')) });
+    editItem({ id: newItem(open(), type, title, join(root, at?.path ?? '')) });
     refresh();
   };
 
@@ -119,7 +118,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.showInformationMessage(`Recorded ${recordRun(repo, testCases, sut.label, picked, logs.map((log) => log.fsPath))}`);
   };
 
-  // VS-01.6, VS-04.3
+  // VS-04.3
   const yaml = { pattern: '**/*.yaml' };
   const atId = <T>(use: (found: Entry, repo: Repo, document: vscode.TextDocument) => T) => (document: vscode.TextDocument, position: vscode.Position) => {
     const repo = open();
@@ -141,8 +140,6 @@ export function activate(context: vscode.ExtensionContext) {
     register('plm.showRequirements', showRequirements),
     register('plm.reviewLink', reviewLink),
     register('plm.recordTestRun', recordTestRun),
-    vscode.languages.registerCompletionItemProvider(yaml, { provideCompletionItems: (document, position) => logic.completesId(document.getText(new vscode.Range(0, 0, position.line, position.character)))
-      ? [...open().entries.values()].map(({ id, item }) => ({ label: item.data.title, detail: id, insertText: id })) : [] }),
     vscode.languages.registerHoverProvider(yaml, { provideHover: atId((found, repo, document) => ({ contents: [Object.assign(
       new vscode.MarkdownString(logic.hoverMarkdown(repo, statesOf(repo), found.id, activeItem(repo, document.uri.fsPath))), { isTrusted: { enabledCommands: ['plm.reviewLink'] } })] })) }),
     vscode.languages.registerDefinitionProvider(yaml, { provideDefinition: atId((found) => new vscode.Location(fileUri(found.item.path), new vscode.Position(0, 0))) }),

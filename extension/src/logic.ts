@@ -1,7 +1,7 @@
 // VS-01–VS-04: editor logic without the vscode API, for tests.
 import type { Document } from 'yaml';
 import type { Coverage, LinkState } from '../../src/links.ts';
-import { childrenOf, entry, subtree, type Entry, type Link, type Repo } from '../../src/repo.ts';
+import { childrenOf, entry, type Entry, type Link, type Repo } from '../../src/repo.ts';
 import type { Finding } from '../../src/validate.ts';
 
 // VS-01.2
@@ -66,22 +66,21 @@ export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry
   const ref = (id: string) => { const found = repo.entries.get(id); return found ? `[${id}](${link(found)}) ${found.item.data.title}` : id; };
   const status = (found: Entry) => (found.meta.data.status ? ` *${found.meta.data.status}*` : '');
   const linkLine = (state: LinkState) => `- ${linkState(state)} ${ref(state.source)} ${state.link.type} ${ref(state.link.target)}\n`;
-  const summary = rows.map((row) => `- ${row.state} ${ref(row.requirement)}${row.run ? ` ${ref(row.run.id)}` : ''}\n`).join('') + suspects.map(linkLine).join('');
-  return summary + subtree(repo, id).map((itemId, index) => {
+  const summary = rows.map((row) => `- ${row.state} ${ref(row.requirement)}\n`).join('') + suspects.map(linkLine).join('');
+  const seen = new Set<string>();
+  const section = (itemId: string, number: string): string => {
+    seen.add(itemId);
     const found = entry(repo, itemId);
-    let folder = '';
-    return `\n## ${index + 1} ${ref(itemId)}${status(found)}\n\n` + rows.filter((row) => found.requirements.includes(row.requirement)).map((row) => {
+    let n = 0;
+    return `\n${'#'.repeat(Math.min(number.split('.').length + 1, 6))} ${number} ${ref(itemId)}${status(found)}\n\n` + rows.filter((row) => found.requirements.includes(row.requirement)).map((row) => {
       const child = row.requirement, requirement = entry(repo, child);
-      const sub = requirement.path.match(/requirements\/(.+)\//)?.[1] ?? ''; // VS-03.2
-      return (folder !== (folder = sub) && sub ? `### ${sub}\n\n` : '') + `**${requirement.item.data.title}** [${child}](${link(requirement)})${status(requirement)} ${row.state}\n\n${requirement.item.data.text ?? ''}\n\n`
+      return `**${requirement.item.data.title}** [${child}](${link(requirement)})${status(requirement)} ${row.state}\n\n${requirement.item.data.text ?? ''}\n\n`
         + states.filter((state) => state.source === child || state.link.target === child).map(linkLine).join('')
         + row.tests.map((test) => `- ${ref(test.testCase.id)}: ${test.run ? `${ref(test.run.id)} ${test.result}${test.outdated ? ' outdated' : ''}` : 'no run'}\n`).join('') + '\n';
-    }).join('');
-  }).join('');
+    }).join('') + childrenOf(found).map((child) => seen.has(child) || !repo.entries.has(child) ? '' : section(child, `${number}.${++n}`)).join('');
+  };
+  return summary + section(id, '1');
 }
-
-// VS-01.6
-export const completesId = (before: string) => /(target:[ \t]*|uses:[ \t]*(\[[^\]]*|(\n[ \t]*-[ \t]*[\w-]*)+)?)[\w-]*$/.test(before);
 
 // VS-04.3
 export function hoverMarkdown(repo: Repo, states: LinkState[], id: string, source?: string) {

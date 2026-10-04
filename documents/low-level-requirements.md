@@ -7,7 +7,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<name>/item.yaml` with their requirements `requirements/<name>.yaml`, also in subfolders, and test cases `tests/<name>/item.yaml`, test runs `runs/<name>/item.yaml` and `meta/<ID>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
 *Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files. Subfolders group requirements; names sort them. Test cases in the tested item's folder make its version cover its requirements and test cases, so adding or changing a test case outdates the runs against the item. Runs stay outside: inside the tested item, a run would change the version it records.
 
-**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type` and `target`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
+**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
 *Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
 
 **CO-01.3** The core shall list artifacts as file paths without reading their contents, and detect Git LFS pointers that are not fetched.
@@ -51,7 +51,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset, and for links of test runs.
 *Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review. Run links are confirmed when recording (CL-03.2).
 
-**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none. Links from test runs are evidence, not links to review: suspect lists shall omit them, and a run with a suspect link is outdated.
+**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none. Links from test runs are evidence, not links to review: suspect lists, of the repository or an item subtree, shall omit them, and a run with a suspect link is outdated.
 *Rationale:* Separating unconfirmed from suspect distinguishes new, unreviewed links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
 
 **TE-03.2** To show what changed, the engine shall return the diff of the target's subtree since the link's `commit` or, if it is missing or unknown, since the latest commit at which the target had the confirmed version.
@@ -63,7 +63,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-05.2** A link shall have become suspect when its confirmed version equals the target's version at base but not at head.
 *Rationale:* Links already suspect at base are not caused by the change.
 
-**TE-06.1** A requirement shall count as verified when a test case `verifies` it through a current link and that test case's latest run, by date, with current `executes` and `tests` links has result `pass`; a pending requirement shall name its test cases' outdated latest runs.
+**TE-06.1** A requirement shall count as verified when a test case `verifies` it through a current link and that test case's latest run, by date, with current `executes` and `tests` links records `pass` for it; coverage shall list each verifying test case with its latest run, that run's result for it and whether it is outdated.
 *Rationale:* Evidence counts only for the versions tested and the latest result; reusing the suspect mechanism avoids a second staleness check.
 
 **TE-06.2** Coverage shall be reported for the repository or an item subtree as verified, verification pending (verifying test case without current passing run) and unverified (no verifying test case).
@@ -71,7 +71,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>[..<head>]` and `report coverage [<item>]`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Commander is the established choice.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
@@ -89,13 +89,13 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-02.5** `plm rename <ID> <title>` shall set the item's `title` and rename its folder or file to match it per CO-02.7.
 *Rationale:* Retitling and renaming in one step keeps names current; links refer to IDs and need no change.
 
-**CL-03.1** `plm test record <test-case> --sut <ID> --result pass|fail|inconclusive [--log <file>...]` shall create a test run in `runs/` with date, result and copies of the log files.
-*Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for.
+**CL-03.1** `plm test record <test-case>... --sut <ID> --result <result>... [--log <file>...]` shall create a test run in `runs/` with date, copies of the log files and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.
+*Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for. One run per rig session keeps its logs together; results per test case keep one failure from discrediting the others.
 
 **CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation per TE-02.1 with the versions at `HEAD`, recorded as `commit`.
 *Rationale:* The run must record exactly which version was tested; the commit makes it reproducible.
 
-**CL-03.3** Recording shall be refused while the system under test or test case differs from `HEAD`.
+**CL-03.3** Recording shall be refused while the system under test or a test case differs from `HEAD`.
 *Rationale:* Uncommitted states cannot be reproduced and so cannot serve as evidence.
 
 **CL-05.1** Every command shall accept `--format json`, with the JSON output schema versioned.
@@ -127,11 +127,17 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-02.1** A tree view shall show composition, nested and used items, from the top-level items, with type icons and status badges; selecting an item opens its `item.yaml`.
 *Rationale:* Badges show maturity. Used items appear under each item using them, as they count toward its version.
 
-**VS-03.1** A product tree command shall show a read-only webview of an item's requirements and those of its nested items, as numbered sections with ID, title, status and rendered Markdown; clicking an ID opens its file.
-*Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements from aircraft to equipment level as one document.
+**VS-03.1** A product tree command shall show a read-only webview of an item with a numbered section per item of its subtree (TE-06.2), each listing the item's requirements with title in bold, ID, status, coverage state and rendered Markdown text; clicking an ID opens its file.
+*Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements from aircraft to equipment level in the product's structure.
 
 **VS-03.2** The document shall show each subfolder of `requirements/` as a heading above its requirements.
 *Rationale:* Subfolders group requirements by topic.
+
+**VS-03.3** Each requirement shall list its links and the links to it with their state per TE-03.1 and, if not current, "Review link" (VS-04.3), and each verifying test case its latest run per TE-06.1.
+*Rationale:* Links in both directions per requirement form the traceability matrix in reading order.
+
+**VS-03.4** The document shall begin with the output of `plm report coverage <item>` and `plm suspects <item>`, and take all link states, coverage and runs from the same core functions.
+*Rationale:* Reviewers see the item's gaps first, including links to requirements outside the subtree.
 
 **VS-04.2** "Review link" shall show one page with the link type, the source's and target's text, the diff from TE-03.2 or, if unconfirmed, the target's file, the previous confirmer and date, and the target's findings; "Confirm" shall confirm that link per CL-01.2, "Cancel" close the page.
 *Rationale:* Users decide on one link with everything needed on one page.
@@ -139,7 +145,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file.
 *Rationale:* Links are inspected and navigated where they are written, replacing a separate links view.
 
-**VS-06.1** A command shall record a manual test run, picking test case, system under test, result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
+**VS-06.1** A command shall record a manual test run, picking test cases, system under test, each test case's result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
 *Rationale:* Manual and automated runs must produce identical evidence; one recording function in the core guarantees it.
 
 ## CI integration

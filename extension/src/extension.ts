@@ -132,10 +132,10 @@ export function activate(context: vscode.ExtensionContext) {
   // VS-06.1
   const recordTestRun = async () => {
     const repo = open();
-    const pickItem = (types: (type: string) => boolean, placeHolder: string) => vscode.window.showQuickPick([...repo.entries.values()]
-      .filter((found) => types(found.item.data.type)).map((found) => ({ label: found.id, description: found.item.data.title })), { placeHolder });
-    const testCase = await pickItem((type) => type === 'test-case', 'Test case');
-    const sut = testCase && await pickItem((type) => !['test-case', 'test-run'].includes(type), 'System under test');
+    const pickItem = (placeHolder: string, type?: string) => vscode.window.showQuickPick([...repo.entries.values()]
+      .filter((found) => !type || found.item.data.type === type).map((found) => ({ label: found.id, description: found.item.data.title })), { placeHolder });
+    const testCase = await pickItem('Test case', 'test-case');
+    const sut = testCase && await pickItem('System under test');
     const result = sut && await vscode.window.showQuickPick(results, { placeHolder: 'Result' });
     if (!result) return;
     const logs = await vscode.window.showOpenDialog({ canSelectMany: true, openLabel: 'Attach logs' }) ?? [];

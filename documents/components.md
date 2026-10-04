@@ -15,7 +15,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 ## Traceability engine (TE)
 
-**TE-01** The engine shall compute each item's version from its content, including nested items, and the versions of items it uses. (CR-07, CR-12; US-2, US-5)
+**TE-01** The engine shall compute each item's version from its content, including nested items, and the versions of items it uses. (CR-07, CR-09, CR-12; US-2, US-5)
 *Rationale:* Including nested and used items means a change anywhere below an assembly invalidates evidence on it, as test results on assemblies require.
 
 **TE-02** The engine shall record the target's version when a user confirms a link. (CR-07; US-1, US-4)
@@ -32,7 +32,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 ## CLI (CL)
 
-**CL-01** The CLI shall expose validation, search, link confirmation, impact analysis and reports. (CR-04–CR-07, CR-10, CR-13; US-1–US-7)
+**CL-01** The CLI shall expose validation, search, link confirmation, impact analysis and reports. (CR-04–CR-07, CR-09, CR-10, CR-13; US-1–US-7)
 *Rationale:* A CLI makes every function scriptable and usable in CI and on rigs without an editor.
 
 **CL-02** The CLI shall create items from type templates. (CR-04; US-2, US-3)
@@ -55,7 +55,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **VS-03** The extension shall show a requirement hierarchy as a readable document. (CR-05, CR-06; US-1)
 *Rationale:* Requirements engineers read and review requirements as documents, not as single files.
 
-**VS-04** The extension shall show an item's links with their suspect state and let users re-confirm them. (CR-06, CR-07; US-1, US-3)
+**VS-04** The extension shall show an item's links with their suspect state and let users re-confirm them. (CR-06, CR-07; US-1)
 *Rationale:* Suspects are resolved where the engineer works, without switching tools.
 
 **VS-06** The extension shall let users enter manual test results. (CR-09; US-5)
@@ -63,7 +63,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 ## CI integration (CI)
 
-**CI-01** CI shall validate each merge request and block merging on errors or unconfirmed suspect links. (CR-09, CR-12, CR-14; US-7)
+**CI-01** CI shall validate each merge request and block merging on errors, suspect or unconfirmed links. (CR-09, CR-12, CR-14; US-7)
 *Rationale:* Checking in CI keeps errors and unconfirmed suspects out of protected branches, whatever tools users run locally.
 
 **CI-02** CI shall post the impact analysis on each merge request and request review from owners of affected items. (CR-13, CR-14, CR-18; US-7)

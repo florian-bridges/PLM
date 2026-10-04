@@ -193,11 +193,11 @@ In a team, each change goes through a merge request into the protected `main` br
 
 ### 6. Change a requirement
 
-The customer wants a heavier camera, so the maximum takeoff mass rises to 2.8 kg. The airframe requirement was confirmed against 2.5 kg, so its link becomes suspect, shown with the change since confirmation. `plm impact` lists what the change affects: the changed requirement, the aircraft containing it and the suspect link:
+The customer wants a heavier camera, so the maximum takeoff mass rises to 2.8 kg. The airframe requirement was confirmed against 2.5 kg, so its link becomes suspect. `plm impact` lists what the change affects: the changed requirement, the aircraft containing it and the suspect link:
 
 ```sh
 perl -pi -e 's/2.5 kg/2.8 kg/' $AC-quadcopter/requirements/$R_MTOM-*.yaml
-plm suspects --diff
+plm suspects
 plm impact HEAD
 ```
 

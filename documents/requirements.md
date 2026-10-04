@@ -1,7 +1,7 @@
 # Requirements
 
 **CR-01 — Engineering definition**
-The tool shall represent the complete engineering definition of an aircraft: structure, systems, software, electrical, EWIS, requirements and other engineering items.
+The tool shall represent the complete engineering definition of an aircraft: structure, systems, software, electrical, EWIS and requirements.
 *Rationale:* Certification requires a complete, consistent type design. Disciplines kept in separate tools hide the dependencies between them.
 
 **CR-02 — Hierarchical composition**
@@ -13,8 +13,8 @@ The tool shall collect development artifacts (CAD, software, documents, analyses
 *Rationale:* The artifacts are the actual engineering work. Associating them with items lets users find the current CAD, analysis or test result of any item.
 
 **CR-04 — Authoring**
-The tool shall let users create, edit and retire items, artifacts and relationships.
-*Rationale:* Engineers maintain the definition throughout development. Retiring instead of deleting keeps links in earlier releases valid.
+The tool shall let users create and edit items, artifacts and relationships.
+*Rationale:* Engineers maintain the definition throughout development.
 
 **CR-05 — Search and navigation**
 The tool shall let users find, browse and view items, artifacts and their relationships.

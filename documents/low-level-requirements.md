@@ -19,9 +19,6 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.2** The core shall report as errors: names not starting with their `id`, requirements and test cases outside their item's `requirements/` and `tests/` folders, test runs outside the top-level `runs/` folder, other items inside them, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late.
 
-**CO-02.3** The core shall report files above the size limit in `plm.yaml` that are not stored in Git LFS.
-*Rationale:* Binaries outside LFS bloat every clone permanently and cannot be locked.
-
 **CO-02.4** Each finding shall carry file, line, column, severity and a stable code.
 *Rationale:* Positions let editors and CI point to the problem; stable codes allow filtering and suppression.
 
@@ -74,7 +71,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>[..<head>]` and `report trace|coverage|compliance [<item>]`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>[..<head>]` and `report coverage [<item>]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Commander is the established choice.
 
 **CL-01.2** `confirm <source>` shall confirm all links of the source item.
@@ -134,7 +131,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Incoming links show what depends on an item before it is changed.
 
 **VS-04.2** "Show change" shall open the diff from TE-03.2 in an editor; "Confirm" shall confirm all links of the item per CL-01.2.
-*Rationale:* One highlighted diff document shows everything changed since confirmation, as `plm suspects --diff` does. Confirming per item matches the CLI.
+*Rationale:* One highlighted diff document shows everything changed since confirmation. Confirming per item matches the CLI.
 
 **VS-06.1** A command shall record a manual test run, picking test case, system under test, result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
 *Rationale:* Manual and automated runs must produce identical evidence; one recording function in the core guarantees it.

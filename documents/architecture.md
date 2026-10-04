@@ -20,7 +20,7 @@ runs/<ID>-<title>/            test runs with their logs
 meta/<ID>.yaml                owner, status, links
 ```
 
-* **Items** (CR-01) have a stable ID and a type with its own schema: requirement, part, assembly, COTS part, harness, interface, software, test case, test run. Retired items are kept (CR-04).
+* **Items** (CR-01) have a stable ID and a type with its own schema (CO-02.5).
 * **Composition** (CR-02): folders nest; `uses` lists items reused from elsewhere, e.g. standard parts.
 * **Artifacts** (CR-03) are files in the item directory; binaries use Git LFS with locking. CAD is stored natively plus a STEP export.
 * **Relationships** (CR-06) are typed links in `meta/<ID>.yaml` (`satisfies`, `verifies`, `implements`, …).
@@ -46,10 +46,4 @@ See [components.md](components.md).
 |---|---|
 | Language | TypeScript (Node.js 22) |
 | Versioning | Git, Git LFS |
-| Data | YAML, JSON Schema (Ajv) |
-| Search | MiniSearch |
-| CLI | Commander |
-| VS Code extension | VS Code API, esbuild |
-| Static site | Astro |
 | Tooling | npm, Vitest |
-| CI | GitHub Actions, GitLab CI |

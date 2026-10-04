@@ -5,7 +5,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { parseDocument, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { addLink, changeSince, confirm, coverage, fromRun, linkStates, recordRun, type LinkState } from './links.ts';
+import { addLink, confirm, coverage, fromRun, linkStates, recordRun, type LinkState } from './links.ts';
 import { entry, homeFolders, innermostItem, isRequirementFile, loadRepo, nameFor, newId, readYaml, Refused, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
 import { search } from './search.ts';
@@ -71,16 +71,10 @@ program.command('confirm <source>').description('confirm all links of an item').
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 
-program.command('suspects').description('list suspect and unconfirmed links').option('--diff', 'show what changed').action(({ diff }) => {
+program.command('suspects').description('list suspect and unconfirmed links').action(() => {
   const repo = openRepo();
-  const states = linkStates(repo, currentVersions(repo))
-    .filter((state) => state.state !== 'current' && !fromRun(repo, state))
-    .map((state) => (diff && state.state === 'suspect' ? { ...state, ...changeSince(repo, state.link) } : state));
-  const lines = states.map((state) => {
-    const change = 'diff' in state && state.diff ? `\n${state.diff}` : '';
-    return `${state.state} ${linkLabel(state)}${change}`;
-  });
-  output(lines.join('\n'), states);
+  const states = linkStates(repo, currentVersions(repo)).filter((state) => state.state !== 'current' && !fromRun(repo, state));
+  output(states.map((state) => `${state.state} ${linkLabel(state)}`).join('\n'), states);
   if (states.length) exitCode = 1;
 });
 

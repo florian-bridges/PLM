@@ -82,9 +82,6 @@ export function loadRepo(start: string): Repo {
   return repo;
 }
 
-// CL-02.1: the slug of the title, or the ID for an empty title.
-export const nameFor = (id: string, title: unknown) => String(title ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id;
-
 export const isRequirementFile = (path: string) => path.endsWith('.yaml');
 export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
 export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
@@ -114,7 +111,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
   const id = newId(repo, type);
   const home = [parent?.path, homeFolders[type]].filter(Boolean).join('/');
   const inGroup = type === 'requirement' && cwd.startsWith(`${home}/`);
-  const path = [inGroup ? cwd : home, nameFor(id, title)].filter(Boolean).join('/');
+  const path = [inGroup ? cwd : home, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id].filter(Boolean).join('/');
 
   const item = readYaml(repo.root, `templates/${type}.yaml`);
   item.path = type === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`;
@@ -126,12 +123,12 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
 }
 
 // CO-01.3
-export function artifacts(repo: Repo, { path }: Entry): { path: string; lfs?: 'missing' }[] {
+export function artifacts(repo: Repo, { path }: Entry) {
   const skipped = ['item.yaml', homeFolders.requirement, homeFolders['test-case']];
   const files = (folder: string): string[] => readdirSync(join(repo.root, folder), { withFileTypes: true }).flatMap((child) => {
     const file = `${folder}/${child.name}`;
     if (child.name.startsWith('.') || (folder === path && skipped.includes(child.name))) return [];
-    if (!child.isDirectory()) return [file];
+    if (!child.isDirectory()) return existsSync(join(repo.root, file)) ? [file] : [];
     return existsSync(join(repo.root, file, 'item.yaml')) ? [] : files(file);
   });
   const isPointer = (file: string) => statSync(join(repo.root, file)).size < 200

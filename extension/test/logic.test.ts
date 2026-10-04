@@ -15,9 +15,9 @@ test('VS-02.1: composition from the top-level items, nested before used items', 
   expect(productTree(repo, 'A').map((found) => found.id)).toEqual(['P', 'L']);
 });
 
-test('VS-03.1: requirements of the item, then its nested items, as numbered sections', () => {
-  const repo = fakeRepo({ id: 'A', requirements: ['R'], nested: ['P'] }, { id: 'R' }, { id: 'P', requirements: ['Q'] }, { id: 'Q' });
-  expect(requirementsMarkdown(repo, 'A', (found) => `#${found.id}`)).toBe('# 1 [A](#A) a *draft*\n\nA text\n\n## 1.1 [R](#R) r *draft*\n\nR text\n\n'
+test('VS-03.1, VS-03.2: requirements of the item, then its nested items, as numbered sections', () => {
+  const repo = fakeRepo({ id: 'A', requirements: ['R'], nested: ['P'] }, { id: 'R', path: 'A/requirements/loads/R.yaml' }, { id: 'P', requirements: ['Q'] }, { id: 'Q' });
+  expect(requirementsMarkdown(repo, 'A', (found) => `#${found.id}`)).toBe('# 1 [A](#A) a *draft*\n\nA text\n\n## loads\n\n## 1.1 [R](#R) r *draft*\n\nR text\n\n'
     + '## 1.2 [P](#P) p *draft*\n\nP text\n\n### 1.2.1 [Q](#Q) q *draft*\n\nQ text\n\n');
 });
 

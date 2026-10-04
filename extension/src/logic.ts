@@ -70,8 +70,12 @@ export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry
   const found = entry(repo, id);
   const { title, text } = found.item.data;
   const status = found.meta.data.status ? ` *${found.meta.data.status}*` : '';
-  const section = `${'#'.repeat(Math.min(number.split('.').length, 6))} ${number} [${id}](${link(found)}) ${title}${status}\n\n${text ?? ''}\n\n`;
-  return section + [...found.requirements, ...found.nested].map((child, index) => requirementsMarkdown(repo, child, link, `${number}.${index + 1}`)).join('');
+  const level = '#'.repeat(Math.min(number.split('.').length, 6));
+  let folder = '';
+  return `${level} ${number} [${id}](${link(found)}) ${title}${status}\n\n${text ?? ''}\n\n` + [...found.requirements, ...found.nested].map((child, index) => {
+    const sub = entry(repo, child).path.match(/requirements\/(.+)\//)?.[1] ?? ''; // VS-03.2
+    return (folder !== (folder = sub) && sub ? `${level}# ${sub}\n\n` : '') + requirementsMarkdown(repo, child, link, `${number}.${index + 1}`);
+  }).join('');
 }
 
 // VS-01.6

@@ -6,7 +6,7 @@ import { childrenOf, entry, findRoot, innermostItem, linksOf, loadRepo, newItem,
 import { results } from '../../src/schemas.ts';
 import { itemSchema, validate } from '../../src/validate.ts';
 import { currentVersions } from '../../src/version.ts';
-import { applyForm, formData, formFields, formHtml, completesId, hoverMarkdown, productTree, references, requirementsMarkdown, reviewHtml } from './logic.ts';
+import * as logic from './logic.ts';
 
 export function activate(context: vscode.ExtensionContext) {
   const folder = vscode.workspace.workspaceFolders?.[0];
@@ -14,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
   const root = findRoot(folder.uri.fsPath);
   const open = () => loadRepo(root);
   const fileUri = (path: string) => vscode.Uri.file(join(root, path));
-  // VS-01.2
+  // VS-01.2, VS-04.3
   const activeItem = (repo: Repo) => {
     const file = vscode.window.activeTextEditor?.document.uri.fsPath;
     return file && innermostItem(repo, relative(root, file));
@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
       description: found.meta.data.status, iconPath: new vscode.ThemeIcon(icons[found.item.data.type] ?? 'symbol-misc'),
       command: { title: 'Open', command: 'vscode.open', arguments: [fileUri(found.item.path)] },
     }),
-    getChildren: (row) => productTree(open(), row?.id),
+    getChildren: (row) => logic.productTree(open(), row?.id),
   };
 
   const refresh = () => {
@@ -52,7 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
   const showRequirements = async (found: Entry) => {
     const link = (target: Entry) => `command:vscode.open?${encodeURIComponent(JSON.stringify([fileUri(target.item.path)]))}`;
     const panel = vscode.window.createWebviewPanel('plm.requirements', `${found.item.data.title} requirements`, vscode.ViewColumn.Active, { enableCommandUris: ['vscode.open'] });
-    panel.webview.html = await vscode.commands.executeCommand<string>('markdown.api.render', requirementsMarkdown(open(), found.id, link));
+    panel.webview.html = await vscode.commands.executeCommand<string>('markdown.api.render', logic.requirementsMarkdown(open(), found.id, link));
   };
 
   // VS-04.2
@@ -61,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
     const link = linksOf(entry(repo, source)).find((found) => found.target === target)!;
     const change = (link.version && changeSince(repo, link).diff) || String(entry(repo, target).item.doc);
     const panel = vscode.window.createWebviewPanel('plm.review', target, vscode.ViewColumn.Active, { enableScripts: true });
-    panel.webview.html = reviewHtml(repo, source, link, change, validate(repo));
+    panel.webview.html = logic.reviewHtml(repo, source, link, change, validate(repo));
     panel.webview.onDidReceiveMessage(reporting((confirmed: number) => {
       if (confirmed) confirm(repo, currentVersions(repo), validate(repo), source, target);
       refresh();
@@ -77,12 +77,12 @@ export function activate(context: vscode.ExtensionContext) {
     const found = entry(repo, id);
     const check = itemSchema(root, found.item.data.type);
     if (!check) throw new Error(`Unknown item type ${found.item.data.type}`);
-    const fields = formFields(check.schema as Parameters<typeof formFields>[0]);
+    const fields = logic.formFields(check.schema as Parameters<typeof logic.formFields>[0]);
     const panel = vscode.window.createWebviewPanel('plm.form', id, vscode.ViewColumn.Active, { enableScripts: true });
-    panel.webview.html = formHtml(`${id} ${found.item.data.title}`, fields, { ...found.item.data, ...found.meta.data });
+    panel.webview.html = logic.formHtml(`${id} ${found.item.data.title}`, fields, { ...found.item.data, ...found.meta.data });
     panel.webview.onDidReceiveMessage(({ save, values }) => {
       const [item, meta] = [found.item.doc.clone(), found.meta.doc.clone()];
-      applyForm(item, meta, fields, formData(fields, values));
+      logic.applyForm(item, meta, fields, logic.formData(fields, values));
       check(item.toJS());
       panel.webview.postMessage((check.errors ?? []).map((error) => `${error.instancePath.slice(1) || 'item'} ${error.message}`).join('\n'));
       if (!save) return;
@@ -116,10 +116,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   // VS-01.6, VS-04.3
   const yaml = { pattern: '**/*.yaml' };
-  const atId = <T>(use: (repo: Repo, found: Entry) => T) => (document: vscode.TextDocument, position: vscode.Position) => {
+  const atId = <T>(use: (found: Entry, repo: Repo) => T) => (document: vscode.TextDocument, position: vscode.Position) => {
     const repo = open();
     const found = repo.entries.get(document.getText(document.getWordRangeAtPosition(position, /[\w-]+/)));
-    return found && use(repo, found);
+    return found && use(found, repo);
   };
   const location = (found: Entry) => new vscode.Location(fileUri(found.item.path), new vscode.Position(0, 0));
 
@@ -137,12 +137,12 @@ export function activate(context: vscode.ExtensionContext) {
     register('plm.showRequirements', showRequirements),
     register('plm.reviewLink', reviewLink),
     register('plm.recordTestRun', recordTestRun),
-    vscode.languages.registerCompletionItemProvider(yaml, { provideCompletionItems: (document, position) => completesId(document.lineAt(position).text.slice(0, position.character))
+    vscode.languages.registerCompletionItemProvider(yaml, { provideCompletionItems: (document, position) => logic.completesId(document.lineAt(position).text.slice(0, position.character))
       ? [...open().entries.values()].map(({ id, item }) => ({ label: item.data.title, detail: id, insertText: id })) : [] }),
-    vscode.languages.registerHoverProvider(yaml, { provideHover: atId((repo, found) => ({ contents: [Object.assign(
-      new vscode.MarkdownString(hoverMarkdown(repo, linkStates(repo, currentVersions(repo)), found.id, activeItem(repo))), { isTrusted: { enabledCommands: ['plm.reviewLink'] } })] })) }),
-    vscode.languages.registerDefinitionProvider(yaml, { provideDefinition: atId((repo, found) => location(found)) }),
-    vscode.languages.registerReferenceProvider(yaml, { provideReferences: atId((repo, found) => references(repo, found.id).map(location)) }),
+    vscode.languages.registerHoverProvider(yaml, { provideHover: atId((found, repo) => ({ contents: [Object.assign(
+      new vscode.MarkdownString(logic.hoverMarkdown(repo, linkStates(repo, currentVersions(repo)), found.id, activeItem(repo))), { isTrusted: { enabledCommands: ['plm.reviewLink'] } })] })) }),
+    vscode.languages.registerDefinitionProvider(yaml, { provideDefinition: atId(location) }),
+    vscode.languages.registerReferenceProvider(yaml, { provideReferences: atId((found, repo) => logic.references(repo, found.id).map(location)) }),
     vscode.workspace.onDidSaveTextDocument(refresh),
   );
   refreshDiagnostics();

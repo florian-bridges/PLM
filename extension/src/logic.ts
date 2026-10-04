@@ -1,4 +1,4 @@
-// VS-01, VS-02, VS-03, VS-04: editor logic without the vscode API, so vitest can test it.
+// VS-01–VS-04: editor logic without the vscode API, for tests.
 import type { Document } from 'yaml';
 import type { LinkState } from '../../src/links.ts';
 import { childrenOf, entry, linksOf, usesOf, type Entry, type Link, type Repo } from '../../src/repo.ts';

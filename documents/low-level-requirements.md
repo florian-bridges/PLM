@@ -77,8 +77,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
 *Rationale:* Links are reviewed one by one, or all at once after reviewing an item.
 
-**CL-02.1** `plm new <type> <title>` shall create, through the core, the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements and test cases in its `requirements/` and `tests/` folders, requirements in the working folder if inside `requirements/`, and print the new ID. It and `plm rename` shall refuse names in use.
-*Rationale:* Repository templates let programs prefill attributes and conventions. Names lack the ID, so equal titles would overwrite files. The extension reuses the core function (VS-01.5).
+**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements and test cases in its `requirements/` and `tests/` folders, requirements in the working folder if inside `requirements/`, and print the new ID. It and `plm rename` shall refuse names in use.
+*Rationale:* Repository templates let programs prefill attributes and conventions. Names lack the ID, so equal titles would overwrite files.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
@@ -112,7 +112,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-01.1** The extension shall reuse the core library and run in the extension host without a separate server, bundled by esbuild into one CommonJS file and activated in workspaces containing `plm.yaml`.
 *Rationale:* One core avoids duplicated logic and diverging results between editor and CI. A bundle needs no installed dependencies; other workspaces stay unaffected.
 
-**VS-01.2** Editing the active item, the innermost item containing the active editor's file, or a product tree item shall open a webview form generated from the type's JSON Schema, with fields for its string, number, enum and string array attributes and for `status` and `owner`. The form shall show schema errors while typing; saving shall write `item.yaml` and `meta/<ID>.yaml` through the core, keeping other attributes and comments.
+**VS-01.2** Editing the active item (the innermost item containing the active editor's file) or a product tree item shall open a webview form generated from the type's JSON Schema, with fields for its string, number, enum and string array attributes and for `status` and `owner`. The form shall show schema errors while typing; saving shall write `item.yaml` and `meta/<ID>.yaml` through the core, keeping other attributes and comments.
 *Rationale:* Forms generated from schemas support new and program-specific types without extension code. Flat fields cover the built-in types; nested attributes are edited in YAML.
 
 **VS-01.3** Diagnostics shall be updated in the Problems panel within one second of saving a file.

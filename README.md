@@ -85,17 +85,17 @@ git lfs track "*.bin"
 
 ### 2. The aircraft and its requirements
 
-Items are folders named `<ID>-<title>`. `plm new` creates an item inside the item folder you are in, or at the top of the repository, and prints its ID. Requirements go into the item's `requirements/` folder, one file each. The title names the requirement; values belong in its text:
+Items are folders named after their title; the ID is inside. `plm new` creates an item inside the item folder you are in, or at the top of the repository, and prints its ID. Requirements go into the item's `requirements/` folder, one file each; subfolders group them, and `plm new` run inside one creates the requirement there. The title names the requirement; values belong in its text:
 
 ```sh
 AC=$(plm new assembly "Quadcopter")
-cd $AC-quadcopter
+cd quadcopter
 R_MTOM=$(plm new requirement "Maximum takeoff mass")
 R_END=$(plm new requirement "Hover endurance")
 R_WIND=$(plm new requirement "Position hold in wind")
-echo "text: The quadcopter shall have a maximum takeoff mass of 2.5 kg." >> requirements/$R_MTOM-*.yaml
-echo "text: The quadcopter shall hover for at least 25 min at maximum takeoff mass." >> requirements/$R_END-*.yaml
-echo "text: The quadcopter shall hold its position within 1 m in wind of up to 10 m/s." >> requirements/$R_WIND-*.yaml
+echo "text: The quadcopter shall have a maximum takeoff mass of 2.5 kg." >> requirements/maximum-takeoff-mass.yaml
+echo "text: The quadcopter shall hover for at least 25 min at maximum takeoff mass." >> requirements/hover-endurance.yaml
+echo "text: The quadcopter shall hold its position within 1 m in wind of up to 10 m/s." >> requirements/position-hold-in-wind.yaml
 ```
 
 ### 3. Systems, their requirements and parts
@@ -106,18 +106,18 @@ Systems are assemblies nested in the aircraft folder; the nesting is the product
 AF=$(plm new assembly "Airframe")
 PWR=$(plm new assembly "Power")
 FC=$(plm new assembly "Flight control")
-cd $AF-airframe
+cd airframe
 R_AFM=$(plm new requirement "Airframe mass")
-echo "text: The airframe shall have a mass of at most 600 g." >> requirements/$R_AFM-*.yaml
+echo "text: The airframe shall have a mass of at most 600 g." >> requirements/airframe-mass.yaml
 FRM=$(plm new part "Frame")
-echo "solid frame" > $FRM-frame/frame.step
-cd ../$PWR-power
+echo "solid frame" > frame/frame.step
+cd ../power
 R_BAT=$(plm new requirement "Battery energy")
-echo "text: The battery pack shall store at least 165 Wh." >> requirements/$R_BAT-*.yaml
+echo "text: The battery pack shall store at least 165 Wh." >> requirements/battery-energy.yaml
 BAT=$(plm new part "Battery pack")
-cd ../$FC-flight-control
+cd ../flight-control
 R_FC=$(plm new requirement "Position hold control")
-echo "text: The flight control system shall hold the position within 1 m in wind of up to 10 m/s." >> requirements/$R_FC-*.yaml
+echo "text: The flight control system shall hold the position within 1 m in wind of up to 10 m/s." >> requirements/position-hold-control.yaml
 ```
 
 ### 4. Firmware with its build record
@@ -132,14 +132,14 @@ cat > schemas/software.schema.json <<'EOF'
 { "properties": { "source": { "type": "string" }, "source_commit": { "type": "string" },
   "build": { "type": "string" }, "sha256": { "type": "string" } } }
 EOF
-cd $AC-quadcopter/$FC-flight-control
+cd quadcopter/flight-control
 SW=$(plm new software "Firmware")
-head -c 1048576 /dev/urandom > $SW-firmware/firmware.bin
-cat >> $SW-firmware/item.yaml <<EOF
+head -c 1048576 /dev/urandom > firmware/firmware.bin
+cat >> firmware/item.yaml <<EOF
 source: https://github.com/you/fc-firmware
 source_commit: "3f9c2e1"
 build: https://github.com/you/fc-firmware/actions/runs/1
-sha256: $(shasum -a 256 $SW-firmware/firmware.bin | cut -d' ' -f1)
+sha256: $(shasum -a 256 firmware/firmware.bin | cut -d' ' -f1)
 EOF
 cd ../..
 ```
@@ -150,24 +150,24 @@ The repository now looks like this:
 multicopter/
   plm.yaml                   settings: ID prefixes
   schemas/                   repository item types
-  meta/<ID>.yaml             status and links of each item
-  ASM-…-quadcopter/
+  meta/<ID>.yaml             status and confirmations of each item
+  quadcopter/
     item.yaml
     requirements/            aircraft requirements
-    ASM-…-airframe/
+    airframe/
       requirements/
-      PRT-…-frame/           item.yaml, frame.step
-    ASM-…-power/
+      frame/                 item.yaml, frame.step
+    power/
       requirements/
-      PRT-…-battery-pack/
-    ASM-…-flight-control/
+      battery-pack/
+    flight-control/
       requirements/
-      SW-…-firmware/         item.yaml, firmware.bin
+      firmware/              item.yaml, firmware.bin
 ```
 
 ### 5. Trace, confirm and commit
 
-System requirements satisfy the aircraft requirements they derive from; parts and firmware satisfy or implement system requirements. New links are unconfirmed:
+System requirements satisfy the aircraft requirements they derive from; parts and firmware satisfy or implement system requirements. `plm link` adds a link to the source's `item.yaml` or requirement file; new links are unconfirmed:
 
 ```sh
 plm link $R_AFM satisfies $R_MTOM
@@ -179,10 +179,10 @@ plm link $SW implements $R_FC
 plm suspects
 ```
 
-Confirming a link states that its source satisfies the target as it is now, and records in `meta/<ID>.yaml` the target's version and title, who confirmed it and when, and the commit if the target is committed. Afterwards no link is open, the repository validates, and `plm show` prints an item with its version and links:
+Confirming a link states that its source satisfies the target as it is now, and records in the source's `meta/<ID>.yaml` the target's version and title, who confirmed it and when, and the commit if the target is committed. Afterwards no link is open, the repository validates, and `plm show` prints an item with its version and links:
 
 ```sh
-for id in $R_AFM $R_BAT $R_FC $FRM $BAT $SW; do plm confirm $id; done
+for id in $R_AFM $R_BAT $R_FC $FRM $BAT $SW; do plm confirm $id; done   # or one link: plm confirm $FRM $R_AFM
 plm suspects
 plm validate
 plm show $FRM
@@ -196,15 +196,15 @@ In a team, each change goes through a merge request into the protected `main` br
 The customer wants a heavier camera, so the maximum takeoff mass rises to 2.8 kg. The airframe requirement was confirmed against 2.5 kg, so its link becomes suspect. `plm impact` lists what the change affects: the changed requirement, the aircraft containing it and the suspect link:
 
 ```sh
-perl -pi -e 's/2.5 kg/2.8 kg/' $AC-quadcopter/requirements/$R_MTOM-*.yaml
+perl -pi -e 's/2.5 kg/2.8 kg/' quadcopter/requirements/maximum-takeoff-mass.yaml
 plm suspects
 plm impact HEAD
 ```
 
-The airframe may now weigh 650 g. Updating its requirement and confirming it against the new takeoff mass moves the suspect one level down, to the frame. The frame meets the looser limit, so it is confirmed too. The diff of the frame's links shows what was reviewed, not only a new version hash:
+The airframe may now weigh 650 g. Updating its requirement and confirming it against the new takeoff mass moves the suspect one level down, to the frame. The frame meets the looser limit, so it is confirmed too. The diff of the frame's confirmations shows what was reviewed, not only a new version hash:
 
 ```sh
-perl -pi -e 's/600 g/650 g/' $AC-quadcopter/$AF-airframe/requirements/$R_AFM-*.yaml
+perl -pi -e 's/600 g/650 g/' quadcopter/airframe/requirements/airframe-mass.yaml
 plm confirm $R_AFM
 plm suspects
 plm confirm $FRM
@@ -220,7 +220,7 @@ The battery energy also depends on the takeoff mass but was not flagged: it is l
 Test cases live in the `tests/` folder of the item they test, so the item's version covers its requirements and test cases: adding or changing a test case outdates the runs against the item. Runs live in the top-level `runs/` folder, so recording one changes no version. Before a test case exists, the endurance requirement is unverified; with one, it is pending:
 
 ```sh
-TC=$(plm -C $AC-quadcopter new test-case "Hover endurance flight")
+TC=$(plm -C quadcopter new test-case "Hover endurance flight")
 plm link $TC verifies $R_END
 plm confirm $TC
 plm report coverage $AC
@@ -241,7 +241,7 @@ git add -A && git commit -m "Hover endurance flight passed"
 A new firmware build replaces the binary and its build record. The firmware's version changes, and with it those of Flight control and the aircraft. The flight was flown with the old firmware, so `plm impact` reports the run as outdated, and the endurance requirement falls back to pending, naming the outdated run, until the flight is repeated with the new build. `plm suspects` lists nothing: a run's links are evidence of what was tested, not links to review:
 
 ```sh
-cd $AC-quadcopter/$FC-flight-control/$SW-firmware
+cd quadcopter/flight-control/firmware
 head -c 1048576 /dev/urandom > firmware.bin
 perl -pi -e "s/3f9c2e1/a1b2c3d/; s/^sha256: .*/sha256: $(shasum -a 256 firmware.bin | cut -d' ' -f1)/" item.yaml
 cd ../../..

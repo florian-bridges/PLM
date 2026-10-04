@@ -34,46 +34,43 @@ export function confirmation(repo: Repo, target: string, version: string | undef
 }
 
 // TE-02.1, CL-01.2
-export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string): Link[] {
+export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, target?: string): Link[] {
   const sourceEntry = entry(repo, source);
-  const links = linksOf(sourceEntry);
-  links.forEach((link, index) => {
-    // TE-02.2
+  // TE-02.2
+  if (sourceEntry.item.data.type === 'test-run') throw new Refused('Test run links are confirmed when recording');
+  const links = linksOf(sourceEntry).filter((link) => !target || link.target === target);
+  for (const link of links) {
     const targetFile = repo.entries.get(link.target)?.item.path;
     const broken = findings.some((finding) => finding.severity === 'error' && finding.file === targetFile);
     if (broken || !versions.has(link.target)) throw new Refused(`${link.target} fails validation; fix it before confirming`);
-    sourceEntry.meta.doc.deleteIn(['links', index, 'commit']);
-    for (const [key, value] of Object.entries(confirmation(repo, link.target, versions.get(link.target)))) sourceEntry.meta.doc.setIn(['links', index, key], value);
-  });
+    sourceEntry.meta.doc.setIn(['confirmed', link.target], confirmation(repo, link.target, versions.get(link.target)));
+  }
   if (links.length) writeYaml(repo.root, sourceEntry.meta);
   return links;
 }
 
 // CL-01.1, VS-01.4: a new, unconfirmed link.
 export function addLink(repo: Repo, source: string, type: string, target: string): void {
-  const { meta } = entry(repo, source);
-  if (meta.doc.hasIn(['links'])) meta.doc.addIn(['links'], { type, target });
-  else meta.doc.setIn(['links'], [{ type, target }]);
-  writeYaml(repo.root, meta);
+  const { item } = entry(repo, source);
+  if (item.doc.hasIn(['links'])) item.doc.addIn(['links'], { type, target });
+  else item.doc.setIn(['links'], [{ type, target }]);
+  writeYaml(repo.root, item);
 }
 
 // CL-03.1, CL-03.2
 export function recordRun(repo: Repo, testCase: string, sut: string, result: string, logs: string[]): string {
   const current = currentVersions(repo);
-  const testedVersion = (id: string) => versionAt(repo.root, 'HEAD', entry(repo, id).id);
-  const links = [
-    { type: 'executes', target: testCase, ...confirmation(repo, testCase, testedVersion(testCase)) },
-    { type: 'tests', target: sut, ...confirmation(repo, sut, testedVersion(sut)) },
-  ];
+  const links = [{ type: 'executes', target: testCase }, { type: 'tests', target: sut }];
+  const confirmed = Object.fromEntries(links.map(({ target }) => [target, confirmation(repo, target, versionAt(repo.root, 'HEAD', target))]));
   // CL-03.3
-  const changed = links.find((link) => link.version !== current.get(link.target));
+  const changed = links.find(({ target }) => confirmed[target].version !== current.get(target));
   if (changed) throw new Refused(`${changed.target} differs from HEAD; commit it first`);
 
   const id = newId(repo, 'test-run');
   const folder = `${homeFolders['test-run']}/${id}`;
-  const item = { id, type: 'test-run', title: `${testCase} on ${sut}`, date: new Date().toISOString(), result };
+  const item = { id, type: 'test-run', title: `${testCase} on ${sut}`, date: new Date().toISOString(), result, links };
   writeYaml(repo.root, { path: `${folder}/item.yaml`, doc: new Document(item) });
-  writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: new Document({ status: 'draft', links }) });
+  writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: new Document({ status: 'draft', confirmed }) });
   for (const log of logs) copyFileSync(log, join(repo.root, folder, basename(log)));
   return id;
 }

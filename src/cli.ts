@@ -65,9 +65,9 @@ program.command('search <query...>').description('search items, e.g. spar type:p
 });
 
 // CL-01.2
-program.command('confirm <source>').description('confirm all links of an item').action((source: string) => {
+program.command('confirm <source> [target]').description('confirm the link to target, or all links of an item').action((source: string, target?: string) => {
   const repo = openRepo();
-  const links = confirm(repo, currentVersions(repo), validate(repo), source);
+  const links = confirm(repo, currentVersions(repo), validate(repo), source, target);
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 
@@ -104,16 +104,24 @@ program.command('init').description('create a product repository').action(() => 
 });
 
 // CL-02.1
-program.command('new <type> [title]').description('create an item in the current item folder').action((type: string, title = '') => {
+const refuseTaken = (root: string, path: string) => {
+  if (existsSync(join(root, path))) throw new UsageError(`${path} exists`);
+};
+
+program.command('new <type> <title>').description('create an item in the current item folder').action((type: string, title: string) => {
   const repo = openRepo();
-  const parent = repo.entries.get(innermostItem(repo, relative(repo.root, resolve(workingFolder()))) ?? '');
+  const cwd = relative(repo.root, resolve(workingFolder()));
+  const parent = repo.entries.get(innermostItem(repo, cwd) ?? '');
   if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item folder`);
 
   const id = newId(repo, type);
-  const path = [parent?.path, homeFolders[type], nameFor(id, title)].filter(Boolean).join('/');
+  const home = [parent?.path, homeFolders[type]].filter(Boolean).join('/');
+  const inGroup = type === 'requirement' && cwd.startsWith(`${home}/`);
+  const path = [inGroup ? cwd : home, nameFor(id, title)].filter(Boolean).join('/');
 
   const item = readYaml(repo.root, `templates/${type}.yaml`);
   item.path = type === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`;
+  refuseTaken(repo.root, item.path);
   for (const [key, value] of Object.entries({ id, type, title })) item.doc.setIn([key], value);
   writeYaml(repo.root, item);
   writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: parseDocument('status: draft\n') });
@@ -124,10 +132,11 @@ program.command('new <type> [title]').description('create an item in the current
 program.command('rename <id> <title>').description('retitle an item and rename its folder or file').action((id: string, title: string) => {
   const repo = openRepo();
   const { item, path } = entry(repo, id);
+  const renamed = join(dirname(path), nameFor(id, title) + (isRequirementFile(path) ? '.yaml' : ''));
+  if (renamed !== path) refuseTaken(repo.root, renamed);
   item.doc.setIn(['title'], title);
   writeYaml(repo.root, item);
-  const name = nameFor(id, title) + (isRequirementFile(path) ? '.yaml' : '');
-  renameSync(join(repo.root, path), join(repo.root, dirname(path), name));
+  renameSync(join(repo.root, path), join(repo.root, renamed));
 });
 
 // CL-03.1

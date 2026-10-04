@@ -8,6 +8,7 @@ export const baseSchema = {
   properties: {
     id: str, type: str, title: str, text: str,
     uses: { type: 'array', items: str },
+    links: { type: 'array', items: { type: 'object', required: ['type', 'target'], properties: { type: str, target: str }, additionalProperties: false } },
   },
 };
 

@@ -2,7 +2,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, homeFolders, linksOf, nameFor, nameMatches, usesOf, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, homeFolders, linksOf, nameFor, usesOf, type Repo, type YamlFile } from './repo.ts';
 import { allows, baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
 // CO-02.4
@@ -36,7 +36,7 @@ export function validate(repo: Repo): Finding[] {
   const ajv = newAjv();
   const findings: Finding[] = [];
   for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
-    const { id, item, meta } = entry;
+    const { id, item } = entry;
     const type = String(item.data.type);
     const validateSchema = schemaFor(ajv, repo.root, type);
     if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', `Unknown item type "${type}"`));
@@ -48,18 +48,17 @@ export function validate(repo: Repo): Finding[] {
       }
     }
 
-    // CO-02.2
-    const name = basename(entry.path);
-    if (!nameMatches(name, id)) findings.push(finding(item, ['id'], 'id-mismatch', `${name} does not start with id ${id}`));
     // CO-02.7
+    const name = basename(entry.path);
     const stem = name.replace(/\.yaml$/, '');
-    if (nameMatches(name, id) && stem !== id && stem !== nameFor(id, item.data.title)) {
+    if (stem !== id && stem !== nameFor(id, item.data.title)) {
       findings.push({ ...finding(item, ['title'], 'stale-name', `${name} does not match the title; use plm rename`), severity: 'warning' });
     }
 
-    const folder = basename(dirname(entry.path));
+    // CO-02.2
+    const folders = dirname(entry.path).split('/');
     const home = homeFolders[type];
-    const misplaced = home ? folder !== home : Object.values(homeFolders).includes(folder);
+    const misplaced = home ? !folders.includes(home) : Object.values(homeFolders).some((folder) => folders.includes(folder));
     if (misplaced) findings.push(finding(item, ['type'], 'misplaced', 'Requirements, test cases and runs belong in their folders, and only there'));
 
     if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', `Duplicate id ${id}`));
@@ -71,12 +70,12 @@ export function validate(repo: Repo): Finding[] {
     linksOf(entry).forEach((link, index) => {
       const target = repo.entries.get(link.target)?.item.data;
       if (!target) {
-        findings.push(finding(meta, ['links', index, 'target'], 'unknown-target', `Unknown link target ${link.target}`));
+        findings.push(finding(item, ['links', index, 'target'], 'unknown-target', `Unknown link target ${link.target}`));
         return;
       }
       const [sourceTypes, targetTypes] = linkRules[link.type] ?? [[], []];
       if (!allows(sourceTypes, type) || !allows(targetTypes, target.type)) {
-        findings.push(finding(meta, ['links', index, 'type'], 'link-type', `${link.type} not allowed from ${type} to ${target.type}`));
+        findings.push(finding(item, ['links', index, 'type'], 'link-type', `${link.type} not allowed from ${type} to ${target.type}`));
       }
     });
   }

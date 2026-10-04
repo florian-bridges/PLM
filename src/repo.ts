@@ -6,7 +6,7 @@ import { Document, LineCounter, parseDocument } from 'yaml';
 
 export interface Link { type: string; target: string; title?: string; version?: string; by?: string; on?: string; commit?: string }
 export interface Item { id: string; type: string; title: string; [attribute: string]: unknown }
-export interface Meta { links?: Link[]; status?: string; owner?: string }
+export interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>>; status?: string; owner?: string }
 
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 // `path`: item folder or requirement file.
@@ -57,8 +57,10 @@ export function loadRepo(start: string): Repo {
   };
 
   const addRequirements = (folder: string, parent: Entry) => {
-    for (const file of readdirSync(join(root, folder))) {
-      if (isRequirementFile(file)) parent.requirements.push(addEntry(`${folder}/${file}`).id);
+    for (const child of readdirSync(join(root, folder), { withFileTypes: true })) {
+      const path = `${folder}/${child.name}`;
+      if (child.isDirectory()) addRequirements(path, parent);
+      else if (isRequirementFile(path)) parent.requirements.push(addEntry(path).id);
     }
   };
 
@@ -80,17 +82,14 @@ export function loadRepo(start: string): Repo {
   return repo;
 }
 
-// CO-02.7: `<ID>-<slug of title>`, or the ID alone for an empty title.
-export const nameFor = (id: string, title: unknown) => [id, String(title ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')].filter(Boolean).join('-');
-
-// CO-02.2
-export const nameMatches = (name: string, id: string) => name === id || name === `${id}.yaml` || name.startsWith(`${id}-`);
+// CO-02.7: the slug of the title, or the ID for an empty title.
+export const nameFor = (id: string, title: unknown) => String(title ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id;
 
 export const isRequirementFile = (path: string) => path.endsWith('.yaml');
 export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
 export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
 export const childrenOf = (entry?: Entry): string[] => [...(entry?.nested ?? []), ...usesOf(entry)];
-export const linksOf = (entry: Entry): Link[] => list(entry.meta.data.links);
+export const linksOf = (entry: Entry): Link[] => list<Link>(entry.item.data.links).map((link) => ({ ...entry.meta.data.confirmed?.[link.target], ...link }));
 
 // TE-05.1, VS-04.1: the innermost item containing a file, given relative to the root.
 export const innermostItem = (repo: Repo, file: string) => [...repo.entries.values()]

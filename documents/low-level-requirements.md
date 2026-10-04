@@ -4,11 +4,11 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## Core library
 
-**CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<ID>-<title>/item.yaml` with their requirements `requirements/<ID>-<title>.yaml` and test cases `tests/<ID>-<title>/item.yaml`, test runs `runs/<ID>-<title>/item.yaml` and `meta/<ID>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
-*Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files. Test cases in the tested item's folder make its version cover its requirements and test cases, so adding or changing a test case outdates the runs against the item. Runs stay outside: inside the tested item, a run would change the version it records.
+**CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<name>/item.yaml` with their requirements `requirements/<name>.yaml`, also in subfolders, and test cases `tests/<name>/item.yaml`, test runs `runs/<name>/item.yaml` and `meta/<ID>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
+*Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files. Subfolders group requirements; names sort them. Test cases in the tested item's folder make its version cover its requirements and test cases, so adding or changing a test case outdates the runs against the item. Runs stay outside: inside the tested item, a run would change the version it records.
 
-**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown) and `uses`. `meta/<ID>.yaml` shall hold `owner`, `status` and `links`.
-*Rationale:* Separating content from administrative data keeps versions stable when links, ownership or status change (TE-01.1).
+**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type` and `target`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
+*Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
 
 **CO-01.3** The core shall list artifacts as file paths without reading their contents, and detect Git LFS pointers that are not fetched.
 *Rationale:* Artifacts can be gigabytes; reading them on demand keeps loading fast and works without fetched LFS files.
@@ -16,7 +16,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.1** The core shall validate `item.yaml` with Ajv against the JSON Schema (2020-12) of its type; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
 *Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add their own attributes.
 
-**CO-02.2** The core shall report as errors: names not starting with their `id`, requirements and test cases outside their item's `requirements/` and `tests/` folders, test runs outside the top-level `runs/` folder, other items inside them, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
+**CO-02.2** The core shall report as errors: requirements and test cases outside their item's `requirements/` and `tests/` folders, test runs outside the top-level `runs/` folder, other items inside them, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late.
 
 **CO-02.4** Each finding shall carry file, line, column, severity and a stable code.
@@ -28,8 +28,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, and `tests` from `test-run` to any type.
 *Rationale:* Fixed semantics keep reports comparable.
 
-**CO-02.7** The core shall warn when a name has a title part other than the slug of its `title`: lowercase, with runs of characters other than ASCII letters and digits replaced by `-`, trimmed of `-`.
-*Rationale:* Names show the structure in file browsers and on the Git host; names left from earlier titles mislead.
+**CO-02.7** The core shall warn when a name is neither the item's `id` nor the slug of its `title`: lowercase, with runs of characters other than ASCII letters and digits replaced by `-`, trimmed of `-`.
+*Rationale:* Names show the structure in file browsers and on the Git host; names left from earlier titles mislead. Test runs keep their ID, as their titles repeat.
 
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.
 *Rationale:* One index format serves the CLI, VS Code and the browser without a search server.
@@ -45,11 +45,11 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-01.2** Hashes of the working tree shall be computed by staging into a temporary Git index, so LFS filters apply and uncommitted and committed states yield identical versions.
 *Rationale:* Engineers need suspect states before committing; identical results avoid spurious differences between local runs and CI.
 
-**TE-02.1** Confirming a link shall write to the link in `meta/<ID>.yaml` the target's current `version` and `title`, the confirming Git `user.name` as `by`, the date as `on`, and as `commit` the short hash of HEAD if the target has the confirmed version there; a link without `version` is unconfirmed.
-*Rationale:* Keeping the version next to the link makes confirmations reviewable as ordinary diffs; title, confirmer, date and commit show what was reviewed without looking up hashes. Uncommitted targets have no commit to name.
+**TE-02.1** Confirming a link shall write to `confirmed.<target>` in the source's `meta/<ID>.yaml` the target's current `version` and `title`, the confirming Git `user.name` as `by`, the date as `on`, and as `commit` the short hash of HEAD if the target has the confirmed version there; a link without `version` there is unconfirmed.
+*Rationale:* Keeping the version in a file of its own makes confirmations reviewable as ordinary diffs; title, confirmer, date and commit show what was reviewed without looking up hashes. Uncommitted targets have no commit to name.
 
-**TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset.
-*Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review.
+**TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset, and for links of test runs.
+*Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review. Run links are confirmed when recording (CL-03.2).
 
 **TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none. Links from test runs are evidence, not links to review: suspect lists shall omit them, and a run with a suspect link is outdated.
 *Rationale:* Separating unconfirmed from suspect distinguishes new, unreviewed links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
@@ -74,11 +74,11 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects`, `impact <base>[..<head>]` and `report coverage [<item>]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Commander is the established choice.
 
-**CL-01.2** `confirm <source>` shall confirm all links of the source item.
-*Rationale:* After review, engineers typically confirm all links of an item at once.
+**CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
+*Rationale:* Links are reviewed one by one, or all at once after reviewing an item.
 
-**CL-02.1** `plm new <type> [title]` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements and test cases in its `requirements/` and `tests/` folders, and print the new ID.
-*Rationale:* Repository templates let programs prefill attributes and conventions.
+**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements and test cases in its `requirements/` and `tests/` folders, requirements in the working folder if inside `requirements/`, and print the new ID. It and `plm rename` shall refuse names in use.
+*Rationale:* Repository templates let programs prefill attributes and conventions. Names lack the ID, so equal titles would overwrite files.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.

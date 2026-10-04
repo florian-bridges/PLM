@@ -5,7 +5,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { parse } from 'yaml';
-import { homeFolders, isRequirementFile, list, loadRepo, nameMatches, usesOf, UsageError, type Repo } from './repo.ts';
+import { isRequirementFile, list, loadRepo, usesOf, UsageError, type Repo } from './repo.ts';
 
 export function git(root: string, args: string[], env: Record<string, string> = {}): string {
   const options = { cwd: root, encoding: 'utf8' as const, env: { ...process.env, ...env }, maxBuffer: 1 << 28 };
@@ -70,9 +70,13 @@ export function currentVersions(repo: Repo): Map<string, string> {
 // TE-03.2
 export function versionAt(root: string, commit: string, id: string): string | undefined {
   const hashes = objectHashes(root, commit);
-  const isItemFolder = (path: string) => hashes.has(`${path}/item.yaml`);
-  const isRequirement = (path: string) => isRequirementFile(path) && basename(dirname(path)) === homeFolders.requirement;
-  const pathOf = (wanted: string) => [...hashes.keys()].find((path) => nameMatches(basename(path), wanted) && (isItemFolder(path) || isRequirement(path)));
+  // The item folder or requirement file declaring the ID.
+  const pathOf = (wanted: string) => {
+    let files = '';
+    try { files = git(root, ['grep', '-l', `^id: ${wanted}$`, commit, '--', '*.yaml']); } catch { /* no match */ }
+    const path = files.split('\n')[0].slice(commit.length + 1);
+    return basename(path) === 'item.yaml' ? dirname(path) : path || undefined;
+  };
   const usesOfId = (wanted: string) => list<string>(parse(git(root, ['show', `${commit}:${pathOf(wanted)}/item.yaml`]))?.uses);
   return computeVersions([id], hashes, pathOf, usesOfId).get(id);
 }

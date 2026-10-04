@@ -1,8 +1,8 @@
 // CO-02
 import { existsSync, readFileSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, homeFolders, linksOf, nameFor, usesOf, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, homeFolders, linksOf, usesOf, type Repo, type YamlFile } from './repo.ts';
 import { allows, baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
 // CO-02.4
@@ -46,13 +46,6 @@ export function validate(repo: Repo): Finding[] {
         const path = [...error.instancePath.split('/').slice(1), ...(unexpected ? [unexpected] : [])];
         findings.push(finding(item, path, 'schema', `${path.join('.') || 'item'} ${error.message}`));
       }
-    }
-
-    // CO-02.7
-    const name = basename(entry.path);
-    const stem = name.replace(/\.yaml$/, '');
-    if (stem !== id && stem !== nameFor(id, item.data.title)) {
-      findings.push({ ...finding(item, ['title'], 'stale-name', `${name} does not match the title; use plm rename`), severity: 'warning' });
     }
 
     // CO-02.2

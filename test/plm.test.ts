@@ -52,15 +52,17 @@ test('TE-01.1: nested and used item changes propagate to ancestors only', () => 
   expect(currentVersions(loadRepo(root)).get('A')).not.toBe(after.get('A'));
 });
 
-test('TE-01.2: uncommitted and committed states yield identical versions', () => {
+test('TE-01.2, CO-01.3: uncommitted and committed states yield identical versions; artifacts', () => {
   const root = fixture();
-  write(root, { 'wing/spar/drawing.txt': 'rev 2' });
+  write(root, { 'wing/spar/drawing.txt': 'rev 2', 'wing/spar/cad/model.step': 'version https://git-lfs.github.com/spec/v1\noid sha256:0\nsize 9\n' });
+  expect(json(root, 'show', 'P').artifacts).toEqual([{ path: 'wing/spar/cad/model.step', lfs: 'missing' }, { path: 'wing/spar/drawing.txt' }]);
+  expect(json(root, 'show', 'A').artifacts).toEqual([]);
   const working = currentVersions(loadRepo(root));
   commit(root);
   expect(versionAt(root, 'HEAD', 'A')).toBe(working.get('A'));
 });
 
-test('CO-01.2, CO-02.1, CO-02.2, CO-02.4–CO-02.7: findings with codes and positions', () => {
+test('CO-01.2, CO-02.1, CO-02.2, CO-02.4, CO-02.6: findings with codes and positions', () => {
   const root = fixture();
   write(root, {
     'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: pass\n',
@@ -69,8 +71,7 @@ test('CO-01.2, CO-02.1, CO-02.2, CO-02.4–CO-02.7: findings with codes and posi
     'wing/requirements/structure/stringer.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
   });
   const findings = validate(loadRepo(root));
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'schema', 'schema', 'schema', 'schema', 'stale-name']);
-  expect(findings.find((f) => f.code === 'stale-name')).toMatchObject({ file: 'copy/item.yaml', severity: 'warning' });
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'schema', 'schema', 'schema', 'schema']);
   expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ file: 'wing/spar/item.yaml', line: 4, col: 9 });
 });
 
@@ -101,7 +102,7 @@ test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes th
   expect(() => confirm(repo, currentVersions(repo), validate(repo), 'P')).toThrow(Refused);
 });
 
-test('CL-02.1, CL-02.2, CL-02.4, CL-02.5: init, new items nest in the working folder, rename', () => {
+test('CL-02.1, CL-02.2, CL-02.4: init, new items nest in the working folder', () => {
   const root = join(base, 'new');
   expect(plm(root, 'init').status).toBe(0);
   expect(plm(root, 'init').status).toBe(2);
@@ -111,16 +112,13 @@ test('CL-02.1, CL-02.2, CL-02.4, CL-02.5: init, new items nest in the working fo
   expect(part).toMatch(/^PRT-[0-9A-HJKMNP-TV-Z]{6}$/);
   expect(existsSync(join(dir, 'main-spar/item.yaml'))).toBe(true);
   expect(plm(dir, 'new', 'part', 'Main spar').status).toBe(2);
-  const req = plm(dir, 'new', 'requirement', 'Carry 3g').stdout.trim();
+  plm(dir, 'new', 'requirement', 'Carry 3g');
   mkdirSync(join(dir, 'requirements/loads'));
   plm(join(dir, 'requirements/loads'), 'new', 'requirement', 'Gust');
   expect(existsSync(join(dir, 'requirements/carry-3g.yaml')) && existsSync(join(dir, 'requirements/loads/gust.yaml'))).toBe(true);
   plm(dir, 'new', 'test-case', 'Load');
   expect(existsSync(join(dir, 'tests/load/item.yaml'))).toBe(true);
   expect(plm(root, 'new', 'test-case', 'Load').status).toBe(2);
-  plm(root, 'rename', part, 'Rear spar');
-  plm(root, 'rename', req, 'Carry 4g');
-  expect(existsSync(join(dir, 'rear-spar/item.yaml')) && existsSync(join(dir, 'requirements/carry-4g.yaml'))).toBe(true);
   expect(validate(loadRepo(root))).toEqual([]);
 });
 
@@ -137,7 +135,7 @@ test('CL-01.1, CL-05.1–CL-05.3, TE-03.1: JSON output, exit codes and titles ne
   expect(plm(root, 'impact', 'HEAD').stdout).toBe('changed R (Load)\npropagated A (Wing)\n');
 });
 
-test('CO-01.1, CO-01.2, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verify requirements until the SUT changes', () => {
+test('CO-01.1, CO-01.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verify requirements until the SUT changes', () => {
   const root = fixture();
   const coverage = () => json(root, 'report', 'coverage', 'A')[0].state;
   const record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'A', '--result', ...results, '--log', join(root, 'rig.log'));

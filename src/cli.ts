@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // CL-01.1
-import { existsSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { addLink, confirm, coverage, linkStates, recordRun, suspects, type LinkState } from './links.ts';
-import { entry, isRequirementFile, loadRepo, nameFor, newItem, Refused, refuseTaken, UsageError, writeYaml, type Named } from './repo.ts';
+import { artifacts, entry, loadRepo, newItem, Refused, UsageError, type Named } from './repo.ts';
 import { results } from './schemas.ts';
 import { search } from './search.ts';
 import { validate } from './validate.ts';
@@ -53,10 +53,11 @@ program.command('validate').description('validate the repository').action(() => 
 
 program.command('show <id>').description('show an item, its version and links').action((id: string) => {
   const repo = openRepo();
-  const { item, meta } = entry(repo, id);
+  const found = entry(repo, id);
   const versions = currentVersions(repo);
   const links = linkStates(repo, versions).filter((state) => state.source === id || state.link.target === id);
-  const data = { ...item.data, version: versions.get(id), meta: meta.data, links };
+  // CO-01.3
+  const data = { ...found.item.data, version: versions.get(id), meta: found.meta.data, links, artifacts: artifacts(repo, found) };
   output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
@@ -111,17 +112,6 @@ program.command('init').description('create a product repository').action(() => 
 program.command('new <type> <title>').description('create an item in the current item folder').action((type: string, title: string) => {
   const id = newItem(openRepo(), type, title, workingFolder());
   output(id, { id });
-});
-
-// CL-02.5
-program.command('rename <id> <title>').description('retitle an item and rename its folder or file').action((id: string, title: string) => {
-  const repo = openRepo();
-  const { item, path } = entry(repo, id);
-  const renamed = join(dirname(path), nameFor(id, title) + (isRequirementFile(path) ? '.yaml' : ''));
-  if (renamed !== path) refuseTaken(repo.root, renamed);
-  item.doc.setIn(['title'], title);
-  writeYaml(repo.root, item);
-  renameSync(join(repo.root, path), join(repo.root, renamed));
 });
 
 // CL-03.1

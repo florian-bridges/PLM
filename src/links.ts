@@ -98,7 +98,7 @@ export const suspects = (repo: Repo, states: LinkState[], root?: string) => {
 };
 
 export interface Coverage {
-  requirement: string; title: string; state: 'verified' | 'pending' | 'unverified'; run?: Named;
+  requirement: string; title: string; state: 'verified' | 'pending' | 'unverified';
   tests: { testCase: Named; run?: Named; result?: string; outdated?: boolean }[];
 }
 
@@ -135,7 +135,7 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
       return { testCase: named(repo, source), ...(latest && { run: named(repo, latest.source), result: latest.link.result, outdated: outdatedRuns.has(latest.source) }) };
     });
     const row = { requirement: requirement.id, title: named(repo, requirement.id).title, tests };
-    if (passingRun) return { ...row, state: 'verified', run: named(repo, passingRun.source) };
+    if (passingRun) return { ...row, state: 'verified' };
     return { ...row, state: verifies.length ? 'pending' : 'unverified' };
   });
 }

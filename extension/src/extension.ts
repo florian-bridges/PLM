@@ -15,10 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
   const open = () => loadRepo(root);
   const fileUri = (path: string) => vscode.Uri.file(join(root, path));
   // VS-01.2, VS-04.3
-  const activeItem = (repo: Repo) => {
-    const file = vscode.window.activeTextEditor?.document.uri.fsPath;
-    return file && innermostItem(repo, relative(root, file));
-  };
+  const activeItem = (repo: Repo, file = vscode.window.activeTextEditor?.document.uri.fsPath) => file && innermostItem(repo, relative(root, file));
 
   // VS-01.3
   const diagnostics = vscode.languages.createDiagnosticCollection('plm');
@@ -63,7 +60,8 @@ export function activate(context: vscode.ExtensionContext) {
     const panel = vscode.window.createWebviewPanel('plm.review', target, vscode.ViewColumn.Active, { enableScripts: true });
     panel.webview.html = logic.reviewHtml(repo, source, link, change, validate(repo));
     panel.webview.onDidReceiveMessage(reporting((confirmed: number) => {
-      if (confirmed) confirm(repo, currentVersions(repo), validate(repo), source, target);
+      const now = open();
+      if (confirmed) confirm(now, currentVersions(now), validate(now), source, target);
       refresh();
       panel.dispose();
     }));
@@ -94,7 +92,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // VS-01.5
   const createItem = async (at?: Entry | vscode.Uri) => {
-    const type = await vscode.window.showQuickPick(Object.keys(open().settings.prefixes ?? {}));
+    const type = await vscode.window.showQuickPick(Object.keys(open().settings.prefixes ?? {}).filter((type) => type !== 'test-run'));
     const title = type && await vscode.window.showInputBox({ prompt: 'Title' });
     if (!title) return;
     editItem({ id: newItem(open(), type, title, at instanceof vscode.Uri ? at.fsPath : join(root, at?.path ?? '')) });
@@ -116,10 +114,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   // VS-01.6, VS-04.3
   const yaml = { pattern: '**/*.yaml' };
-  const atId = <T>(use: (found: Entry, repo: Repo) => T) => (document: vscode.TextDocument, position: vscode.Position) => {
+  const atId = <T>(use: (found: Entry, repo: Repo, document: vscode.TextDocument) => T) => (document: vscode.TextDocument, position: vscode.Position) => {
     const repo = open();
     const found = repo.entries.get(document.getText(document.getWordRangeAtPosition(position, /[\w-]+/)));
-    return found && use(found, repo);
+    return found && use(found, repo, document);
   };
   const location = (found: Entry) => new vscode.Location(fileUri(found.item.path), new vscode.Position(0, 0));
 
@@ -139,8 +137,8 @@ export function activate(context: vscode.ExtensionContext) {
     register('plm.recordTestRun', recordTestRun),
     vscode.languages.registerCompletionItemProvider(yaml, { provideCompletionItems: (document, position) => logic.completesId(document.lineAt(position).text.slice(0, position.character))
       ? [...open().entries.values()].map(({ id, item }) => ({ label: item.data.title, detail: id, insertText: id })) : [] }),
-    vscode.languages.registerHoverProvider(yaml, { provideHover: atId((found, repo) => ({ contents: [Object.assign(
-      new vscode.MarkdownString(logic.hoverMarkdown(repo, linkStates(repo, currentVersions(repo)), found.id, activeItem(repo))), { isTrusted: { enabledCommands: ['plm.reviewLink'] } })] })) }),
+    vscode.languages.registerHoverProvider(yaml, { provideHover: atId((found, repo, document) => ({ contents: [Object.assign(
+      new vscode.MarkdownString(logic.hoverMarkdown(repo, linkStates(repo, currentVersions(repo)), found.id, activeItem(repo, document.uri.fsPath))), { isTrusted: { enabledCommands: ['plm.reviewLink'] } })] })) }),
     vscode.languages.registerDefinitionProvider(yaml, { provideDefinition: atId(location) }),
     vscode.languages.registerReferenceProvider(yaml, { provideReferences: atId((found, repo) => logic.references(repo, found.id).map(location)) }),
     vscode.workspace.onDidSaveTextDocument(refresh),

@@ -77,8 +77,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
 *Rationale:* Links are reviewed one by one, or all at once after reviewing an item.
 
-**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements and test cases in its `requirements/` and `tests/` folders, requirements in the working folder if inside `requirements/`, and print the new ID. It and `plm rename` shall refuse names in use.
-*Rationale:* Repository templates let programs prefill attributes and conventions. Names lack the ID, so equal titles would overwrite files.
+**CL-02.1** `plm new <type> <title>` shall create, through the core, the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements and test cases in its `requirements/` and `tests/` folders, requirements in the working folder if inside `requirements/`, and print the new ID. It and `plm rename` shall refuse names in use.
+*Rationale:* Repository templates let programs prefill attributes and conventions. Names lack the ID, so equal titles would overwrite files. The extension reuses the core function (VS-01.5).
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
@@ -112,14 +112,17 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-01.1** The extension shall reuse the core library and run in the extension host without a separate server, bundled by esbuild into one CommonJS file and activated in workspaces containing `plm.yaml`.
 *Rationale:* One core avoids duplicated logic and diverging results between editor and CI. A bundle needs no installed dependencies; other workspaces stay unaffected.
 
-**VS-01.2** Editing the active item or a product tree item shall open a webview form generated from the type's JSON Schema, with fields for its string, number, enum and string array attributes and for `status` and `owner`. The form shall show schema errors while typing; saving shall write `item.yaml` and `meta/<ID>.yaml` through the core, keeping other attributes and comments.
+**VS-01.2** Editing the active item, the innermost item containing the active editor's file, or a product tree item shall open a webview form generated from the type's JSON Schema, with fields for its string, number, enum and string array attributes and for `status` and `owner`. The form shall show schema errors while typing; saving shall write `item.yaml` and `meta/<ID>.yaml` through the core, keeping other attributes and comments.
 *Rationale:* Forms generated from schemas support new and program-specific types without extension code. Flat fields cover the built-in types; nested attributes are edited in YAML.
 
 **VS-01.3** Diagnostics shall be updated in the Problems panel within one second of saving a file.
 *Rationale:* Immediate feedback catches errors while the context is fresh. Validation reads files from disk, so unsaved edits are not seen.
 
-**VS-01.4** Adding a link to the active item shall offer the link types allowed from its type and select the target through the core search, filtered to the allowed target type.
-*Rationale:* Typing IDs by hand is error-prone; search finds targets by title or text.
+**VS-01.5** A "New item" command on product tree items and Explorer folders shall pick a type, ask for a title, create the item per CL-02.1 with that item's folder or the Explorer folder as working folder, and open its form.
+*Rationale:* Explorer folders place requirements in subfolders; the form follows at once.
+
+**VS-01.6** In item and requirement files, IDs after `target:` and `uses:` shall be completed from all items, labelled and matched by title.
+*Rationale:* Users know titles, not IDs.
 
 **VS-02.1** A tree view shall show composition, nested and used items, from the top-level items, with type icons and status badges; selecting an item opens its `item.yaml`.
 *Rationale:* Badges show maturity. Used items appear under each item using them, as they count toward its version.
@@ -127,11 +130,14 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-03.1** A product tree command shall show a read-only webview of an item's requirements and those of its nested items, as numbered sections with ID, title, status and rendered Markdown; clicking an ID opens its file.
 *Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements from aircraft to equipment level as one document.
 
-**VS-04.1** A links view shall list the active item's outgoing and incoming links with their state; the active item is the innermost item containing the active editor's file.
-*Rationale:* Incoming links show what depends on an item before it is changed.
+**VS-03.2** The document shall show each subfolder of `requirements/` as a heading above its requirements.
+*Rationale:* Subfolders group requirements by topic.
 
-**VS-04.2** "Show change" shall open the diff from TE-03.2 in an editor; "Confirm" shall confirm all links of the item per CL-01.2.
-*Rationale:* One highlighted diff document shows everything changed since confirmation. Confirming per item matches the CLI.
+**VS-04.2** "Review link" shall show one page with the link type, the source's and target's text, the diff from TE-03.2 or, if unconfirmed, the target's file, the previous confirmer and date, and the target's findings; "Confirm" shall confirm that link per CL-01.2, "Cancel" close the page.
+*Rationale:* Users decide on one link with everything needed on one page.
+
+**VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file, Find references list the links and uses pointing to it.
+*Rationale:* Links are inspected and navigated where they are written, replacing a separate links view.
 
 **VS-06.1** A command shall record a manual test run, picking test case, system under test, result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
 *Rationale:* Manual and automated runs must produce identical evidence; one recording function in the core guarantees it.

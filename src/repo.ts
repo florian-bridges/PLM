@@ -40,8 +40,7 @@ export function findRoot(start: string): string {
   }
 }
 
-// Item folders contain item.yaml and nest; requirements are files in their requirements folder,
-// test cases item folders in their tests folder; runs are item folders in the top-level runs folder.
+// CO-01.1, CO-02.2
 export const homeFolders: Record<string, string> = { requirement: 'requirements', 'test-case': 'tests', 'test-run': 'runs' };
 
 export function loadRepo(start: string): Repo {

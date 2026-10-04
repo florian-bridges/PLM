@@ -20,11 +20,11 @@ runs/<ID>-<title>/            test runs with their logs
 meta/<ID>.yaml                owner, status, links
 ```
 
-* **Items** (CR-01) have a stable ID and a type with its own schema: requirement, part, assembly, COTS part, harness, interface, software, test case, test run. Items are folders named `<ID>-<title>`. Retired items are kept (CR-04).
+* **Items** (CR-01) have a stable ID and a type with its own schema: requirement, part, assembly, COTS part, harness, interface, software, test case, test run. Retired items are kept (CR-04).
 * **Composition** (CR-02): folders nest; `uses` lists items reused from elsewhere, e.g. standard parts.
 * **Artifacts** (CR-03) are files in the item directory; binaries use Git LFS with locking. CAD is stored natively plus a STEP export.
 * **Relationships** (CR-06) are typed links in `meta/<ID>.yaml` (`satisfies`, `verifies`, `implements`, …).
-* **Requirements** are items, stored in the `requirements/` folder of the item they specify, so one link and suspect mechanism covers all disciplines; VS Code shows them as a document. Certification basis paragraphs are requirement items, enabling compliance tracing.
+* **Requirements** are items, stored in the `requirements/` folder of the item they specify, so one link and suspect mechanism covers all disciplines. Certification basis paragraphs are requirement items, enabling compliance tracing.
 
 ## Releases
 
@@ -34,11 +34,11 @@ meta/<ID>.yaml                owner, status, links
 ## Change and verification
 
 * **Change requests** use the host's issues and merge requests; the host provides permissions and approvals (CR-13, CR-14, CR-17).
-* **Test runs** record SUT version, result and logs. Test cases live in the item they test, so adding one changes the item's version; runs live outside item folders, so recording one changes none. Tests execute externally (CI, HIL rigs) and report via the CLI; manual results are entered in VS Code.
+* **Tests** execute externally (CI, HIL rigs) and report via the CLI; manual results are entered in VS Code.
 
 ## Components
 
-Core library, traceability engine, CLI, VS Code extension, CI integration and static site; see [components.md](components.md).
+See [components.md](components.md).
 
 ## Toolchain
 
@@ -51,5 +51,5 @@ Core library, traceability engine, CLI, VS Code extension, CI integration and st
 | CLI | Commander |
 | VS Code extension | VS Code API, esbuild |
 | Static site | Astro |
-| Tooling | npm, ESLint, Prettier, Vitest |
+| Tooling | npm, Vitest |
 | CI | GitHub Actions, GitLab CI |

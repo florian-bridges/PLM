@@ -1,4 +1,4 @@
-// VS-01–VS-06: VS Code glue; the logic is in logic.ts and the core.
+// VS-01–VS-06: VS Code glue.
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
 import { addLink, changeSince, confirm, linkStates, recordRun } from '../../src/links.ts';
@@ -104,7 +104,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
   };
 
-  // VS-01.4: the quick pick shows the core search results unfiltered.
+  // VS-01.4
   const addLinkToActive = async () => {
     const repo = open();
     const source = activeItem(repo);
@@ -142,7 +142,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.showInformationMessage(`Recorded ${recordRun(repo, testCase.label, sut.label, result, logs.map((log) => log.fsPath))}`);
   };
 
-  // Core refusals, such as uncommitted changes, become error messages.
+  // Core refusals become error messages.
   const register = <T extends unknown[]>(name: string, command: (...args: T) => unknown) => vscode.commands.registerCommand(name, async (...args: T) => {
     try { await command(...args); } catch (error) { vscode.window.showErrorMessage((error as Error).message); }
   });

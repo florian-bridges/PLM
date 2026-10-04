@@ -36,20 +36,17 @@ export function confirmation(repo: Repo, target: string, version: string | undef
 // TE-02.1, CL-01.2
 export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string): Link[] {
   const sourceEntry = entry(repo, source);
-  const selected = linksOf(sourceEntry).map((link, index) => ({ link, index }));
-  for (const { link } of selected) {
+  const links = linksOf(sourceEntry);
+  links.forEach((link, index) => {
     // TE-02.2
     const targetFile = repo.entries.get(link.target)?.item.path;
     const broken = findings.some((finding) => finding.severity === 'error' && finding.file === targetFile);
     if (broken || !versions.has(link.target)) throw new Refused(`${link.target} fails validation; fix it before confirming`);
-  }
-  const confirmations = selected.map(({ link, index }) => [index, confirmation(repo, link.target, versions.get(link.target))] as const);
-  for (const [index, fields] of confirmations) {
     sourceEntry.meta.doc.deleteIn(['links', index, 'commit']);
-    for (const [key, value] of Object.entries(fields)) sourceEntry.meta.doc.setIn(['links', index, key], value);
-  }
-  if (selected.length) writeYaml(repo.root, sourceEntry.meta);
-  return selected.map(({ link }) => link);
+    for (const [key, value] of Object.entries(confirmation(repo, link.target, versions.get(link.target)))) sourceEntry.meta.doc.setIn(['links', index, key], value);
+  });
+  if (links.length) writeYaml(repo.root, sourceEntry.meta);
+  return links;
 }
 
 // CL-01.1, VS-01.4: a new, unconfirmed link.

@@ -3,7 +3,7 @@ import type { Document } from 'yaml';
 import type { LinkState } from '../../src/links.ts';
 import { childrenOf, entry, type Entry, type Repo } from '../../src/repo.ts';
 
-// VS-01.2: flat fields only; others stay as they are in the file.
+// VS-01.2
 interface Property { type?: string; enum?: string[]; items?: { type?: string } }
 export interface Field { name: string; kind: 'string' | 'text' | 'number' | 'enum' | 'list'; options?: string[]; meta?: boolean }
 
@@ -22,7 +22,7 @@ export function formFields(schema: { allOf: { properties?: Record<string, Proper
 
 const escape = (value: unknown) => String(value ?? '').replace(/[&<>"]/g, (character) => `&#${character.charCodeAt(0)};`);
 
-// The script posts the values on each input and on Save; the extension answers with the schema errors.
+// VS-01.2
 export function formHtml(heading: string, fields: Field[], values: Record<string, unknown>): string {
   const input = ({ name, kind, options = [] }: Field) => {
     const value = values[name];
@@ -49,7 +49,7 @@ export const formData = (fields: Field[], raw: Record<string, string>) => Object
   return [name, value];
 }));
 
-// Setting keys in the parsed documents keeps comments and other attributes; empty fields are removed.
+// VS-01.2: empty fields are removed.
 export function applyForm(item: Document, meta: Document, fields: Field[], data: Record<string, unknown>): void {
   for (const { name, meta: inMeta } of fields) {
     const doc = inMeta ? meta : item;

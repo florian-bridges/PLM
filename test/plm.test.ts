@@ -60,7 +60,7 @@ test('TE-01.2: uncommitted and committed states yield identical versions', () =>
   expect(versionAt(root, 'HEAD', 'A')).toBe(working.get('A'));
 });
 
-test('CO-01.2, CO-02.1, CO-02.2, CO-02.4, CO-02.7: findings with codes and positions', () => {
+test('CO-01.2, CO-02.1, CO-02.2, CO-02.4–CO-02.7: findings with codes and positions', () => {
   const root = fixture();
   write(root, {
     'A-wing/P-spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\n',

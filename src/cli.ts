@@ -116,12 +116,10 @@ program.command('new <type> [title]').description('create an item in the current
   if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item folder`);
 
   const id = newId(repo, type);
-  const name = nameFor(id, title);
-  let folder = parent ? `${parent.path}/` : '';
-  if (type === 'test-case') folder += `${homeFolders['test-case']}/`;
+  const path = [parent?.path, homeFolders[type], nameFor(id, title)].filter(Boolean).join('/');
 
   const item = readYaml(repo.root, `templates/${type}.yaml`);
-  item.path = type === 'requirement' ? `${folder}${homeFolders.requirement}/${name}.yaml` : `${folder}${name}/item.yaml`;
+  item.path = type === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`;
   for (const [key, value] of Object.entries({ id, type, title })) item.doc.setIn([key], value);
   writeYaml(repo.root, item);
   writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: parseDocument('status: draft\n') });
@@ -152,7 +150,7 @@ program.command('test').command('record <test-case>').description('record a test
 program.command('report').command('coverage [item]').description('report requirement verification')
   .action((item: string | undefined) => {
     const repo = openRepo();
-    const root = item ? entry(repo, item).id : undefined;
+    const root = item && entry(repo, item).id;
     const rows = coverage(repo, linkStates(repo, currentVersions(repo)), root);
     const line = (row: (typeof rows)[number]) => [row.state, label({ id: row.requirement, title: row.title }), row.run && label(row.run), ...(row.outdated ? ['outdated', ...row.outdated.map(label)] : [])];
     output(rows.map((row) => line(row).filter(Boolean).join(' ')).join('\n'), rows);

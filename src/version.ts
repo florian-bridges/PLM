@@ -36,7 +36,7 @@ export function computeVersions(
   return versions;
 }
 
-// Hash of every tree and blob below a tree-ish, by path.
+// TE-01.1: tree and blob hashes by path.
 function objectHashes(root: string, tree: string): Map<string, string> {
   const rows = git(root, ['ls-tree', '-r', '-t', '-z', tree]).split('\0').filter(Boolean);
   return new Map(rows.map((row) => {

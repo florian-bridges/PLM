@@ -46,7 +46,7 @@ Proof of concept: a `plm` CLI with the core library and traceability engine. Ite
 
 A release is a reviewed merge into the protected `main` branch; there are no revisions or baselines, and an item's earlier released versions are its states at earlier commits of `main`.
 
-The VS Code extension shows validation findings in the Problems panel, the product tree and requirements documents. It completes, explains and navigates IDs in YAML files, reviews and confirms one link at a time, creates and edits items in forms and records manual test runs.
+The VS Code extension shows validation findings in the Problems panel, the product tree and requirements documents with their links, test runs, coverage and suspect links. It completes, explains and navigates IDs in YAML files, reviews and confirms one link at a time, creates and edits items in forms and records manual test runs.
 
 Not yet implemented: static site and CI.
 
@@ -227,7 +227,7 @@ plm report coverage $AC
 git add -A && git commit -m "Hover endurance test"
 ```
 
-Recording a run confirms its links to the test case and the tested aircraft at the committed versions; it is refused while either has uncommitted changes. The run copies the flight log, and the requirement becomes verified:
+Recording a run confirms its links to the test cases and the tested aircraft at the committed versions; it is refused while either has uncommitted changes. The run copies the flight log, and the requirement becomes verified:
 
 ```sh
 echo "Hover 26 min 10 s, landed with 21 % capacity" > ../hover.log
@@ -235,6 +235,8 @@ plm test record $TC --sut $AC --result pass --log ../hover.log
 plm report coverage $AC
 git add -A && git commit -m "Hover endurance flight passed"
 ```
+
+One run can cover several test cases of a session, with one result per test case in order, e.g. `plm test record $TC1 $TC2 --sut $AC --result pass fail`; coverage then lists each verifying test case with its latest run and result.
 
 ### 8. Update the firmware
 
@@ -257,6 +259,6 @@ plm report coverage $AC
 * To reuse an item, such as a standard part, list its ID under `uses:` in the `item.yaml` of the assembly using it.
 * `plm search <words>` finds items whose ID, title, text or attributes contain all words, also as word beginnings; `type:`, `status:` and `owner:` filter, e.g. `plm search mass type:requirement`.
 * `plm impact <base>[..<head>]` compares a commit with another commit or, by default, the working tree, e.g. `plm impact main..my-branch` before merging.
-* `plm report coverage [item]` reports the requirements of the repository or of an item's subtree as verified, pending or unverified.
-* The VS Code extension is built by `npm run build:ext` in this repository and, for now, run from source with `code --extensionDevelopmentPath=<this repository>/extension <product repository>`. It validates on save. The PLM Product view in the Explorer shows nested and used items with their status, and Show requirements on an item renders its requirements and those of its nested items as one document, with requirement subfolders as headings. New item, on a product tree item or an Explorer folder, picks a type and asks for a title, creates the item in that folder like `plm new`, and opens its form. In YAML files, typing after `target:` or `uses:` completes IDs by title; hovering an ID shows its title, type and status and, for a link of the item, the link's state and Review link; Ctrl+click opens the item. Review link shows the link type, source and target text, the change since confirmation (or the target if never confirmed), the previous confirmer and date, and the target's findings; Confirm confirms that one link. Edit item (pencil in the product tree, or `PLM: Edit item` for the open file's item) opens a form generated from the type's schema that shows schema errors while typing and writes on Save. `PLM: Record test run` in the Command Palette records a run like `plm test record`, picking test case, system under test, result and logs.
+* `plm report coverage [item]` reports the requirements of the repository or of an item's subtree as verified, pending or unverified, each with its verifying test cases' latest runs; `plm suspects [item]` limits the suspect list to links from an item's subtree.
+* The VS Code extension is built by `npm run build:ext` in this repository and, for now, run from source with `code --extensionDevelopmentPath=<this repository>/extension <product repository>`. It validates on save. The PLM Product view in the Explorer shows nested and used items with their status, and Show requirements on an item renders a document that opens with the subtree's coverage and suspect links, then has a section per item of the subtree with requirement subfolders as headings. Each requirement shows its title, ID, status, coverage state and text, its links in both directions with their state and Review link, and the latest run of each test case verifying it, so the document doubles as the traceability matrix. New item, on a product tree item or an Explorer folder, picks a type and asks for a title, creates the item in that folder like `plm new`, and opens its form. In YAML files, typing after `target:` or `uses:` completes IDs by title; hovering an ID shows its title, type and status and, for a link of the item, the link's state and Review link; Ctrl+click opens the item. Review link shows the link type, source and target text, the change since confirmation (or the target if never confirmed), the previous confirmer and date, and the target's findings; Confirm confirms that one link. Edit item (pencil in the product tree, or `PLM: Edit item` for the open file's item) opens a form generated from the type's schema that shows schema errors while typing and writes on Save. `PLM: Record test run` in the Command Palette records a run like `plm test record`, picking several test cases, the system under test, a result per test case and logs.
 * `--format json` gives machine-readable output. Exit codes: 0 success, 1 findings, 2 usage error, 3 internal error.

@@ -1,7 +1,7 @@
 // VS-01–VS-04: editor logic without the vscode API, for tests.
 import type { Document } from 'yaml';
 import type { LinkState } from '../../src/links.ts';
-import { childrenOf, entry, linksOf, usesOf, type Entry, type Link, type Repo } from '../../src/repo.ts';
+import { childrenOf, entry, type Entry, type Link, type Repo } from '../../src/repo.ts';
 import type { Finding } from '../../src/validate.ts';
 
 // VS-01.2
@@ -79,23 +79,20 @@ export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry
 }
 
 // VS-01.6
-export const completesId = (before: string) => /(target:|uses:|^\s*-)\s*[\w-]*$/.test(before);
+export const completesId = (before: string) => /(target:[ \t]*|uses:[ \t]*(\[[^\]]*|(\n[ \t]*-[ \t]*[\w-]*)+)?)[\w-]*$/.test(before);
 
 // VS-04.3
 export function hoverMarkdown(repo: Repo, states: LinkState[], id: string, source?: string) {
   const { item, meta } = entry(repo, id);
   const link = states.find((state) => state.source === source && state.link.target === id);
   const review = link ? `\n\n${link.state} [Review link](command:plm.reviewLink?${encodeURIComponent(JSON.stringify([source, id]))})` : '';
-  return `**${item.data.title}**\n\n${item.data.type}, ${meta.data.status ?? ''}${review}`;
+  return `**${item.data.title}**\n\n${[item.data.type, meta.data.status].filter(Boolean).join(', ')}${review}`;
 }
-
-// VS-04.3
-export const references = (repo: Repo, id: string) => [...repo.entries.values()].filter((found) => [...linksOf(found).map((link) => link.target), ...usesOf(found)].includes(id));
 
 // VS-04.2
 export function reviewHtml(repo: Repo, source: string, link: Link, change: string, findings: Finding[]) {
   const target = entry(repo, link.target);
   return `<pre>${[`${source} ${link.type} ${link.target}`, entry(repo, source).item.data.text, target.item.data.text, change, link.by && `Confirmed by ${link.by} on ${link.on}`,
-    ...findings.filter((finding) => finding.file === target.item.path).map((finding) => finding.message)].map(escape).join('</pre><pre>')}</pre>
+    ...findings.filter((finding) => finding.file === target.item.path).map((finding) => finding.message)].filter(Boolean).map(escape).join('</pre><pre>')}</pre>
 <button onclick="vscode.postMessage(1)">Confirm</button><button onclick="vscode.postMessage(0)">Cancel</button><script>const vscode = acquireVsCodeApi()</script>`;
 }

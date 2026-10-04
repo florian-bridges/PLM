@@ -12,6 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
   const folder = vscode.workspace.workspaceFolders?.[0];
   if (!folder) return;
   const root = findRoot(folder.uri.fsPath);
+  vscode.commands.executeCommand('setContext', 'plm.active', true); // VS-01.5
   const open = () => loadRepo(root);
   const fileUri = (path: string) => vscode.Uri.file(join(root, path));
   // VS-01.2, VS-04.3
@@ -56,7 +57,8 @@ export function activate(context: vscode.ExtensionContext) {
   const reviewLink = (source: string, target: string) => {
     const repo = open();
     const link = linksOf(entry(repo, source)).find((found) => found.target === target)!;
-    const change = (link.version && changeSince(repo, link).diff) || String(entry(repo, target).item.doc);
+    const { commit, diff } = link.version ? changeSince(repo, link) : { commit: '', diff: String(entry(repo, target).item.doc) };
+    const change = link.version && !commit ? 'No commit has the confirmed version' : diff || 'No change';
     const panel = vscode.window.createWebviewPanel('plm.review', target, vscode.ViewColumn.Active, { enableScripts: true });
     panel.webview.html = logic.reviewHtml(repo, source, link, change, validate(repo));
     panel.webview.onDidReceiveMessage(reporting((confirmed: number) => {
@@ -135,12 +137,11 @@ export function activate(context: vscode.ExtensionContext) {
     register('plm.showRequirements', showRequirements),
     register('plm.reviewLink', reviewLink),
     register('plm.recordTestRun', recordTestRun),
-    vscode.languages.registerCompletionItemProvider(yaml, { provideCompletionItems: (document, position) => logic.completesId(document.lineAt(position).text.slice(0, position.character))
+    vscode.languages.registerCompletionItemProvider(yaml, { provideCompletionItems: (document, position) => logic.completesId(document.getText(new vscode.Range(0, 0, position.line, position.character)))
       ? [...open().entries.values()].map(({ id, item }) => ({ label: item.data.title, detail: id, insertText: id })) : [] }),
     vscode.languages.registerHoverProvider(yaml, { provideHover: atId((found, repo, document) => ({ contents: [Object.assign(
       new vscode.MarkdownString(logic.hoverMarkdown(repo, linkStates(repo, currentVersions(repo)), found.id, activeItem(repo, document.uri.fsPath))), { isTrusted: { enabledCommands: ['plm.reviewLink'] } })] })) }),
     vscode.languages.registerDefinitionProvider(yaml, { provideDefinition: atId(location) }),
-    vscode.languages.registerReferenceProvider(yaml, { provideReferences: atId((found, repo) => logic.references(repo, found.id).map(location)) }),
     vscode.workspace.onDidSaveTextDocument(refresh),
   );
   refreshDiagnostics();

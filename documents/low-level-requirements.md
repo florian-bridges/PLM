@@ -136,7 +136,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-04.2** "Review link" shall show one page with the link type, the source's and target's text, the diff from TE-03.2 or, if unconfirmed, the target's file, the previous confirmer and date, and the target's findings; "Confirm" shall confirm that link per CL-01.2, "Cancel" close the page.
 *Rationale:* Users decide on one link with everything needed on one page.
 
-**VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file, Find references list the links and uses pointing to it.
+**VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file.
 *Rationale:* Links are inspected and navigated where they are written, replacing a separate links view.
 
 **VS-06.1** A command shall record a manual test run, picking test case, system under test, result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.

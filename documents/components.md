@@ -46,7 +46,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 ## VS Code extension (VS)
 
-**VS-01** The extension shall provide forms to create and edit items and links, validated while typing. (CR-04; US-1–US-5)
+**VS-01** The extension shall create and edit items in forms validated while typing, and complete link targets. (CR-04; US-1–US-5)
 *Rationale:* Engineers should not need to know the YAML schemas; forms with live validation lower the entry barrier.
 
 **VS-02** The extension shall show the product tree of the repository. (CR-02, CR-05; US-2)

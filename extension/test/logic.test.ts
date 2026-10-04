@@ -35,15 +35,14 @@ test('VS-01.2: flat form fields from the schema, written back keeping other attr
   expect(meta.toJS()).toEqual({ status: 'released' });
 });
 
-test('VS-01.6: completion after target:, uses: and dashes', () => {
-  expect(['  target: R', 'uses: ', '  - P', 'title: P'].map(logic.completesId)).toEqual([true, true, true, false]);
+test('VS-01.6: completion after target: and in uses: lists', () => {
+  expect(['  target: R', 'uses: ', 'uses: [P', 'uses:\n  - A\n  - P', 'tags:\n  - P', 'title: P'].map(logic.completesId)).toEqual([true, true, true, true, false, false]);
 });
 
-test('VS-04.2, VS-04.3: review page, hover, references', () => {
-  const repo = fakeRepo({ id: 'A', item: { data: { text: 'a', links: [{ target: 'R' }] } } }, { id: 'B', item: { data: { uses: ['R'] } } }, { id: 'R', item: { path: 'R', data: { title: 'r', type: 'requirement', text: '<R>' } } });
+test('VS-04.2, VS-04.3: review page, hover', () => {
+  const repo = fakeRepo({ id: 'A', item: { data: { text: 'a', links: [{ target: 'R' }] } } }, { id: 'R', item: { path: 'R', data: { title: 'r', type: 'requirement', text: '<R>' } } });
   expect(logic.reviewHtml(repo, 'A', { type: 'satisfies', target: 'R', by: 'Ann', on: 'May' }, '+x', [{ file: 'R', message: 'bad' }, { file: 'A', message: 'other' }] as never))
     .toMatch(/A.satisfies.R.*<pre>a<.*&#60;R&#62;.*\+x.*Ann.on.May.*bad<\/pre>\s<button.*Confirm.*Cancel/);
   expect(logic.hoverMarkdown(repo, [{ source: 'A', link: { target: 'R' }, state: 'suspect' } as LinkState], 'R', 'A'))
     .toBe('**r**\n\nrequirement, draft\n\nsuspect [Review link](command:plm.reviewLink?%5B%22A%22%2C%22R%22%5D)');
-  expect(logic.references(repo, 'R').map((found) => found.id)).toEqual(['A', 'B']);
 });

@@ -17,7 +17,7 @@
       { "command": "plm.showRequirements", "title": "Show requirements", "icon": "$(book)" }
     ],
     "menus": {
-      "explorer/context": [{ "command": "plm.newItem", "when": "explorerResourceIsFolder" }],
+      "explorer/context": [{ "command": "plm.newItem", "when": "explorerResourceIsFolder && plm.active" }],
       "view/item/context": [
         { "command": "plm.newItem", "when": "view == plm.tree" },
         { "command": "plm.editItem", "when": "view == plm.tree", "group": "inline" },

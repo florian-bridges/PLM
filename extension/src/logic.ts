@@ -42,28 +42,20 @@ window.onmessage = (event) => { document.getElementById('errors').textContent = 
 </script>`;
 }
 
-export const formData = (fields: Field[], raw: Record<string, string>) => Object.fromEntries(fields.map(({ name, kind }) => {
-  const value = raw[name]?.trim();
-  if (!value) return [name, undefined];
-  if (kind === 'number') return [name, Number(value)];
-  if (kind === 'list') return [name, value.split(',').map((part) => part.trim()).filter(Boolean)];
-  return [name, value];
-}));
-
 // VS-01.2: empty fields are removed.
-export function applyForm(item: Document, meta: Document, fields: Field[], data: Record<string, unknown>): void {
-  for (const { name, meta: inMeta } of fields) {
+export function applyForm(item: Document, meta: Document, fields: Field[], raw: Record<string, string>): void {
+  for (const { name, kind, meta: inMeta } of fields) {
     const doc = inMeta ? meta : item;
-    if (data[name] === undefined) doc.deleteIn([name]);
-    else doc.setIn([name], data[name]);
+    const value = raw[name]?.trim();
+    if (!value) doc.deleteIn([name]);
+    else doc.setIn([name], kind === 'number' ? Number(value) : kind === 'list' ? value.split(',').map((part) => part.trim()).filter(Boolean) : value);
   }
 }
 
 // VS-02.1
-export function productTree(repo: Repo, parent?: string): Entry[] {
-  const ids = parent ? childrenOf(repo.entries.get(parent)) : [...repo.entries.values()].filter((found) => !found.path.includes('/')).map((found) => found.id);
-  return ids.flatMap((id) => repo.entries.get(id) ?? []);
-}
+export const productTree = (repo: Repo, parent?: string): Entry[] => parent
+  ? childrenOf(repo.entries.get(parent)).flatMap((id) => repo.entries.get(id) ?? [])
+  : [...repo.entries.values()].filter((found) => !found.path.includes('/'));
 
 // VS-03.1
 export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry) => string, number = '1'): string {

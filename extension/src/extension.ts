@@ -18,16 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
   // VS-01.2, VS-04.3
   const activeItem = (repo: Repo, file = vscode.window.activeTextEditor?.document.uri.fsPath) => file && innermostItem(repo, relative(root, file));
 
-  // VS-01.3
   const diagnostics = vscode.languages.createDiagnosticCollection('plm');
-  const refreshDiagnostics = () => {
-    diagnostics.clear();
-    for (const [file, found] of Map.groupBy(validate(open()), (finding) => finding.file)) {
-      diagnostics.set(fileUri(file), found.map(({ line, col, severity, code, message }) => Object.assign(
-        new vscode.Diagnostic(new vscode.Range(line - 1, col - 1, line - 1, col - 1), message, severity === 'error' ? vscode.DiagnosticSeverity.Error : vscode.DiagnosticSeverity.Warning),
-        { code, source: 'plm' })));
-    }
-  };
 
   // VS-02.1
   const icons: Record<string, string> = { assembly: 'layers', part: 'package' };
@@ -41,8 +32,14 @@ export function activate(context: vscode.ExtensionContext) {
     getChildren: (row) => logic.productTree(open(), row?.id),
   };
 
+  // VS-01.3
   const refresh = () => {
-    refreshDiagnostics();
+    diagnostics.clear();
+    for (const [file, found] of Map.groupBy(validate(open()), (finding) => finding.file)) {
+      diagnostics.set(fileUri(file), found.map(({ line, col, severity, code, message }) => Object.assign(
+        new vscode.Diagnostic(new vscode.Range(line - 1, col - 1, line - 1, col - 1), message, severity === 'error' ? vscode.DiagnosticSeverity.Error : vscode.DiagnosticSeverity.Warning),
+        { code, source: 'plm' })));
+    }
     treeChanged.fire();
   };
 
@@ -77,12 +74,12 @@ export function activate(context: vscode.ExtensionContext) {
     const found = entry(repo, id);
     const check = itemSchema(root, found.item.data.type);
     if (!check) throw new Error(`Unknown item type ${found.item.data.type}`);
-    const fields = logic.formFields(check.schema as Parameters<typeof logic.formFields>[0]);
+    const fields = logic.formFields(check.schema as never);
     const panel = vscode.window.createWebviewPanel('plm.form', id, vscode.ViewColumn.Active, { enableScripts: true });
     panel.webview.html = logic.formHtml(`${id} ${found.item.data.title}`, fields, { ...found.item.data, ...found.meta.data });
     panel.webview.onDidReceiveMessage(({ save, values }) => {
       const [item, meta] = [found.item.doc.clone(), found.meta.doc.clone()];
-      logic.applyForm(item, meta, fields, logic.formData(fields, values));
+      logic.applyForm(item, meta, fields, values);
       check(item.toJS());
       panel.webview.postMessage((check.errors ?? []).map((error) => `${error.instancePath.slice(1) || 'item'} ${error.message}`).join('\n'));
       if (!save) return;
@@ -121,7 +118,6 @@ export function activate(context: vscode.ExtensionContext) {
     const found = repo.entries.get(document.getText(document.getWordRangeAtPosition(position, /[\w-]+/)));
     return found && use(found, repo, document);
   };
-  const location = (found: Entry) => new vscode.Location(fileUri(found.item.path), new vscode.Position(0, 0));
 
   // Core refusals become error messages.
   const reporting = (command: Function) => async (...args: unknown[]) => {
@@ -141,8 +137,8 @@ export function activate(context: vscode.ExtensionContext) {
       ? [...open().entries.values()].map(({ id, item }) => ({ label: item.data.title, detail: id, insertText: id })) : [] }),
     vscode.languages.registerHoverProvider(yaml, { provideHover: atId((found, repo, document) => ({ contents: [Object.assign(
       new vscode.MarkdownString(logic.hoverMarkdown(repo, linkStates(repo, currentVersions(repo)), found.id, activeItem(repo, document.uri.fsPath))), { isTrusted: { enabledCommands: ['plm.reviewLink'] } })] })) }),
-    vscode.languages.registerDefinitionProvider(yaml, { provideDefinition: atId(location) }),
+    vscode.languages.registerDefinitionProvider(yaml, { provideDefinition: atId((found) => new vscode.Location(fileUri(found.item.path), new vscode.Position(0, 0))) }),
     vscode.workspace.onDidSaveTextDocument(refresh),
   );
-  refreshDiagnostics();
+  refresh();
 }

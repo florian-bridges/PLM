@@ -29,7 +29,7 @@ test('VS-01.2: flat form fields from the schema, written back keeping other attr
 
   const item = parseDocument('# spar\ntitle: Old\ntext: x\nspec: { a: 1 }\n');
   const meta = parseDocument('');
-  logic.applyForm(item, meta, fields, logic.formData(fields, { title: 'Spar', text: ' ', uses: 'L, M,', mass_kg: '1.5', status: 'released' }));
+  logic.applyForm(item, meta, fields, { title: 'Spar', text: ' ', uses: 'L, M,', mass_kg: '1.5', status: 'released' });
   expect(item.toJS()).toEqual({ title: 'Spar', spec: { a: 1 }, uses: ['L', 'M'], mass_kg: 1.5 });
   expect(String(item)).toContain('# spar');
   expect(meta.toJS()).toEqual({ status: 'released' });

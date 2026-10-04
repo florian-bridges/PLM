@@ -136,8 +136,8 @@ program.command('report').command('coverage [item]').description('report require
     const repo = openRepo();
     const root = item && entry(repo, item).id;
     const rows = coverage(repo, linkStates(repo, currentVersions(repo)), root);
-    const line = (row: (typeof rows)[number]) => [row.state, label({ id: row.requirement, title: row.title }), row.run && label(row.run), ...(row.outdated ? ['outdated', ...row.outdated.map(label)] : [])];
-    output(rows.map((row) => line(row).filter(Boolean).join(' ')).join('\n'), rows);
+    output(rows.map((row) => [row.state, label({ id: row.requirement, title: row.title }), row.run && label(row.run), ...(row.outdated ? ['outdated', ...row.outdated.map(label)] : [])]
+      .filter(Boolean).join(' ')).join('\n'), rows);
     if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
   });
 

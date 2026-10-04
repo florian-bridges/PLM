@@ -93,9 +93,8 @@ test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes th
   expect(changeSince(repo, state.link)).toMatchObject({ commit: head, diff: expect.stringContaining('+text: Carry 4g.') });
   confirm(repo, currentVersions(repo), [], 'P');
   expect(link()).not.toHaveProperty('commit');
-  git(root, ['config', '--unset', 'user.name']);
-  const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null' };
-  expect(spawnSync(process.execPath, ['src/cli.ts', '-C', root, 'confirm', 'P'], { env }).status).toBe(1);
+  git(root, ['config', 'user.name', '']);
+  expect(plm(root, 'confirm', 'P').status).toBe(1);
 
   write(root, { 'wing/requirements/load.yaml': 'id: R\ntype: requirement\n' });
   repo = loadRepo(root);

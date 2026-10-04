@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { Document, LineCounter, parseDocument } from 'yaml';
 
-export interface Link { type: string; target: string; title?: string; version?: string; by?: string; on?: string; commit?: string }
+export interface Link { type: string; target: string; result?: string; title?: string; version?: string; by?: string; on?: string; commit?: string }
 export interface Item { id: string; type: string; title: string; [attribute: string]: unknown }
 export interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>>; status?: string; owner?: string }
 

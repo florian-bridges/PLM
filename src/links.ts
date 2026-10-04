@@ -2,7 +2,7 @@
 import { copyFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document } from 'yaml';
-import { entry, homeFolders, linksOf, named, newId, Refused, selection, subtree, writeYaml, type Entry, type Link, type Named, type Repo } from './repo.ts';
+import { entry, homeFolders, linksOf, named, newId, Refused, selection, subtree, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, git, versionAt } from './version.ts';
 
@@ -58,9 +58,10 @@ export function addLink(repo: Repo, source: string, type: string, target: string
 }
 
 // CL-03.1, CL-03.2
-export function recordRun(repo: Repo, testCase: string, sut: string, result: string, logs: string[]): string {
+export function recordRun(repo: Repo, testCases: string[], sut: string, results: string[], logs: string[]): string {
+  if (results.length !== testCases.length) throw new UsageError('Give one result per test case');
   const current = currentVersions(repo);
-  const links = [{ type: 'executes', target: testCase }, { type: 'tests', target: sut }];
+  const links: Link[] = [{ type: 'tests', target: sut }, ...testCases.map((target, i) => ({ type: 'executes', target, result: results[i] }))];
   const confirmed = Object.fromEntries(links.map(({ target }) => [target, confirmation(repo, target, versionAt(repo.root, 'HEAD', target))]));
   // CL-03.3
   const changed = links.find(({ target }) => confirmed[target].version !== current.get(target));
@@ -68,7 +69,7 @@ export function recordRun(repo: Repo, testCase: string, sut: string, result: str
 
   const id = newId(repo, 'test-run');
   const folder = `${homeFolders['test-run']}/${id}`;
-  const item = { id, type: 'test-run', title: `${testCase} on ${sut}`, date: new Date().toISOString(), result, links };
+  const item = { id, type: 'test-run', title: `${testCases.join(', ')} on ${sut}`, date: new Date().toISOString(), links };
   writeYaml(repo.root, { path: `${folder}/item.yaml`, doc: new Document(item) });
   writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: new Document({ status: 'draft', confirmed }) });
   for (const log of logs) copyFileSync(log, join(repo.root, folder, basename(log)));
@@ -85,41 +86,56 @@ export function changeSince(repo: Repo, link: Link): { commit?: string; diff: st
   return { commit, diff: git(repo.root, ['diff', commit, '--', ...paths]) };
 }
 
-export interface Coverage { requirement: string; title: string; state: 'verified' | 'pending' | 'unverified'; run?: Named; outdated?: Named[] }
+// TE-03.1
+const within = (repo: Repo, root?: string) => {
+  const selected = root && new Set(selection(repo, root));
+  return (id: string) => !selected || selected.has(id);
+};
+
+export const suspects = (repo: Repo, states: LinkState[], root?: string) => {
+  const inScope = within(repo, root);
+  return states.filter((state) => state.state !== 'current' && !fromRun(repo, state) && inScope(state.source));
+};
+
+export interface Coverage {
+  requirement: string; title: string; state: 'verified' | 'pending' | 'unverified'; run?: Named;
+  tests: { testCase: Named; run?: Named; result?: string; outdated?: boolean }[];
+}
 
 // TE-06.1, TE-06.2, CL-05.3
 export function coverage(repo: Repo, states: LinkState[], root?: string): Coverage[] {
   const linksOfType = (type: string) => states.filter((state) => state.link.type === type);
   const isCurrent = (state: LinkState) => state.state === 'current';
 
-  // Each test case's latest run, overall and among runs with current links.
+  // Each test case's latest `executes` link, overall and among runs with current links.
   const outdatedRuns = new Set(states.filter((state) => fromRun(repo, state) && !isCurrent(state)).map((state) => state.source));
   const runsOfCurrentSut = new Set(linksOfType('tests').filter(isCurrent).map((state) => state.source));
-  const latestRun = new Map<string, Entry>();
-  const latestCurrentRun = new Map<string, Entry>();
-  const keepLatest = (latest: Map<string, Entry>, testCase: string, run: Entry) => {
-    const previous = latest.get(testCase);
-    if (!previous || String(run.item.data.date) > String(previous.item.data.date)) latest.set(testCase, run);
+  const latestRun = new Map<string, LinkState>();
+  const latestCurrentRun = new Map<string, LinkState>();
+  const date = (executes: LinkState) => String(entry(repo, executes.source).item.data.date);
+  const keepLatest = (latest: Map<string, LinkState>, executes: LinkState) => {
+    const previous = latest.get(executes.link.target);
+    if (!previous || date(executes) > date(previous)) latest.set(executes.link.target, executes);
   };
   for (const executes of linksOfType('executes')) {
-    const run = entry(repo, executes.source);
-    keepLatest(latestRun, executes.link.target, run);
-    if (!outdatedRuns.has(run.id) && runsOfCurrentSut.has(run.id)) keepLatest(latestCurrentRun, executes.link.target, run);
+    keepLatest(latestRun, executes);
+    if (!outdatedRuns.has(executes.source) && runsOfCurrentSut.has(executes.source)) keepLatest(latestCurrentRun, executes);
   }
 
-  const selected = root ? new Set(selection(repo, root)) : undefined;
-  const inScope = (requirement: Entry) => !selected || selected.has(requirement.id);
-  const requirements = [...repo.entries.values()].filter((candidate) => candidate.item.data.type === 'requirement' && inScope(candidate));
+  const inScope = within(repo, root);
+  const requirements = [...repo.entries.values()].filter((candidate) => candidate.item.data.type === 'requirement' && inScope(candidate.id));
 
   return requirements.map((requirement) => {
     const verifies = linksOfType('verifies').filter((state) => state.link.target === requirement.id);
     const passingRun = verifies.filter(isCurrent)
       .map((state) => latestCurrentRun.get(state.source))
-      .find((run) => run?.item.data.result === 'pass');
-    const row = { requirement: requirement.id, title: named(repo, requirement.id).title };
-    if (passingRun) return { ...row, state: 'verified', run: named(repo, passingRun.id) };
-    if (!verifies.length) return { ...row, state: 'unverified' };
-    const outdated = verifies.map((state) => latestRun.get(state.source)?.id).filter((id) => id && outdatedRuns.has(id)) as string[];
-    return { ...row, state: 'pending', ...(outdated.length && { outdated: outdated.map((id) => named(repo, id)) }) };
+      .find((executes) => executes?.link.result === 'pass');
+    const tests = verifies.map(({ source }) => {
+      const latest = latestRun.get(source);
+      return { testCase: named(repo, source), ...(latest && { run: named(repo, latest.source), result: latest.link.result, outdated: outdatedRuns.has(latest.source) }) };
+    });
+    const row = { requirement: requirement.id, title: named(repo, requirement.id).title, tests };
+    if (passingRun) return { ...row, state: 'verified', run: named(repo, passingRun.source) };
+    return { ...row, state: verifies.length ? 'pending' : 'unverified' };
   });
 }

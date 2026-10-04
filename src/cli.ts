@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { addLink, confirm, coverage, fromRun, linkStates, recordRun, type LinkState } from './links.ts';
+import { addLink, confirm, coverage, linkStates, recordRun, suspects, type LinkState } from './links.ts';
 import { entry, isRequirementFile, loadRepo, nameFor, newItem, Refused, refuseTaken, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
 import { search } from './search.ts';
@@ -18,11 +18,16 @@ const program = new Command('plm')
   .exitOverride();
 const workingFolder = (): string => program.opts().repo;
 const openRepo = () => loadRepo(workingFolder());
+// CL-01.1, TE-06.2
+const scoped = (item?: string) => {
+  const repo = openRepo();
+  return { repo, states: linkStates(repo, currentVersions(repo)), root: item && entry(repo, item).id };
+};
 
 // CL-05.1
 function output(text: string, data: unknown) {
   const json = program.opts().format === 'json';
-  console.log(json ? JSON.stringify({ schema: 2, data }, null, 2) : text);
+  console.log(json ? JSON.stringify({ schema: 3, data }, null, 2) : text);
 }
 
 // CL-05.3
@@ -71,9 +76,9 @@ program.command('confirm <source> [target]').description('confirm the link to ta
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 
-program.command('suspects').description('list suspect and unconfirmed links').action(() => {
-  const repo = openRepo();
-  const states = linkStates(repo, currentVersions(repo)).filter((state) => state.state !== 'current' && !fromRun(repo, state));
+program.command('suspects [item]').description('list suspect and unconfirmed links').action((item?: string) => {
+  const { repo, states: all, root } = scoped(item);
+  const states = suspects(repo, all, root);
   output(states.map((state) => `${state.state} ${linkLabel(state)}`).join('\n'), states);
   if (states.length) exitCode = 1;
 });
@@ -121,23 +126,23 @@ program.command('rename <id> <title>').description('retitle an item and rename i
 });
 
 // CL-03.1
-program.command('test').command('record <test-case>').description('record a test run')
+program.command('test').command('record <test-case...>').description('record a test run')
   .requiredOption('--sut <id>')
-  .addOption(new Option('--result <result>').choices(results).makeOptionMandatory())
+  .addOption(new Option('--result <results...>').choices(results).makeOptionMandatory())
   .option('--log <files...>', '', [])
-  .action((testCase: string, options: { sut: string; result: string; log: string[] }) => {
-    const id = recordRun(openRepo(), testCase, options.sut, options.result, options.log);
+  .action((testCases: string[], options: { sut: string; result: string[]; log: string[] }) => {
+    const id = recordRun(openRepo(), testCases, options.sut, options.result, options.log);
     output(id, { id });
   });
 
 // TE-06.2
 program.command('report').command('coverage [item]').description('report requirement verification')
-  .action((item: string | undefined) => {
-    const repo = openRepo();
-    const root = item && entry(repo, item).id;
-    const rows = coverage(repo, linkStates(repo, currentVersions(repo)), root);
-    output(rows.map((row) => [row.state, label({ id: row.requirement, title: row.title }), row.run && label(row.run), ...(row.outdated ? ['outdated', ...row.outdated.map(label)] : [])]
-      .filter(Boolean).join(' ')).join('\n'), rows);
+  .action((item?: string) => {
+    const { repo, states, root } = scoped(item);
+    const rows = coverage(repo, states, root);
+    const lines = rows.flatMap((row) => [[row.state, label({ id: row.requirement, title: row.title })],
+      ...row.tests.map((test) => ['  ' + label(test.testCase), test.run && label(test.run), test.result, test.outdated && 'outdated'])]);
+    output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'), rows);
     if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
   });
 

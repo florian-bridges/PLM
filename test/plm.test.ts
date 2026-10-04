@@ -63,13 +63,13 @@ test('TE-01.2: uncommitted and committed states yield identical versions', () =>
 test('CO-01.2, CO-02.1, CO-02.2, CO-02.4–CO-02.7: findings with codes and positions', () => {
   const root = fixture();
   write(root, {
-    'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n',
+    'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: pass\n',
     'copy/item.yaml': 'id: L\ntype: part\ntitle: Bolt\n',
     'bolt/item.yaml': 'id: L\ntype: part\ntitle: Bolt\nexternal_ids: { reqif: B1 }\n',
     'wing/requirements/structure/stringer.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
   });
   const findings = validate(loadRepo(root));
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'schema', 'schema', 'stale-name']);
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'schema', 'schema', 'schema', 'schema', 'stale-name']);
   expect(findings.find((f) => f.code === 'stale-name')).toMatchObject({ file: 'copy/item.yaml', severity: 'warning' });
   expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ file: 'wing/spar/item.yaml', line: 4, col: 9 });
 });
@@ -124,43 +124,47 @@ test('CL-02.1, CL-02.2, CL-02.4, CL-02.5: init, new items nest in the working fo
   expect(validate(loadRepo(root))).toEqual([]);
 });
 
-test('CL-05.1–CL-05.3: JSON output, exit codes and titles next to IDs', () => {
+test('CL-01.1, CL-05.1–CL-05.3, TE-03.1: JSON output, exit codes and titles next to IDs', () => {
   const root = fixture();
   expect(plm(root, 'validate').status).toBe(0);
   const suspects = plm(root, '--format', 'json', 'suspects');
   expect(suspects.status).toBe(1);
-  expect(JSON.parse(suspects.stdout)).toMatchObject({ schema: 2, data: [{ state: 'unconfirmed', source: 'P', title: 'Spar', targetTitle: 'Load' }] });
-  expect(plm(root, 'suspects').stdout).toBe('unconfirmed P (Spar) satisfies R (Load)\n');
+  expect(JSON.parse(suspects.stdout)).toMatchObject({ schema: 3, data: [{ state: 'unconfirmed', source: 'P', title: 'Spar', targetTitle: 'Load' }] });
+  expect(plm(root, 'suspects', 'A').stdout).toBe('unconfirmed P (Spar) satisfies R (Load)\n');
+  expect(plm(root, 'suspects', 'L').status).toBe(0);
   expect(plm(root, 'report', 'coverage').stdout).toBe('unverified R (Load)\n');
   write(root, { 'wing/requirements/load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
   expect(plm(root, 'impact', 'HEAD').stdout).toBe('changed R (Load)\npropagated A (Wing)\n');
 });
 
-test('CO-01.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verify requirements until the SUT changes', () => {
+test('CO-01.1, CO-01.2, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: recorded runs verify requirements until the SUT changes', () => {
   const root = fixture();
   const coverage = () => json(root, 'report', 'coverage', 'A')[0].state;
-  const record = (result: string) => plm(root, 'test', 'record', 'T', '--sut', 'A', '--result', result, '--log', join(root, 'rig.log'));
+  const record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
   expect(coverage()).toBe('unverified');
   const wing = currentVersions(loadRepo(root)).get('A');
   expect(json(root, 'report', 'coverage', 'P')).toEqual([]);
   write(root, {
     'wing/tests/load-test/item.yaml': 'id: T\ntype: test-case\ntitle: Load test\nlinks:\n  - type: verifies\n    target: R\n',
+    'wing/tests/drop-test/item.yaml': 'id: U\ntype: test-case\ntitle: Drop test\nlinks:\n  - type: verifies\n    target: R\n',
     'rig.log': 'ok',
   });
   expect(currentVersions(loadRepo(root)).get('A')).not.toBe(wing);
-  expect(plm(root, 'confirm', 'T').status).toBe(0);
+  expect(plm(root, 'confirm', 'T').status + plm(root, 'confirm', 'U').status).toBe(0);
   expect(coverage()).toBe('pending');
-  expect(() => recordRun(loadRepo(root), 'T', 'A', 'pass', [])).toThrow(Refused);
+  expect(() => recordRun(loadRepo(root), ['T'], 'A', ['pass'], [])).toThrow(Refused);
   commit(root);
-  expect(record('maybe').status).toBe(2);
-  const run = record('pass').stdout.trim();
+  expect(record('pass', 'maybe').status + record('pass').status).toBe(4);
+  const run = record('pass', 'fail').stdout.trim();
   expect(existsSync(join(root, `runs/${run}/rig.log`))).toBe(true);
   expect(loadRepo(root).entries.get(run)?.meta.data.confirmed?.T.commit).toBe(git(root, ['rev-parse', '--short', 'HEAD']));
   expect(plm(root, 'confirm', run).status).toBe(1);
   expect(validate(loadRepo(root))).toEqual([]);
-  expect(coverage()).toBe('verified');
+  const tests = (outdated: boolean) => [['U', 'Drop test', 'fail'], ['T', 'Load test', 'pass']]
+    .map(([id, title, result]) => ({ testCase: { id, title }, run: { id: run, title: 'T, U on A' }, result, outdated }));
+  expect(json(root, 'report', 'coverage', 'A')[0]).toMatchObject({ state: 'verified', tests: tests(false) });
   write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\n' });
-  expect(json(root, 'report', 'coverage', 'A')[0]).toEqual({ requirement: 'R', title: 'Load', state: 'pending', outdated: [{ id: run, title: 'T on A' }] });
+  expect(json(root, 'report', 'coverage', 'A')[0]).toEqual({ requirement: 'R', title: 'Load', state: 'pending', tests: tests(true) });
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
 });

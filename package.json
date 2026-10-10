@@ -1,0 +1,32 @@
+{
+  "name": "plm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "plm": "dist/cli.js"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --exclude '.claude/**'",
+    "plm": "node src/cli.ts",
+    "build:ext": "esbuild extension/src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=extension/dist/extension.js",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p extension"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "commander": "^15.0.0",
+    "minisearch": "^7.2.0",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "@types/vscode": "1.105",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

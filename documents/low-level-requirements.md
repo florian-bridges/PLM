@@ -1,0 +1,177 @@
+# Low-Level Requirements
+
+Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.md](components.md).
+
+## Core library
+
+**CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<name>/item.yaml` with their requirements `requirements/<name>.yaml`, also in subfolders, and test cases `tests/<name>/item.yaml`, test runs `runs/<name>/item.yaml` and `meta/<ID>.yaml` with the `yaml` package, keeping comments and formatting when writing back.
+*Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files. Subfolders group requirements; names sort them. Test cases in the tested item's folder make its version cover its requirements and test cases, so adding or changing a test case outdates the runs against the item. Runs stay outside: inside the tested item, a run would change the version it records.
+
+**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
+*Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
+
+**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder, except hidden files, `item.yaml`, `requirements/`, `tests/` and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
+*Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
+
+**CO-02.1** The core shall validate `item.yaml` with Ajv against the JSON Schema (2020-12) of its type; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
+*Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add their own attributes.
+
+**CO-02.2** The core shall report as errors: requirements and test cases outside their item's `requirements/` and `tests/` folders, test runs outside the top-level `runs/` folder, other items inside them, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
+*Rationale:* These errors break versions, links or composition and would otherwise surface late.
+
+**CO-02.4** Each finding shall carry file, line, column, severity and a stable code.
+*Rationale:* Positions let editors and CI point to the problem; stable codes allow filtering and suppression.
+
+**CO-02.5** Built-in types shall be `requirement`, `part`, `assembly`, `test-case` and `test-run`.
+*Rationale:* Others come by schema.
+
+**CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, and `tests` from `test-run` to any type.
+*Rationale:* Fixed semantics keep reports comparable.
+
+**CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.
+*Rationale:* One index format serves the CLI, VS Code and the browser without a search server.
+
+**CO-03.2** Queries shall combine free text, matching all words by prefix, with filters `type:`, `status:` and `owner:`.
+*Rationale:* Filters answer typical questions, such as all unreleased parts of an owner, faster than text alone. Prefix matching finds items while typing.
+
+## Traceability engine
+
+**TE-01.1** An item's version shall be the SHA-256 hex digest of its folder's Git tree hash followed by the versions of the items it uses, in listed order; a requirement's version shall be its file's Git blob hash.
+*Rationale:* Git hashes capture all files, including nested items and LFS pointers; adding used items' versions propagates their changes.
+
+**TE-01.2** Hashes of the working tree shall be computed by staging into a temporary Git index, so LFS filters apply and uncommitted and committed states yield identical versions.
+*Rationale:* Engineers need suspect states before committing; identical results avoid spurious differences between local runs and CI.
+
+**TE-02.1** Confirming a link shall write to `confirmed.<target>` in the source's `meta/<ID>.yaml` the target's current `version` and `title`, the confirming Git `user.name` as `by`, the date as `on`, and as `commit` the short hash of HEAD if the target has the confirmed version there; a link without `version` there is unconfirmed.
+*Rationale:* Keeping the version in a file of its own makes confirmations reviewable as ordinary diffs; title, confirmer, date and commit show what was reviewed without looking up hashes. Uncommitted targets have no commit to name.
+
+**TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset, and for links of test runs.
+*Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review. Run links are confirmed when recording (CL-03.2).
+
+**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none. Links from test runs are evidence, not links to review: suspect lists, of the repository or an item subtree, shall omit them, and a run with a suspect link is outdated.
+*Rationale:* Separating unconfirmed from suspect distinguishes new, unreviewed links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
+
+**TE-03.2** To show what changed, the engine shall return the diff of the target's subtree since the link's `commit` or, if it is missing or unknown, since the latest commit at which the target had the confirmed version.
+*Rationale:* The user must judge whether the change matters; the diff shows exactly what happened since confirmation. The stored commit avoids searching history, which is needed only for uncommitted confirmations or squashed branches.
+
+**TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links other than from test runs that became suspect, and runs that became outdated.
+*Rationale:* These are the questions a change board asks before approval.
+
+**TE-05.2** A link shall have become suspect when its confirmed version equals the target's version at base but not at head.
+*Rationale:* Links already suspect at base are not caused by the change.
+
+**TE-06.1** A requirement shall count as verified when a test case `verifies` it through a current link and that test case's latest run, by date, with current `executes` and `tests` links records `pass` for it; coverage shall list each verifying test case with its latest run, that run's result for it and whether it is outdated.
+*Rationale:* Evidence counts only for the versions tested and the latest result; reusing the suspect mechanism avoids a second staleness check.
+
+**TE-06.2** Coverage shall be reported for the repository or an item subtree as verified, verification pending (verifying test case without current passing run) and unverified (no verifying test case).
+*Rationale:* Pending verification differs from a missing test and needs a different action.
+
+## CLI
+
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>]`, finding the repository by searching upward for `plm.yaml`.
+*Rationale:* Searching upward works from any subfolder.
+
+**CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
+*Rationale:* Links are reviewed one by one, or all at once after reviewing an item.
+
+**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the item folder containing the working folder, requirements and test cases in its `requirements/` and `tests/` folders, requirements in the working folder if inside `requirements/`, and print the new ID. It shall name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
+*Rationale:* Repository templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
+
+**CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
+*Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
+
+**CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types.
+*Rationale:* Items can follow at once.
+
+**CL-03.1** `plm test record <test-case>... --sut <ID> --result <result>... [--log <file>...]` shall create a test run in `runs/<ID>/` with date, copies of the log files and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.
+*Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for. One run per rig session keeps its logs together; results per test case keep one failure from discrediting the others.
+
+**CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation per TE-02.1 with the versions at `HEAD`, recorded as `commit`.
+*Rationale:* The run must record exactly which version was tested; the commit makes it reproducible.
+
+**CL-03.3** Recording shall be refused while the system under test or a test case differs from `HEAD`.
+*Rationale:* Uncommitted states cannot be reproduced and so cannot serve as evidence.
+
+**CL-05.1** Every command shall accept `--format json`, with the JSON output schema versioned.
+*Rationale:* Versioned JSON lets scripts and CI rely on the output across tool updates.
+
+**CL-05.2** Exit codes shall be 0 for success, 1 for findings, 2 for usage errors and 3 for internal errors.
+*Rationale:* Separating findings from failures lets CI tell rejected changes from broken tooling.
+
+**CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states.
+*Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up.
+
+## VS Code extension
+
+**VS-01.1** The extension shall reuse the core library and run in the extension host without a separate server, bundled by esbuild into one CommonJS file and activated in workspaces containing `plm.yaml`.
+*Rationale:* One core avoids duplicated logic and diverging results between editor and CI. A bundle needs no installed dependencies; other workspaces stay unaffected.
+
+**VS-01.2** Editing the active item (the innermost item containing the active editor's file) or a product tree item shall open a webview form generated from the type's JSON Schema, with fields for its string, number, enum and string array attributes and for `status` and `owner`. The form shall show schema errors while typing; saving shall write `item.yaml` and `meta/<ID>.yaml` through the core, keeping other attributes and comments.
+*Rationale:* Forms generated from schemas support new and program-specific types without extension code. Flat fields cover the built-in types; nested attributes are edited in YAML.
+
+**VS-01.3** Diagnostics shall be updated in the Problems panel within one second of saving a file.
+*Rationale:* Immediate feedback catches errors while the context is fresh. Validation reads files from disk, so unsaved edits are not seen.
+
+**VS-01.5** A "New item" command on product tree items shall pick a type, ask for a title, create the item per CL-02.1 in that item's folder, and open its form.
+*Rationale:* Items are created where they belong in the product structure.
+
+**VS-02.1** A tree view shall show composition, nested and used items, from the top-level items, with type icons and status badges; selecting an item opens its `item.yaml`.
+*Rationale:* Badges show maturity. Used items appear under each item using them, as they count toward its version.
+
+**VS-03.1** A product tree command shall show a read-only webview of an item with a section per item of its subtree (TE-06.2), each item once, numbered and headed by depth (1, 1.1, 1.1.1), each listing the item's requirements with title in bold, ID, status, coverage state and rendered Markdown text; clicking an ID opens its file.
+*Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements from aircraft to equipment level in the product's structure.
+
+**VS-03.3** Each requirement shall list its links and the links to it with their state per TE-03.1 and, if not current, "Review link" (VS-04.3), and each verifying test case its latest run per TE-06.1.
+*Rationale:* Links in both directions per requirement form the traceability matrix in reading order.
+
+**VS-03.4** The document shall begin with each requirement's coverage state and the output of `plm suspects <item>`, and take all link states, coverage and runs from the core functions behind `plm suspects` and `plm report coverage`.
+*Rationale:* Reviewers see the item's gaps first, including links to requirements outside the subtree.
+
+**VS-04.2** "Review link" shall show one page with the link type, the source's and target's text, the diff from TE-03.2 or, if unconfirmed, the target's file, the previous confirmer and date, and the target's findings; "Confirm" shall confirm that link per CL-01.2, "Cancel" close the page.
+*Rationale:* Users decide on one link with everything needed on one page.
+
+**VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file.
+*Rationale:* Links are inspected and navigated where they are written, replacing a separate links view.
+
+**VS-06.1** A command shall record a manual test run, picking test cases, system under test, each test case's result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
+*Rationale:* Manual and automated runs must produce identical evidence; one recording function in the core guarantees it.
+
+## CI integration
+
+**CI-01.1** CI shall be provided as a GitHub Action and a GitLab CI component, both running the CLI in a published container image.
+*Rationale:* GitHub and GitLab cover most hosts, and Forgejo Actions largely runs GitHub Actions; a container keeps tool versions identical everywhere.
+
+**CI-01.2** On each merge request CI shall run `plm validate` and `plm suspects` on the merge result and fail on any error, suspect or unconfirmed link.
+*Rationale:* Checking the merge result catches problems that arise only when branches combine.
+
+**CI-01.3** Findings shall appear as merge request annotations: GitHub check annotations or a GitLab Code Quality report.
+*Rationale:* Annotations show findings at the affected lines, where reviewers look.
+
+**CI-02.1** CI shall post the output of `plm impact` as one merge request comment, updated on each push and linking a full report when it exceeds the host's comment size limit.
+*Rationale:* One updated comment avoids noise; large changes still show a summary.
+
+**CI-02.2** CI shall request review from the owners of affected items through the host API, mapping `owner` to host usernames.
+*Rationale:* Owners know their items best and must accept changes affecting them.
+
+**CI-04.1** CI shall build the site on every push and deploy it under `<site>/<branch>/`, removing sites of deleted branches, and under `<site>/<commit>/` for each release, keeping those.
+*Rationale:* Every branch can be reviewed in the browser; release sites preserve released states.
+
+## Static site
+
+**SI-01.1** The site shall be built with Astro from the core library and contain only static files.
+*Rationale:* Static files can be hosted anywhere, including isolated networks, without a server to maintain.
+
+**SI-01.2** Each item shall have a page with attributes, text, artifact downloads, nested and used items, links with their state, and history: the commits touching its files, with date, author, message and merge request.
+*Rationale:* Reviewers need the complete picture of an item, including why it changed.
+
+**SI-02.1** For each top-level item the site shall show a traceability matrix (requirements against satisfying, implementing and verifying items), coverage per TE-06.2, and a compliance matrix (certification basis requirements against evidence).
+*Rationale:* These matrices are the evidence reviewed in certification and program reviews.
+
+**SI-02.2** Each matrix shall be exportable as CSV.
+*Rationale:* Matrices are often attached to certification documents or processed in spreadsheets.
+
+**SI-04.1** CI shall deploy only to targets enforcing host login: GitLab Pages access control, or a reverse proxy with the host's OAuth such as oauth2-proxy.
+*Rationale:* Static sites have no login of their own; the host login reuses existing permissions.
+
+**SI-04.2** CI shall refuse to deploy to a public target unless `plm.yaml` sets `site.public: true`.
+*Rationale:* Publishing export-controlled data must be an explicit decision.

@@ -156,3 +156,10 @@ Add new entries at the end. Format:
 *Impact:* The artifact list is machine-dependent — a fresh clone shows a different one — so it cannot be used as the record of what an item contains, and a reviewer cannot tell generated output from a committed artifact.
 *Workaround:* Delete generated output from the item folder before `plm show` or commit, and keep a local `.gitignore`.
 *Proposal:* List only files tracked by git, or mark untracked and ignored files as such.
+
+## No gate review pack report
+*Found:* 2026-10-13, autonomous-fixed-wing, systems-engineer
+*Observed:* A gate (SRR) needs one document with requirements by folder theme (text, verification, status, parent, cited items), open `TBD`s, decisions and analyses with status and documents, review verdicts with open findings, suspects and coverage per verification method. `plm` has no such report; `plm show` gives no item path and status is only in `meta`, so it takes one `plm show` call per item (about 170 calls, 30 s).
+*Impact:* Every product repository writes its own generator; hand-made packs drift from the data.
+*Workaround:* Python generator over `plm --format json search/show/suspects/report coverage` and a file scan for paths: `aircraft-system/srr-review-pack/review_pack.py` in autonomous-fixed-wing, copied here as `scripts/review_pack.py`.
+*Proposal:* `plm report review-pack [item] [--gate <name>] [--reviews <REV-…>]` writing Markdown with links to the item files; include `path` in `plm show`/`search` JSON and a bulk `plm show --all`.

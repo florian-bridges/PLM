@@ -29,6 +29,8 @@ Make every change in as few words as possible: reuse existing code and text, don
 
 ## Scope
 
+**PLM is a general tool.** It serves any product that is split into subsystems with their own requirements, tests and items, not one project. No code, requirement, test or document names a project, its item kinds, folders or tooling; what varies by project is configuration in `plm.yaml` with a default. Example data in tests and documents is neutral. Projects that use PLM (such as `autonomous-fixed-wing`) are sources of needs, not of specifications: generalise the need before building it.
+
 Keep the tool tight: implement only what the scenarios need. For every feature, ask whether it can be dropped or merged into an existing one, and propose that before adding to it. When a change touches a requirement, update requirement, code and test together.
 
 ## Commits

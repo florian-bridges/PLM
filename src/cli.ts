@@ -126,11 +126,23 @@ program.command('test').command('record <test-case...>').description('record a t
 
 // TE-06.2
 program.command('report').command('coverage [item]').description('report requirement verification')
-  .action((item?: string) => {
+  .option('--by <field>')
+  .action((item?: string, options?: any) => {
     const rows = coverage(...scoped(item));
-    const lines = rows.flatMap((row) => [[row.state, label({ id: row.requirement, title: row.title })],
-      ...row.tests.map((test) => ['  ' + label(test.testCase), test.run && label(test.run), test.result, test.outdated && 'outdated'])]);
-    output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'), rows);
+    if (options?.by) {
+      // TE-06.3
+      const groups: Record<string, any> = {};
+      for (const row of rows) {
+        const value = String(entry(openRepo(), row.requirement).item.data[options.by] ?? '');
+        const g = groups[value] ??= { value, verified: 0, pending: 0, unverified: 0, total: 0 };
+        g[row.state]++; g.total++;
+      }
+      output(Object.values(groups).map((g) => `${g.value} verified ${g.verified} pending ${g.pending} unverified ${g.unverified} total ${g.total}`).join('\n'), Object.values(groups));
+    } else {
+      const lines = rows.flatMap((row) => [[row.state, label({ id: row.requirement, title: row.title })],
+        ...row.tests.map((test) => ['  ' + label(test.testCase), test.run && label(test.run), test.result, test.outdated && 'outdated'])]);
+      output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'), rows);
+    }
     if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
   });
 

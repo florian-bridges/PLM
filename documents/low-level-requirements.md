@@ -101,7 +101,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-05.2** Exit codes shall be 0 for success, 1 for findings, 2 for usage errors and 3 for internal errors.
 *Rationale:* Separating findings from failures lets CI tell rejected changes from broken tooling.
 
-**CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. JSON for `search` shall give each match's item fields, `links`, `path` and `meta`: the record `show` gives without version, link states or artifacts.
+**CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
 *Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up. Reusing `show`'s fields for `search` answers many items in one call, avoiding per-item lookups.
 
 ## VS Code extension

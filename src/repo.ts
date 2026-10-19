@@ -35,7 +35,7 @@ export function findRoot(start: string): string {
   for (let folder = resolve(start); ; folder = dirname(folder)) {
     if (existsSync(join(folder, 'plm.yaml'))) return folder;
     const isFileSystemRoot = folder === dirname(folder);
-    if (isFileSystemRoot) throw new UsageError(`No plm.yaml found in ${start} or above`);
+    if (isFileSystemRoot) throw new UsageError(`No plm.yaml up from ${start}`);
   }
 }
 
@@ -96,7 +96,7 @@ export const innermostItem = (repo: Repo, file: string) => [...repo.entries.valu
 // CL-02.2
 export function newId(repo: Repo, type: string): string {
   const prefix = repo.settings.prefixes?.[type];
-  if (!prefix) throw new UsageError(`No ID prefix for type ${type} in plm.yaml`);
+  if (!prefix) throw new UsageError(`No prefix for ${type} in plm.yaml`);
   const crockfordBase32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
   const characters = Array.from(randomBytes(6), (byte) => crockfordBase32[byte & 31]);
   return prefix + characters.join('');

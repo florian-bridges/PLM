@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, expect, test } from 'vitest';
@@ -164,7 +164,7 @@ test('CL-01.1, CL-05.1–CL-05.3, TE-03.1: JSON output, exit codes and titles ne
   expect(plm(root, 'impact', 'HEAD').stdout).toBe('changed R (Load)\npropagated A (Wing)\n');
 });
 
-test('CO-01.1–CO-01.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: recorded runs verify requirements until the SUT changes', () => {
+test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: recorded runs verify requirements until the SUT changes', () => {
   const root = fixture();
   const coverage = () => json(root, 'report', 'coverage', 'A')[0].state;
   const record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
@@ -195,6 +195,8 @@ test('CO-01.1–CO-01.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3:
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
   expect(json(root, 'report', 'coverage', '--by', 'type')[0]).toMatchObject({ total: 1 });
+  renameSync(join(root, 'runs', run), join(root, 'r1'));
+  expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 }, 15000);
 
 test('TE-05.1–TE-05.2: impact of a change on items, links and test runs', () => {

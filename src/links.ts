@@ -48,12 +48,12 @@ export function confirmation(repo: Repo, target: string, version: string | undef
 export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, target?: string): Link[] {
   const sourceEntry = entry(repo, source);
   // TE-02.2
-  if (sourceEntry.item.data.type === 'test-run') throw new Refused('Test run links are confirmed when recording');
+  if (sourceEntry.item.data.type === 'test-run') throw new Refused('Test runs confirm at recording');
   const links = linksOf(sourceEntry).filter((link) => !target || link.target === target);
   for (const link of links) {
     const targetFile = repo.entries.get(link.target)?.item.path;
     const broken = findings.some((finding) => finding.severity === 'error' && finding.file === targetFile);
-    if (broken || !versions.has(link.target)) throw new Refused(`${link.target} fails validation; fix it before confirming`);
+    if (broken || !versions.has(link.target)) throw new Refused(`${link.target} fails validation; fix before confirming`);
     sourceEntry.meta.doc.setIn(['confirmed', link.target], confirmation(repo, link.target, versions.get(link.target)));
   }
   if (links.length) writeYaml(repo.root, sourceEntry.meta);
@@ -70,13 +70,13 @@ export function addLink(repo: Repo, source: string, type: string, target: string
 
 // CL-03.1, CL-03.2
 export function recordRun(repo: Repo, testCases: string[], sut: string, results: string[], logs: string[]): string {
-  if (results.length !== testCases.length) throw new UsageError('Give one result per test case');
+  if (results.length !== testCases.length) throw new UsageError('One result per test case');
   const current = currentVersions(repo);
   const links: Link[] = [{ type: 'tests', target: sut }, ...testCases.map((target, i) => ({ type: 'executes', target, result: results[i] }))];
   const confirmed = Object.fromEntries(links.map(({ target }) => [target, confirmation(repo, target, versionAt(repo.root, 'HEAD', target))]));
   // CL-03.3
   const changed = links.find(({ target }) => confirmed[target].version !== current.get(target));
-  if (changed) throw new Refused(`${changed.target} differs from HEAD; commit it first`);
+  if (changed) throw new Refused(`${changed.target} differs from HEAD; commit first`);
 
   const id = newId(repo, 'test-run');
   const folder = `${repo.settings.folders!['test-run']}/${id}`;

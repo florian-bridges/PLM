@@ -182,6 +182,7 @@ Add new entries at the end. Format:
 *Review round 2:* 2026-10-19, quality, commit 2392b92. Both closed. Major: CL-05.3 now states `show`'s JSON adds `path` (7e98111); `schema` bumped 3→4, matching the 2→3 precedent; `test/plm.test.ts:70` asserts `path` on `show`. Minor: the `search` links assertion (line 235) now runs after `addLink`. `tsc --noEmit` clean; `npm test` 14/14 green (pre-existing unrelated timeout flake at the 5 s default, green at 30 s, same as before this stream). Word budget 4097/4100. Behaviour on an autonomous-fixed-wing copy (`validate`, `show`, `search`) unchanged except the intended `path`/schema addition. New minor, not blocking: the stream's "delete `scripts/review_pack.py`" was never done (still present on `integration/afw`); for the product owner.
 
 *Decision:* 2026-10-19, chief engineer. Traced, not removed: CL-05.3 now states `show`'s JSON adds `path`, matching the original proposal. Implementer: bump `schema` to 4 (output changed, as for the 2→3 precedent) and add the minor's `links`-content assertion.
+*Done:* 2026-10-19, product owner. Accepted on `integration/afw`; `scripts/review_pack.py` deleted. Projects: replace their pack generator with `plm --format json search`, `suspects` and `report coverage --by verification`. JSON `schema` is now 4.
 
 ## Migrating a repository to a new folder structure
 *Found:* 2026-10-19, autonomous-fixed-wing, chief engineer

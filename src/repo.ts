@@ -9,9 +9,8 @@ export interface Item { id: string; type: string; title: string; [attribute: str
 export interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>>; status?: string; owner?: string }
 
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
-// `path`: item folder or requirement file.
 export interface Entry { id: string; path: string; nested: string[]; requirements: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
-export interface Settings { prefixes?: Record<string, string> }
+export interface Settings { prefixes?: Record<string, string>; informative?: string[] }
 export interface Repo { root: string; settings: Settings; entries: Map<string, Entry>; duplicates: Entry[] }
 
 export class UsageError extends Error {}
@@ -88,7 +87,7 @@ export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
 export const childrenOf = (entry?: Entry): string[] => [...(entry?.nested ?? []), ...usesOf(entry)];
 export const linksOf = (entry: Entry): Link[] => list<Link>(entry.item.data.links).map((link) => ({ ...entry.meta.data.confirmed?.[link.target], ...link }));
 
-// TE-05.1, VS-01.2: the innermost item containing a file, given relative to the root.
+// TE-05.1, VS-01.2
 export const innermostItem = (repo: Repo, file: string) => [...repo.entries.values()]
   .filter((candidate) => file === candidate.path || file.startsWith(`${candidate.path}/`))
   .sort((a, b) => b.path.length - a.path.length)[0]?.id;
@@ -146,7 +145,7 @@ export function entry(repo: Repo, id: string): Entry {
   return found;
 }
 
-// TE-03.2, TE-06.2: the item, its nested and used items, each listed once.
+// TE-03.2, TE-06.2
 export function subtree(repo: Repo, id: string, seen = new Set<string>()): string[] {
   if (seen.has(id) || !repo.entries.has(id)) return [];
   seen.add(id);

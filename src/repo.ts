@@ -10,7 +10,7 @@ export interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>
 
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 export interface Entry { id: string; path: string; nested: string[]; requirements: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
-export interface Settings { prefixes?: Record<string, string>; informative?: string[] }
+export interface Settings { prefixes?: Record<string, string>; informative?: string[]; folders?: Record<string, string> }
 export interface Repo { root: string; settings: Settings; entries: Map<string, Entry>; duplicates: Entry[] }
 
 export class UsageError extends Error {}
@@ -45,6 +45,7 @@ export const homeFolders: Record<string, string> = { requirement: 'requirements'
 export function loadRepo(start: string): Repo {
   const root = findRoot(start);
   const repo: Repo = { root, settings: readYaml<Settings>(root, 'plm.yaml').data, entries: new Map(), duplicates: [] };
+  repo.settings.folders = { ...homeFolders, ...repo.settings.folders };
 
   const addEntry = (path: string): Entry => {
     const item = readYaml<Item>(root, isRequirementFile(path) ? path : `${path}/item.yaml`);
@@ -67,8 +68,8 @@ export function loadRepo(start: string): Repo {
     for (const child of readdirSync(join(root, folder), { withFileTypes: true })) {
       if (!child.isDirectory() || child.name.startsWith('.')) continue;
       const path = folder ? `${folder}/${child.name}` : child.name;
-      if (parent && child.name === homeFolders.requirement) addRequirements(path, parent);
-      else if (parent ? child.name === homeFolders['test-case'] : !folder && child.name === homeFolders['test-run']) walk(path);
+      if (parent && child.name === repo.settings.folders!.requirement) addRequirements(path, parent);
+      else if (parent ? child.name === repo.settings.folders!['test-case'] : !folder && child.name === repo.settings.folders!['test-run']) walk(path);
       else if (existsSync(join(root, path, 'item.yaml'))) {
         const nested = addEntry(path);
         parent?.nested.push(nested.id);
@@ -108,7 +109,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
   if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item folder`);
 
   const id = newId(repo, type);
-  const typeHome = homeFolders[type] && `${parent?.path}/${homeFolders[type]}`;
+  const typeHome = repo.settings.folders![type] && `${parent?.path}/${repo.settings.folders![type]}`;
   const inGroup = !!parent && (!typeHome || cwd === typeHome || cwd.startsWith(`${typeHome}/`));
   const path = [inGroup ? cwd : typeHome || parent?.path, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id].filter(Boolean).join('/');
 
@@ -123,7 +124,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
 
 // CO-01.3
 export function artifacts(repo: Repo, { path }: Entry) {
-  const skipped = ['item.yaml', homeFolders.requirement, homeFolders['test-case']];
+  const skipped = ['item.yaml', ...Object.values(repo.settings.folders!)];
   const files = (folder: string): string[] => readdirSync(join(repo.root, folder), { withFileTypes: true }).flatMap((child) => {
     const file = `${folder}/${child.name}`;
     if (child.name.startsWith('.') || (folder === path && skipped.includes(child.name))) return [];

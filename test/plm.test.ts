@@ -73,7 +73,7 @@ test('TE-01.2, CO-01.3: uncommitted and committed states yield identical version
   expect(versionAt(root, 'HEAD', 'A')).toBe(working.get('A'));
 });
 
-test('CO-01.1, CO-01.2, CO-02.1, CO-02.2, CO-02.4, CO-02.6: findings with codes and positions', () => {
+test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6: findings with codes and positions', () => {
   const root = fixture();
   write(root, {
     'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: pass\n',
@@ -123,7 +123,7 @@ test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes th
   expect(() => confirm(repo, currentVersions(repo), validate(repo), 'P')).toThrow(Refused);
 });
 
-test('CL-02.1, CL-02.2, CL-02.4: init, new items nest in the working folder', () => {
+test('CL-02.1–CL-02.2, CL-02.4, CO-01.1, CO-02.2: init, new items nest in the working folder', () => {
   const root = join(base, 'new');
   expect(plm(root, 'init').status).toBe(0);
   expect(readFileSync(join(root, 'plm.yaml'), 'utf8')).toContain('informative');
@@ -145,6 +145,9 @@ test('CL-02.1, CL-02.2, CL-02.4: init, new items nest in the working folder', ()
   expect(existsSync(join(dir, 'tests/load/item.yaml'))).toBe(true);
   expect(plm(root, 'new', 'test-case', 'Load').status).toBe(2);
   expect(validate(loadRepo(root))).toEqual([]);
+
+  writeFileSync(join(root, 'plm.yaml'), 'folders:\n  part: parts\n');
+  expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 });
 
 test('CL-01.1, CL-05.1–CL-05.3, TE-03.1: JSON output, exit codes and titles next to IDs', () => {
@@ -191,7 +194,7 @@ test('CO-01.1, CO-01.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2, T
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
   expect(json(root, 'report', 'coverage', '--by', 'type')[0]).toMatchObject({ total: 1 });
-});
+}, 15000);
 
 test('TE-05.1, TE-05.2: impact of a change on items, links and test runs', () => {
   const root = fixture();

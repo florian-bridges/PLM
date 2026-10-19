@@ -2,7 +2,7 @@
 import { copyFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, homeFolders, linksOf, named, newId, Refused, selection, subtree, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { entry, linksOf, named, newId, Refused, selection, subtree, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, git, versionAt } from './version.ts';
 
@@ -79,7 +79,7 @@ export function recordRun(repo: Repo, testCases: string[], sut: string, results:
   if (changed) throw new Refused(`${changed.target} differs from HEAD; commit it first`);
 
   const id = newId(repo, 'test-run');
-  const folder = `${homeFolders['test-run']}/${id}`;
+  const folder = `${repo.settings.folders!['test-run']}/${id}`;
   const item = { id, type: 'test-run', title: `${testCases.join(', ')} on ${sut}`, date: new Date().toISOString(), links };
   writeYaml(repo.root, { path: `${folder}/item.yaml`, doc: new Document(item) });
   writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: new Document({ status: 'draft', confirmed }) });

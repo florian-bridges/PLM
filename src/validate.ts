@@ -1,8 +1,7 @@
-// CO-02
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, homeFolders, linksOf, usesOf, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, innermostItem, linksOf, usesOf, type Repo, type YamlFile } from './repo.ts';
 import { allows, baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
 // CO-02.4
@@ -29,7 +28,7 @@ function schemaFor(ajv: Ajv2020, root: string, type: string): ValidateFunction |
 
 const newAjv = () => new Ajv2020({ allErrors: true, strictTypes: false });
 
-// VS-01.2: the type's validator, whose schema generates the item form.
+// VS-01.2: the type's validator for the item form.
 export const itemSchema = (root: string, type: string) => schemaFor(newAjv(), root, type);
 
 export function validate(repo: Repo): Finding[] {
@@ -50,9 +49,9 @@ export function validate(repo: Repo): Finding[] {
 
     // CO-02.2
     const folders = dirname(entry.path).split('/');
-    const home = homeFolders[type];
-    const misplaced = home ? !folders.includes(home) : Object.values(homeFolders).some((folder) => folders.includes(folder));
-    if (misplaced) findings.push(finding(item, ['type'], 'misplaced', 'Requirements, test cases and runs belong in their folders, and only there'));
+    const home = repo.settings.folders![type];
+    const misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
+    if (misplaced) findings.push(finding(item, ['type'], 'misplaced', `outside ${home}`));
 
     if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', `Duplicate id ${id}`));
 
@@ -89,7 +88,7 @@ function cycles(repo: Repo): Finding[] {
     const entry = repo.entries.get(id)!;
     for (const child of childrenOf(entry)) {
       const closesCycle = state.get(child) === 'open';
-      if (closesCycle) findings.push(finding(entry.item, ['uses'], 'cycle', `${id} → ${child} closes a composition cycle`));
+      if (closesCycle) findings.push(finding(entry.item, ['uses'], 'cycle', `${id} → ${child} closes composition cycle`));
       else if (!state.has(child) && repo.entries.has(child)) visit(child);
     }
     state.set(id, 'done');

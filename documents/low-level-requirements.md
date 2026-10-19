@@ -4,19 +4,19 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## Core library
 
-**CO-01.1** The core shall read `plm.yaml` (repository settings), item folders `<name>/item.yaml` with their requirements `requirements/<name>.yaml` and test cases `tests/<name>/item.yaml`, both also in subfolders, test runs `runs/<name>/item.yaml` and `meta/<ID>.yaml` with the `yaml` package, keeping comments and formatting when writing back. A folder with no `item.yaml` shall be transparent, hidden folders excepted: items under it belong to the nearest enclosing item, or are top-level if none.
-*Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files. Subfolders group requirements and test cases; names sort them. Test cases in the tested item's folder make its version cover its requirements and test cases, so adding or changing a test case outdates the runs against the item. Runs stay outside: inside the tested item, a run would change the version it records.
+**CO-01.1** The core shall read `plm.yaml` (repository settings, including `folders: {<type>: <folder>}` overriding or extending each built-in home folder: `requirements` for `requirement`, `tests` for `test-case`, `runs` for `test-run`), item folders `<name>/item.yaml` with requirements and test cases in their home folder as `<home>/<name>.yaml` and `<home>/<name>/item.yaml`, both also in subfolders, test runs in the top-level home folder, other types' home folder inside their parent item only, a top-level item having none, and `meta/<ID>.yaml` with the `yaml` package, keeping comments and formatting when writing back. A folder with no `item.yaml` shall be transparent, hidden folders excepted: items under it belong to the nearest enclosing item, or are top-level if none.
+*Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files. Subfolders group requirements and test cases; names sort them. Test cases in the tested item's folder make its version cover its requirements and test cases, so adding or changing a test case outdates the runs against the item. Runs stay outside: inside the tested item, a run would change the version it records. A per-type home folder in `plm.yaml` avoids hard-coding other types' names in the core.
 
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
 *Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
 
-**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder, except hidden files, `item.yaml`, `requirements/`, `tests/` and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
+**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder, except hidden files, `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
 
 **CO-02.1** The core shall validate `item.yaml` with Ajv against the JSON Schema (2020-12) of its type; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
 *Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add their own attributes.
 
-**CO-02.2** The core shall report as errors: requirements and test cases outside their item's `requirements/` and `tests/` folders, test runs outside the top-level `runs/` folder, other items inside them, a `meta/<ID>.yaml` with no item, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
+**CO-02.2** The core shall report as errors: items outside their type's home folder (CO-01.1), other items inside them, a `meta/<ID>.yaml` with no item, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late.
 
 **CO-02.4** Each finding shall carry file, line, column, severity and a stable code.
@@ -77,8 +77,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
 *Rationale:* Links are reviewed one by one, or all at once after reviewing an item.
 
-**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the working folder if that is inside the item folder and, for a type with a home folder (`requirements/` for `requirement`, `tests/` for `test-case`), inside that home folder; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
-*Rationale:* Repository templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
+**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
+*Rationale:* Repository templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files. Creating a missing home folder spares preparing structure by hand for a new type.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.

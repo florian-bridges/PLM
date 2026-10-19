@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, expect, test } from 'vitest';
@@ -73,7 +73,7 @@ test('TE-01.2, CO-01.3: uncommitted and committed states yield identical version
   expect(versionAt(root, 'HEAD', 'A')).toBe(working.get('A'));
 });
 
-test('CO-01.1, CO-01.2, CO-02.1, CO-02.2, CO-02.4, CO-02.6: findings with codes and positions', () => {
+test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6: findings with codes and positions', () => {
   const root = fixture();
   write(root, {
     'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: pass\n',
@@ -92,7 +92,7 @@ test('CO-01.1, CO-01.2, CO-02.1, CO-02.2, CO-02.4, CO-02.6: findings with codes 
   expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ file: 'wing/spar/item.yaml', line: 4, col: 9 });
 });
 
-test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes the link suspect', () => {
+test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: confirm, then a target change makes the link suspect', () => {
   const root = fixture();
   let repo = loadRepo(root);
   expect(linkStates(repo, currentVersions(repo))[0].state).toBe('unconfirmed');
@@ -123,11 +123,12 @@ test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes th
   expect(() => confirm(repo, currentVersions(repo), validate(repo), 'P')).toThrow(Refused);
 });
 
-test('CL-02.1, CL-02.2, CL-02.4: init, new items nest in the working folder', () => {
+test('CL-02.1–CL-02.2, CL-02.4, CO-01.1, CO-02.2: init, new items nest in cwd', () => {
   const root = join(base, 'new');
   expect(plm(root, 'init').status).toBe(0);
   expect(readFileSync(join(root, 'plm.yaml'), 'utf8')).toContain('informative');
   expect(plm(root, 'init').status).toBe(2);
+  appendFileSync(join(root, 'plm.yaml'), 'folders:\n  assembly: subsystems\n');
   plm(root, 'new', 'assembly', 'My aircraft');
   const dir = join(root, 'my-aircraft');
   const part = plm(dir, 'new', 'part', 'Main spar').stdout.trim();
@@ -145,6 +146,9 @@ test('CL-02.1, CL-02.2, CL-02.4: init, new items nest in the working folder', ()
   expect(existsSync(join(dir, 'tests/load/item.yaml'))).toBe(true);
   expect(plm(root, 'new', 'test-case', 'Load').status).toBe(2);
   expect(validate(loadRepo(root))).toEqual([]);
+
+  writeFileSync(join(root, 'plm.yaml'), 'folders:\n  part: parts\n');
+  expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 });
 
 test('CL-01.1, CL-05.1–CL-05.3, TE-03.1: JSON output, exit codes and titles next to IDs', () => {
@@ -160,7 +164,7 @@ test('CL-01.1, CL-05.1–CL-05.3, TE-03.1: JSON output, exit codes and titles ne
   expect(plm(root, 'impact', 'HEAD').stdout).toBe('changed R (Load)\npropagated A (Wing)\n');
 });
 
-test('CO-01.1, CO-01.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2, TE-06.3: recorded runs verify requirements until the SUT changes', () => {
+test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: recorded runs verify requirements until the SUT changes', () => {
   const root = fixture();
   const coverage = () => json(root, 'report', 'coverage', 'A')[0].state;
   const record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
@@ -191,9 +195,11 @@ test('CO-01.1, CO-01.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2, T
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
   expect(json(root, 'report', 'coverage', '--by', 'type')[0]).toMatchObject({ total: 1 });
-});
+  renameSync(join(root, 'runs', run), join(root, 'r1'));
+  expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
+}, 15000);
 
-test('TE-05.1, TE-05.2: impact of a change on items, links and test runs', () => {
+test('TE-05.1–TE-05.2: impact of a change on items, links and test runs', () => {
   const root = fixture();
   write(root, {
     'runs/X/item.yaml': 'id: X\ntype: test-run\ntitle: Run\nlinks:\n  - type: tests\n    target: A\n',
@@ -210,7 +216,7 @@ test('TE-05.1, TE-05.2: impact of a change on items, links and test runs', () =>
   expect(plm(root, 'impact', 'nonsense').status).toBe(2);
 });
 
-test('TE-01.1, TE-01.2: a nested repository counts by its commit, without warnings', () => {
+test('TE-01.1–TE-01.2: a nested repository counts by its commit, without warnings', () => {
   const root = fixture();
   const firmware = join(root, 'wing/spar/src');
   write(root, { 'wing/spar/src/main.c': 'int main() {}\n' });
@@ -225,7 +231,7 @@ test('TE-01.1, TE-01.2: a nested repository counts by its commit, without warnin
   expect(json(root, 'impact', 'HEAD')).toMatchObject({ changed: [], propagated: [] });
 });
 
-test('CO-03.1, CO-03.2, CL-01.1, CL-05.3: search all words by prefix with filters, then link to a result', () => {
+test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search all words by prefix with filters, then link to a result', () => {
   const root = fixture();
   write(root, { 'meta/A.yaml': 'owner: ana\nstatus: draft\n' });
   const repo = loadRepo(root);

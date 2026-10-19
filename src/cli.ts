@@ -27,7 +27,7 @@ const scoped = (item?: string) => {
 // CL-05.1
 function output(text: string, data: unknown) {
   const json = program.opts().format === 'json';
-  console.log(json ? JSON.stringify({ schema: 3, data }, null, 2) : text);
+  console.log(json ? JSON.stringify({ schema: 4, data }, null, 2) : text);
 }
 
 // CL-05.3

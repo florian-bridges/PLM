@@ -66,9 +66,12 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-06.2** Coverage shall be reported for the repository or an item subtree as verified, verification pending (verifying test case without current passing run) and unverified (no verifying test case).
 *Rationale:* Pending verification differs from a missing test and needs a different action.
 
+**TE-06.3** Given a field name, coverage shall be grouped by its value into verified, pending, unverified and total, requirements lacking the field in their own group; JSON shall use the same groups.
+*Rationale:* Grouping by method gives the per-method denominator a gate needs.
+
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>]`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Searching upward works from any subfolder.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.

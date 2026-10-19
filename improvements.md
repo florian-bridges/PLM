@@ -217,3 +217,12 @@ Add new entries at the end. Format:
 *Impact:* The trial structure migration needed a `sed` pass over `run` fields and script docstrings (3 analyses, 4 scripts); a missed one surfaces only when someone reruns it.
 *Workaround:* Rewrite moved paths with `sed` in the migration script.
 *Proposal:* Define `run` as executed in the item folder, and have `plm validate` warn when the file it names does not exist there.
+
+## Item folders per type are hard-coded
+*Found:* 2026-10-19, autonomous-fixed-wing, chief engineer
+*Observed:* Only `requirements/`, `tests/` and `runs/` are home folders, built into the code. A structure with one folder per type in each parent item (e.g. analyses in `analyses/`) cannot be configured: `plm new analysis "Motor sizing"` in an item folder creates `motor-sizing/` beside the item's other children.
+*Impact:* Blocks replaying the approved structure migration at the gate; in the next phase every agent places folders by hand, and nothing reports a misplaced one.
+*Workaround:* None; the migration waits.
+*Proposal:* Per-type folder in `plm.yaml`, next to `prefixes:`.
+*Decision:* 2026-10-19, product owner. Accepted, trimmed. `plm.yaml` `folders: {<type>: <folder>}` overrides and extends the built-in home folders (`requirement: requirements`, `test-case: tests`, `test-run: runs`); no new command, `plm init` unchanged. The one table drives all home-folder behaviour as today: `plm new` places the item in the type's folder inside the parent item (created if missing), `plm validate` reports items outside their type's folder (CO-02.2), artifacts skip home folders. Projects whose items are not yet in the configured folders get validate errors until they migrate; that is intended.
+*Stream:* branch `wp/afw-type-folders`; `src/repo.ts`, `src/validate.ts`, `src/links.ts`, `test/plm.test.ts`; net 0 words in `src/`+`test/` (4100/4100: pay by deleting). Documents (requirements author): CO-01.1, CL-02.1, CO-02.2; at most +60 net words. Extension unchanged.

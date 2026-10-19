@@ -180,6 +180,8 @@ Add new entries at the end. Format:
 
 *Review:* 2026-10-19, quality, commit de325d2. Word budget 4099/4100: correct. `search` JSON on an autonomous-fixed-wing copy gives `path`, `meta` and flat `links` (type+target, no state) per match, matching CL-05.3's wording; `search`/`validate`/`suspects` text output and `show` text output unchanged. **Major:** `src/cli.ts`, the shared `record()` helper also adds an untraced `path` field to `show`'s JSON (confirmed by diff against the parent commit); no requirement states this for `show` (CL-05.3 only mandates it for `search`; CO-01.3 covers only artifact paths), no test covers it, and `schema` stays 3 though the output changed, unlike the 2→3 bump for the last output change (8dd64bb). **Minor:** `test/plm.test.ts`'s new `CL-05.3` assertion runs before `addLink`, so it never checks `links` content; a regression dropping `links` from `search` would pass. Not blocking, not closed: raise with the implementer.
 
+*Decision:* 2026-10-19, chief engineer. Traced, not removed: CL-05.3 now states `show`'s JSON adds `path`, matching the original proposal. Implementer: bump `schema` to 4 (output changed, as for the 2→3 precedent) and add the minor's `links`-content assertion.
+
 ## Migrating a repository to a new folder structure
 *Found:* 2026-10-19, autonomous-fixed-wing, chief engineer
 *Observed:* A gate restructures the product tree: requirements and items move from the system item into subsystem items. No documented way says whether moving folders keeps IDs, links and confirmations, and a mistake is not reported (see "A moved item folder disappears without a validate error").

@@ -126,12 +126,24 @@ program.command('test').command('record <test-case...>').description('record a t
 
 // TE-06.2
 program.command('report').command('coverage [item]').description('report requirement verification')
-  .action((item?: string) => {
-    const rows = coverage(...scoped(item));
+  .option('--by <field>')
+  .action((item?: string, options?: any) => {
+    const state = scoped(item);
+    const rows = coverage(...state);
+    if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
+    if (options?.by) {
+      // TE-06.3
+      const groups: Record<string, any> = {};
+      rows.forEach((row) => {
+        const value = String(entry(state[0], row.requirement).item.data[options.by] ?? '');
+        const g = groups[value] ??= { value, verified: 0, pending: 0, unverified: 0, total: 0 };
+        g[row.state]++; g.total++;
+      });
+      return output(Object.values(groups).map((g) => Object.entries(g).flat().slice(1).join(' ')).join('\n'), Object.values(groups));
+    }
     const lines = rows.flatMap((row) => [[row.state, label({ id: row.requirement, title: row.title })],
       ...row.tests.map((test) => ['  ' + label(test.testCase), test.run && label(test.run), test.result, test.outdated && 'outdated'])]);
     output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'), rows);
-    if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
   });
 
 try {

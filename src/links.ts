@@ -1,18 +1,31 @@
 // TE-02, TE-03, TE-06, CL-03
 import { copyFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { Document } from 'yaml';
+import { Document, parseDocument } from 'yaml';
 import { entry, homeFolders, linksOf, named, newId, Refused, selection, subtree, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, git, versionAt } from './version.ts';
 
 export interface LinkState { source: string; title: string; link: Link; targetTitle: string; state: 'current' | 'suspect' | 'unconfirmed' }
 
+const tryGit = (repo: Repo, args: string[]) => { try { return git(repo.root, args); } catch { return ''; } };
+
+// TE-03.1
+const strip = (repo: Repo, hash?: string) => {
+  const text = hash && tryGit(repo, ['cat-file', '-p', hash]);
+  if (!text) return undefined;
+  const doc = parseDocument(text);
+  for (const f of repo.settings.informative ?? ['rationale']) doc.delete(f);
+  return doc.toString();
+};
+
 // TE-03.1, CL-05.3
 export function linkStates(repo: Repo, versions: Map<string, string>): LinkState[] {
   const stateOf = (link: Link): LinkState['state'] => {
     if (!link.version) return 'unconfirmed';
-    return link.version === versions.get(link.target) ? 'current' : 'suspect';
+    if (link.version === versions.get(link.target)) return 'current';
+    const confirmed = repo.entries.get(link.target)?.item.data.type === 'requirement' && strip(repo, link.version);
+    return !!confirmed && confirmed === strip(repo, versions.get(link.target)) ? 'current' : 'suspect';
   };
   return [...repo.entries.values()].flatMap((source) => linksOf(source).map((link) => ({
     source: source.id, title: named(repo, source.id).title, link, targetTitle: named(repo, link.target).title, state: stateOf(link),
@@ -21,8 +34,6 @@ export function linkStates(repo: Repo, versions: Map<string, string>): LinkState
 
 // TE-03.1
 export const fromRun = (repo: Repo, state: LinkState) => repo.entries.get(state.source)?.item.data.type === 'test-run';
-
-const tryGit = (repo: Repo, args: string[]) => { try { return git(repo.root, args); } catch { return ''; } };
 
 // TE-02.1, TE-02.2
 export function confirmation(repo: Repo, target: string, version: string | undefined): Omit<Link, 'type' | 'target'> {
@@ -49,7 +60,7 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
   return links;
 }
 
-// CL-01.1: a new, unconfirmed link.
+// CL-01.1
 export function addLink(repo: Repo, source: string, type: string, target: string): void {
   const { item } = entry(repo, source);
   if (item.doc.hasIn(['links'])) item.doc.addIn(['links'], { type, target });
@@ -107,7 +118,6 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
   const linksOfType = (type: string) => states.filter((state) => state.link.type === type);
   const isCurrent = (state: LinkState) => state.state === 'current';
 
-  // Each test case's latest `executes` link, overall and among runs with current links.
   const outdatedRuns = new Set(states.filter((state) => fromRun(repo, state) && !isCurrent(state)).map((state) => state.source));
   const runsOfCurrentSut = new Set(linksOfType('tests').filter(isCurrent).map((state) => state.source));
   const latestRun = new Map<string, LinkState>();

@@ -70,7 +70,7 @@ program.command('search <query...>').description('search items').action((query: 
 });
 
 // CL-01.2
-program.command('confirm <source> [target]').description('confirm the link to target, or all links').action((source: string, target?: string) => {
+program.command('confirm <source> [target]').description('confirm a link, or all').action((source: string, target?: string) => {
   const repo = openRepo();
   const links = confirm(repo, currentVersions(repo), validate(repo), source, target);
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
@@ -83,7 +83,7 @@ program.command('suspects [item]').description('list suspect and unconfirmed lin
 });
 
 // TE-05.1
-program.command('impact <range>').description('list items, links and test runs affected by a change').action((range: string) => {
+program.command('impact <range>').description('list affected items, links and runs').action((range: string) => {
   const repo = openRepo();
   const [base, head] = range.split('..');
   const headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) };
@@ -98,23 +98,23 @@ program.command('impact <range>').description('list items, links and test runs a
 });
 
 // CL-02.4
-program.command('init').description('create a product repository').action(() => {
+program.command('init').description('create a repository').action(() => {
   const root = workingFolder();
   if (existsSync(join(root, 'plm.yaml'))) throw new UsageError('plm.yaml already exists');
   mkdirSync(root, { recursive: true });
   git(root, ['init', '-q']);
   const prefixes = { requirement: 'REQ-', part: 'PRT-', assembly: 'ASM-', 'test-case': 'TC-', 'test-run': 'RUN-' };
-  writeFileSync(join(root, 'plm.yaml'), stringify({ prefixes }));
+  writeFileSync(join(root, 'plm.yaml'), stringify({ prefixes, informative: ['rationale'] }));
 });
 
 // CL-02.1
-program.command('new <type> <title>').description('create an item in the current item folder').action((type: string, title: string) => {
+program.command('new <type> <title>').description('create an item here').action((type: string, title: string) => {
   const id = newItem(openRepo(), type, title, workingFolder());
   output(id, { id });
 });
 
 // CL-03.1
-program.command('test').command('record <test-case...>').description('record a test run')
+program.command('test').command('record <test-case...>').description('record a run')
   .requiredOption('--sut <id>')
   .addOption(new Option('--result <results...>').choices(results).makeOptionMandatory())
   .option('--log <files...>', '', [])

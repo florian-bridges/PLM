@@ -21,7 +21,6 @@ const commit = (root: string) => {
   git(root, ['add', '-A']);
   git(root, ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'change']);
 };
-// Wing A nests spar P, satisfying R; uses bolt L.
 const fixture = () => {
   const root = mkdtempSync(join(base, 'repo-'));
   write(root, {
@@ -112,6 +111,10 @@ test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes th
   expect(changeSince(repo, state.link)).toMatchObject({ commit: head, diff: expect.stringContaining('+text: Carry 4g.') });
   confirm(repo, currentVersions(repo), [], 'P');
   expect(link()).not.toHaveProperty('commit');
+  write(root, { 'wing/requirements/load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\nrationale: why.\n' });
+  expect(linkStates(loadRepo(root), currentVersions(repo))[0].state).toBe('current');
+  write(root, { 'meta/P.yaml': 'confirmed:\n  R:\n    version: bad\n' });
+  expect(linkStates(loadRepo(root), currentVersions(repo))[0].state).toBe('suspect');
   git(root, ['config', 'user.name', '']);
   expect(plm(root, 'confirm', 'P').status).toBe(1);
 
@@ -123,6 +126,7 @@ test('TE-02.1, TE-02.2, TE-03.1, TE-03.2: confirm, then a target change makes th
 test('CL-02.1, CL-02.2, CL-02.4: init, new items nest in the working folder', () => {
   const root = join(base, 'new');
   expect(plm(root, 'init').status).toBe(0);
+  expect(readFileSync(join(root, 'plm.yaml'), 'utf8')).toContain('informative');
   expect(plm(root, 'init').status).toBe(2);
   plm(root, 'new', 'assembly', 'My aircraft');
   const dir = join(root, 'my-aircraft');

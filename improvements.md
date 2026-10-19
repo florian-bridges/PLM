@@ -41,7 +41,7 @@ Add new entries at the end. Format:
 ## Non-normative edits make links suspect
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer
 *Observed:* Changing only the `rationale` of a stakeholder need made every requirement satisfying it suspect.
-*Impact:* Review noise; reconfirming without a real change trains people to confirm blindly.
+*Impact:* Review noise; reconfirming without a real change trains people to confirm blindly. 2026-10-19: blocks the Structure-gate clean-up — shortening 14 rationales/results (no value change) made 21 links suspect (8 → 29); the remaining ~140 overlong fields would add about 100 more. Branch `wp/cleanup-1` step 2 held unmerged.
 *Proposal:* Let a schema mark fields as non-normative and exclude them from the version a link is confirmed against.
 
 ## `plm new` cannot set attributes

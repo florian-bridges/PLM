@@ -21,7 +21,7 @@ const commit = (root: string) => {
   git(root, ['add', '-A']);
   git(root, ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'change']);
 };
-// Wing A with nested spar P satisfying the wing's requirement R; the wing uses bolt L.
+// Wing A nests spar P, satisfying R; uses bolt L.
 const fixture = () => {
   const root = mkdtempSync(join(base, 'repo-'));
   write(root, {
@@ -67,7 +67,7 @@ test('TE-01.1: nested/used changes propagate; git mv keeps ID, links, confirmati
 test('TE-01.2, CO-01.3: uncommitted and committed states yield identical versions; artifacts', () => {
   const root = fixture();
   write(root, { 'wing/spar/drawing.txt': 'rev 2', 'wing/spar/cad/model.step': 'version https://git-lfs.github.com/spec/v1\noid sha256:0\nsize 9\n' });
-  expect(json(root, 'show', 'P').artifacts).toEqual([{ path: 'wing/spar/cad/model.step', lfs: 'missing' }, { path: 'wing/spar/drawing.txt' }]);
+  expect(json(root, 'show', 'P')).toMatchObject({ path: 'wing/spar', artifacts: [{ path: 'wing/spar/cad/model.step', lfs: 'missing' }, { path: 'wing/spar/drawing.txt' }] });
   expect(json(root, 'show', 'A').artifacts).toEqual([]);
   const working = currentVersions(loadRepo(root));
   commit(root);
@@ -81,9 +81,9 @@ test('CO-01.1, CO-01.2, CO-02.1, CO-02.2, CO-02.4, CO-02.6: findings with codes 
     'copy/item.yaml': 'id: L\ntype: part\ntitle: Bolt\n',
     'bolt/item.yaml': 'id: L\ntype: part\ntitle: Bolt\nexternal_ids: { reqif: B1 }\n',
     'wing/requirements/structure/stringer.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
-    'wing/misc/panel/item.yaml': 'id: Z\ntype: part\ntitle: Panel\n', // CO-01.1
+    'wing/misc/panel/item.yaml': 'id: Z\ntype: part\ntitle: Panel\n',
     'wing/.attic/item.yaml': 'id: H\ntype: part\ntitle: Hidden\n',
-    'meta/M.yaml': 'status: draft\n', // CO-02.2
+    'meta/M.yaml': 'status: draft\n',
   });
   const repo = loadRepo(root);
   expect(repo.entries.get('Z')?.path).toBe('wing/misc/panel');
@@ -148,7 +148,7 @@ test('CL-01.1, CL-05.1–CL-05.3, TE-03.1: JSON output, exit codes and titles ne
   expect(plm(root, 'validate').status).toBe(0);
   const suspects = plm(root, '--format', 'json', 'suspects');
   expect(suspects.status).toBe(1);
-  expect(JSON.parse(suspects.stdout)).toMatchObject({ schema: 3, data: [{ state: 'unconfirmed', source: 'P', title: 'Spar', targetTitle: 'Load' }] });
+  expect(JSON.parse(suspects.stdout)).toMatchObject({ schema: 4, data: [{ state: 'unconfirmed', source: 'P', title: 'Spar', targetTitle: 'Load' }] });
   expect(plm(root, 'suspects', 'A').stdout).toBe('unconfirmed P (Spar) satisfies R (Load)\n');
   expect(plm(root, 'suspects', 'L').status).toBe(0);
   expect(plm(root, 'report', 'coverage').stdout).toBe('unverified R (Load)\n');
@@ -221,7 +221,7 @@ test('TE-01.1, TE-01.2: a nested repository counts by its commit, without warnin
   expect(json(root, 'impact', 'HEAD')).toMatchObject({ changed: [], propagated: [] });
 });
 
-test('CO-03.1, CO-03.2, CL-01.1: search all words by prefix with filters, then link to a result', () => {
+test('CO-03.1, CO-03.2, CL-01.1, CL-05.3: search all words by prefix with filters, then link to a result', () => {
   const root = fixture();
   write(root, { 'meta/A.yaml': 'owner: ana\nstatus: draft\n' });
   const repo = loadRepo(root);
@@ -232,4 +232,5 @@ test('CO-03.1, CO-03.2, CL-01.1: search all words by prefix with filters, then l
   expect(plm(root, 'search', 'bo').stdout).toBe('L (Bolt)\n');
   addLink(repo, 'L', 'satisfies', 'R');
   expect(linksOf(loadRepo(root).entries.get('L')!)).toEqual([{ type: 'satisfies', target: 'R' }]);
+  expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {}, links: [{ target: 'R' }] }]);
 });

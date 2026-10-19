@@ -48,7 +48,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset, and for links of test runs.
 *Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review. Run links are confirmed when recording (CL-03.2).
 
-**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none. Links from test runs are evidence, not links to review: suspect lists, of the repository or an item subtree, shall omit them, and a run with a suspect link is outdated.
+**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none; for a requirement target, versions are compared with the fields listed under `informative:` in `plm.yaml` (default `[rationale]`) removed from both, read from Git, and a confirmed blob missing from Git keeps the link suspect. Links from test runs are evidence, not links to review: suspect lists, of the repository or an item subtree, shall omit them, and a run with a suspect link is outdated.
 *Rationale:* Separating unconfirmed from suspect distinguishes new, unreviewed links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
 
 **TE-03.2** To show what changed, the engine shall return the diff of the target's subtree since the link's `commit` or, if it is missing or unknown, since the latest commit at which the target had the confirmed version.
@@ -83,7 +83,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
 
-**CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types.
+**CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types and `informative: [rationale]`.
 *Rationale:* Items can follow at once.
 
 **CL-03.1** `plm test record <test-case>... --sut <ID> --result <result>... [--log <file>...]` shall create a test run in `runs/<ID>/` with date, copies of the log files and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.

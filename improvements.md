@@ -196,3 +196,10 @@ Add new entries at the end. Format:
 *Observed:* On the Jetson Orin NX, the test "recorded runs verify requirements until the SUT changes" takes about 7.3 s and fails on Vitest's 5 s default, also on `main`; with `--testTimeout=30000` all tests pass.
 *Impact:* `npm test` is red at every acceptance on this machine; a real failure can hide behind the known one.
 *Proposal:* Set `testTimeout` in the Vitest config, or make the test spawn fewer CLI processes.
+
+## The `run` field has no defined working directory
+*Found:* 2026-10-19, autonomous-fixed-wing, systems-engineer
+*Observed:* Some analyses write `run` relative to the item folder (`python3 fha.py`), others relative to the repo root (`python3 aircraft-system/evasion-clearance-budget/clearance_budget.py`). After `git mv` into a kind folder the root-relative ones point to nothing, and `plm validate` reports nothing.
+*Impact:* The trial structure migration needed a `sed` pass over `run` fields and script docstrings (3 analyses, 4 scripts); a missed one surfaces only when someone reruns it.
+*Workaround:* Rewrite moved paths with `sed` in the migration script.
+*Proposal:* Define `run` as executed in the item folder, and have `plm validate` warn when the file it names does not exist there.

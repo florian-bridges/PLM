@@ -10,7 +10,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
 *Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
 
-**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder, except hidden files, `item.yaml`, `requirements/`, `tests/` and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
+**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder, except hidden files, `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
 
 **CO-02.1** The core shall validate `item.yaml` with Ajv against the JSON Schema (2020-12) of its type; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.

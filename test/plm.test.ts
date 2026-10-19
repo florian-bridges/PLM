@@ -221,7 +221,7 @@ test('TE-01.1, TE-01.2: a nested repository counts by its commit, without warnin
   expect(json(root, 'impact', 'HEAD')).toMatchObject({ changed: [], propagated: [] });
 });
 
-test('CO-03.1, CO-03.2, CL-01.1: search all words by prefix with filters, then link to a result', () => {
+test('CO-03.1, CO-03.2, CL-01.1, CL-05.3: search all words by prefix with filters, then link to a result', () => {
   const root = fixture();
   write(root, { 'meta/A.yaml': 'owner: ana\nstatus: draft\n' });
   const repo = loadRepo(root);
@@ -230,6 +230,7 @@ test('CO-03.1, CO-03.2, CL-01.1: search all words by prefix with filters, then l
   expect(search(repo, 'carry spar')).toEqual([]);
   expect(search(repo, 'owner:ana status:draft')).toEqual([{ id: 'A', title: 'Wing' }]);
   expect(plm(root, 'search', 'bo').stdout).toBe('L (Bolt)\n');
+  expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {} }]);
   addLink(repo, 'L', 'satisfies', 'R');
   expect(linksOf(loadRepo(root).entries.get('L')!)).toEqual([{ type: 'satisfies', target: 'R' }]);
 });

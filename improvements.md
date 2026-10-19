@@ -175,6 +175,9 @@ Add new entries at the end. Format:
 *Workaround:* Python generator over `plm --format json search/show/suspects/report coverage` and a file scan for paths: `aircraft-system/srr-review-pack/review_pack.py` in autonomous-fixed-wing, copied here as `scripts/review_pack.py`.
 *Proposal:* `plm report review-pack [item] [--gate <name>] [--reviews <REV-…>]` writing Markdown with links to the item files; include `path` in `plm show`/`search` JSON and a bulk `plm show --all`.
 
+*Decision:* 2026-10-19, product owner. Trimmed. Rejected: `plm report review-pack` and `show --all`. A pack's layout (themes, gate, which sections) is project presentation, it would cost hundreds of words with 8 free, and `search` covers bulk reads. Accepted: `plm --format json search <query>` gives per match the item fields (with `links`), `path` and `meta`, the record of `plm show` without version, link states and artifacts. One call then replaces the file scan and the ~170 `show` calls. With `search TBD`, `search type:review`, `suspects` and `report coverage --by verification`, the project can delete `review_pack.py` and list these commands in its gate review instead.
+*Stream:* `src/cli.ts` (share one record helper between `show` and `search`), `test/plm.test.ts`; net at most +8 words in `src/`+`test/` (limit 4100, at 4092): pay by trimming tests or code; delete `scripts/review_pack.py`. Documents (requirements author): amend CL-05.3 or CO-03.2, at most +40 net words. Extension unchanged.
+
 ## Migrating a repository to a new folder structure
 *Found:* 2026-10-19, autonomous-fixed-wing, chief engineer
 *Observed:* A gate restructures the product tree: requirements and items move from the system item into subsystem items. No documented way says whether moving folders keeps IDs, links and confirmations, and a mistake is not reported (see "A moved item folder disappears without a validate error").

@@ -1,4 +1,4 @@
-// CO-01.1, CO-01.2
+// CO-01.1–CO-01.2
 import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
@@ -109,7 +109,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
   if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item folder`);
 
   const id = newId(repo, type);
-  const typeHome = repo.settings.folders![type] && `${parent?.path}/${repo.settings.folders![type]}`;
+  const typeHome = parent && repo.settings.folders![type] && `${parent.path}/${repo.settings.folders![type]}`;
   const inGroup = !!parent && (!typeHome || cwd === typeHome || cwd.startsWith(`${typeHome}/`));
   const path = [inGroup ? cwd : typeHome || parent?.path, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id].filter(Boolean).join('/');
 

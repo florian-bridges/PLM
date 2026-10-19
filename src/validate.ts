@@ -2,7 +2,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, linksOf, usesOf, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, innermostItem, linksOf, usesOf, type Repo, type YamlFile } from './repo.ts';
 import { allows, baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
 // CO-02.4
@@ -51,8 +51,8 @@ export function validate(repo: Repo): Finding[] {
     // CO-02.2
     const folders = dirname(entry.path).split('/');
     const home = repo.settings.folders![type];
-    const misplaced = home ? !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
-    if (misplaced) findings.push(finding(item, ['type'], 'misplaced', 'Misplaced'));
+    const misplaced = home ? !!innermostItem(repo, folders.join('/')) && !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
+    if (misplaced) findings.push(finding(item, ['type'], 'misplaced', `outside ${home}`));
 
     if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', `Duplicate id ${id}`));
 

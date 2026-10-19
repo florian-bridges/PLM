@@ -74,6 +74,7 @@ Add new entries at the end. Format:
 *Impact:* `plm report coverage` cannot distinguish "not yet verified" from "deliberately not verifiable in this project". The permanent verification gap has to be tracked in a separate document.
 *Workaround:* The requirements that only a flight can verify are listed in `aircraft-system/verification-strategy.md` and excluded from the coverage target by hand.
 *Proposal:* Align the two enums, and let `plm report coverage` report such requirements as `open-by-design` with their reason instead of `unverified`.
+*Decision:* 2026-10-19, product owner: rejected as a tool change, merged into the next entry. The enums are project configuration (`schemas/`); a project that plans no flight tests states that once as a policy, and the per-method counts of the next entry show those requirements as their own group, not as hidden gaps. No `open-by-design` state: a second kind of "unverified" adds words without new information.
 
 ## `plm report coverage` is method-blind and has no denominator
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by verification-engineer)
@@ -81,6 +82,9 @@ Add new entries at the end. Format:
 *Impact:* The coverage figure a gate needs cannot be read off the tool. At SRR the real denominator is 29 of the 46 items listed (33 aircraft requirements minus 4 open by design, 13 needs excluded).
 *Workaround:* The method distribution was obtained by grepping the requirement YAML, and the denominator is stated by hand in `aircraft-system/verification-strategy.md`.
 *Proposal:* Report verified/total per method and per subtree; let an item be marked verified through its children; allow an open-by-design state with a reason.
+*Decision:* 2026-10-19, product owner: accepted, trimmed (branch `integration/afw`). `plm report coverage [item] --by <field>` adds one count line per value of any item field (items without it in one group): verified, pending, unverified, total; JSON gives the same groups. Default output and exit code unchanged. No open-by-design state, no verification through children, no config. Needs without the field fall into their own group, so the denominator is read off.
+*Stream:* one, `src/cli.ts`, `src/links.ts`, `test/plm.test.ts`; at most +40 net words in `src/`+`test/` (54 free; pay by shortening). Documents (requirements author): amend TE-06.2 or add one TE-06.x, add `--by` to CL-01.1; at most +45 net words. Extension unchanged.
+*Done when:* on a copy of autonomous-fixed-wing, `plm report coverage ASM-92GJKY --by verification` prints a line per method and one for items without it, totals matching the requirements in scope; `npm test` green; word limits held.
 
 ## Only three verification methods; no inspection or demonstration
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by verification-engineer)

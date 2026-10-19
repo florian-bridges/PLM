@@ -66,15 +66,15 @@ export function loadRepo(start: string): Repo {
 
   const walk = (folder: string, parent?: Entry) => {
     for (const child of readdirSync(join(root, folder), { withFileTypes: true })) {
-      if (!child.isDirectory()) continue;
+      if (!child.isDirectory() || child.name.startsWith('.')) continue;
       const path = folder ? `${folder}/${child.name}` : child.name;
       if (parent && child.name === homeFolders.requirement) addRequirements(path, parent);
-      else if (parent ? child.name === homeFolders['test-case'] : !folder && child.name === homeFolders['test-run']) walk(path);
+      else if (parent ? child.name === homeFolders['test-case'] : !folder && child.name === homeFolders['test-run']) walk(path, parent);
       else if (existsSync(join(root, path, 'item.yaml'))) {
         const nested = addEntry(path);
         parent?.nested.push(nested.id);
         walk(path, nested);
-      }
+      } else walk(path, parent); // CO-01.1
     }
   };
 
@@ -109,9 +109,9 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
   if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item folder`);
 
   const id = newId(repo, type);
-  const home = [parent?.path, homeFolders[type]].filter(Boolean).join('/');
-  const inGroup = type === 'requirement' && cwd.startsWith(`${home}/`);
-  const path = [inGroup ? cwd : home, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id].filter(Boolean).join('/');
+  const typeHome = homeFolders[type] && `${parent?.path}/${homeFolders[type]}`;
+  const inGroup = !!parent && (!typeHome || cwd === typeHome || cwd.startsWith(`${typeHome}/`));
+  const path = [inGroup ? cwd : typeHome || parent?.path, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id].filter(Boolean).join('/');
 
   const item = readYaml(repo.root, `templates/${type}.yaml`);
   item.path = type === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`;

@@ -40,16 +40,28 @@ const fixture = () => {
 const plm = (root: string, ...args: string[]) => spawnSync(process.execPath, ['src/cli.ts', '-C', root, ...args], { encoding: 'utf8' });
 const json = (root: string, ...args: string[]) => JSON.parse(plm(root, '--format', 'json', ...args).stdout).data;
 
-test('TE-01.1: nested and used item changes propagate to ancestors only', () => {
+test('TE-01.1: nested/used changes propagate; git mv keeps ID, links, confirmations', () => {
   const root = fixture();
   const before = currentVersions(loadRepo(root));
-  write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\n' });
+  write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\nlinks: [{type: satisfies, target: R}]\n' });
   const after = currentVersions(loadRepo(root));
   expect(after.get('P')).not.toBe(before.get('P'));
   expect(after.get('A')).not.toBe(before.get('A'));
   expect(after.get('R')).toBe(before.get('R'));
   write(root, { 'bolt/item.yaml': 'id: L\ntype: part\ntitle: Hi-Lok\n' });
   expect(currentVersions(loadRepo(root)).get('A')).not.toBe(after.get('A'));
+
+  confirm(loadRepo(root), currentVersions(loadRepo(root)), [], 'P');
+  commit(root);
+  const moved = currentVersions(loadRepo(root));
+  git(root, ['mv', 'wing/spar', 'bolt/spar']);
+  const repo = loadRepo(root);
+  expect(repo.entries.get('P')?.path).toBe('bolt/spar');
+  const now = currentVersions(repo);
+  expect(now.get('P')).toBe(moved.get('P'));
+  expect(now.get('A')).not.toBe(moved.get('A'));
+  expect(now.get('L')).not.toBe(moved.get('L'));
+  expect(linkStates(repo, now)[0].state).toBe('current');
 });
 
 test('TE-01.2, CO-01.3: uncommitted and committed states yield identical versions; artifacts', () => {
@@ -62,16 +74,22 @@ test('TE-01.2, CO-01.3: uncommitted and committed states yield identical version
   expect(versionAt(root, 'HEAD', 'A')).toBe(working.get('A'));
 });
 
-test('CO-01.2, CO-02.1, CO-02.2, CO-02.4, CO-02.6: findings with codes and positions', () => {
+test('CO-01.1, CO-01.2, CO-02.1, CO-02.2, CO-02.4, CO-02.6: findings with codes and positions', () => {
   const root = fixture();
   write(root, {
     'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: pass\n',
     'copy/item.yaml': 'id: L\ntype: part\ntitle: Bolt\n',
     'bolt/item.yaml': 'id: L\ntype: part\ntitle: Bolt\nexternal_ids: { reqif: B1 }\n',
     'wing/requirements/structure/stringer.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
+    'wing/misc/panel/item.yaml': 'id: Z\ntype: part\ntitle: Panel\n', // CO-01.1
+    'wing/.attic/item.yaml': 'id: H\ntype: part\ntitle: Hidden\n',
+    'meta/M.yaml': 'status: draft\n', // CO-02.2
   });
-  const findings = validate(loadRepo(root));
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'schema', 'schema', 'schema', 'schema']);
+  const repo = loadRepo(root);
+  expect(repo.entries.get('Z')?.path).toBe('wing/misc/panel');
+  expect(repo.entries.has('H')).toBe(false);
+  const findings = validate(repo);
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', 'schema', 'schema', 'schema', 'schema']);
   expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ file: 'wing/spar/item.yaml', line: 4, col: 9 });
 });
 
@@ -112,6 +130,9 @@ test('CL-02.1, CL-02.2, CL-02.4: init, new items nest in the working folder', ()
   expect(part).toMatch(/^PRT-[0-9A-HJKMNP-TV-Z]{6}$/);
   expect(existsSync(join(dir, 'main-spar/item.yaml'))).toBe(true);
   expect(plm(dir, 'new', 'part', 'Main spar').status).toBe(2);
+  mkdirSync(join(dir, 'parts'));
+  plm(join(dir, 'parts'), 'new', 'part', 'Rib');
+  expect(existsSync(join(dir, 'parts/rib/item.yaml'))).toBe(true);
   plm(dir, 'new', 'requirement', 'Carry 3g');
   mkdirSync(join(dir, 'requirements/loads'));
   plm(join(dir, 'requirements/loads'), 'new', 'requirement', 'Gust');
@@ -143,7 +164,7 @@ test('CO-01.1, CO-01.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1, TE-06.2: r
   const wing = currentVersions(loadRepo(root)).get('A');
   expect(json(root, 'report', 'coverage', 'P')).toEqual([]);
   write(root, {
-    'wing/tests/load-test/item.yaml': 'id: T\ntype: test-case\ntitle: Load test\nlinks:\n  - type: verifies\n    target: R\n',
+    'wing/tests/suite/load-test/item.yaml': 'id: T\ntype: test-case\ntitle: Load test\nlinks:\n  - type: verifies\n    target: R\n',
     'wing/tests/drop-test/item.yaml': 'id: U\ntype: test-case\ntitle: Drop test\nlinks:\n  - type: verifies\n    target: R\n',
     'rig.log': 'ok',
   });

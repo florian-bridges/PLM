@@ -1,5 +1,5 @@
 // CO-02
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
 import { childrenOf, homeFolders, linksOf, usesOf, type Repo, type YamlFile } from './repo.ts';
@@ -72,6 +72,11 @@ export function validate(repo: Repo): Finding[] {
       }
     });
   }
+  // CO-02.2
+  const metaFolder = join(repo.root, 'meta');
+  const orphans = existsSync(metaFolder) ? readdirSync(metaFolder).filter((f) => f.endsWith('.yaml') && !repo.entries.has(f.slice(0, -5))) : [];
+  for (const file of orphans) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: `No item: meta/${file}` });
+
   return [...findings, ...cycles(repo)];
 }
 

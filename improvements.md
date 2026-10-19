@@ -21,14 +21,16 @@ Add new entries at the end. Format:
 *Workaround:* Items sit directly in their parent item folder.
 *Proposal:* Report `item.yaml` files that are not reachable as a finding, or allow grouping folders.
 
-*Decision:* 2026-10-19 accepted, see "Grouping folders and migration".
+*Decision:* 2026-10-19 done, see "Grouping folders and migration".
+
 ## `plm new` in a plain folder creates the item elsewhere
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer
 *Observed:* `plm new review "SRR review"` run in `aircraft-system/reviews/` created `aircraft-system/srr-review/`.
 *Impact:* Surprising location; easy to miss in scripts.
 *Proposal:* Refuse, or print the created path.
 
-*Decision:* 2026-10-19 accepted, see "Grouping folders and migration".
+*Decision:* 2026-10-19 done, see "Grouping folders and migration".
+
 ## Links can only target requirements
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer
 *Observed:* `satisfies` and `implements` accept only requirement targets; link types are fixed in the tool. A derived requirement cannot link to the analysis or decision its value comes from.
@@ -100,14 +102,16 @@ Add new entries at the end. Format:
 *Workaround:* Create folder-type items directly in the item folder and do not use grouping folders for them.
 *Proposal:* Print the created path, and either honour the working directory or refuse with the reason.
 
-*Decision:* 2026-10-19 accepted, see "Grouping folders and migration".
+*Decision:* 2026-10-19 done, see "Grouping folders and migration".
+
 ## A moved item folder disappears without a validate error
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by simulation-engineer)
 *Observed:* After moving an item folder into a plain grouping folder, `plm show ANA-T7TECF` returned "Unknown item" while `plm validate` reported nothing. A registered item with a live `meta/<ID>.yaml` was simply invisible.
 *Impact:* An item can be lost silently; the meta file and the ID survive with no item behind them.
 *Proposal:* `plm validate` should report an ID with a meta file but no discoverable item, and an `item.yaml` that is not reachable as an item.
 
-*Decision:* 2026-10-19 accepted, see "Grouping folders and migration".
+*Decision:* 2026-10-19 done, see "Grouping folders and migration".
+
 ## `plm new` writes `status` into `item.yaml` as well as meta
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by simulation-engineer)
 *Observed:* `plm new` writes `status: draft` into both `item.yaml` and `meta/<ID>.yaml`. The convention keeps status in meta only, and the existing `aircraft-system/item.yaml` has no status field. `plm validate` accepts both.
@@ -174,13 +178,19 @@ Add new entries at the end. Format:
 *Observed:* A gate restructures the product tree: requirements and items move from the system item into subsystem items. No documented way says whether moving folders keeps IDs, links and confirmations, and a mistake is not reported (see "A moved item folder disappears without a validate error").
 *Impact:* Restructuring is risky hand work; teams avoid it and keep large flat items.
 *Proposal:* A `plm move` command.
-*Decision:* 2026-10-19 accepted with "Grouping folders and migration", without `plm move`.
+*Decision:* 2026-10-19 done with "Grouping folders and migration", without `plm move`.
 
 ## Grouping folders and migration
-*Decision:* 2026-10-19, product owner. Accepted, one stream, branch `integration/afw`. Covers the five entries above.
+*Decision:* 2026-10-19, product owner. Accepted, one stream; done on `integration/afw`, accepted 2026-10-19 after removing an unrequested change (test cases had become nested items of their item). Covers the five entries above.
 1. A folder without `item.yaml` is transparent everywhere (hidden folders skipped): items in it belong to the nearest enclosing item, or are top-level. Grouping folders inside `requirements/` and `tests/` work alike; placement errors (CO-02.2) still apply.
 2. `plm new` creates every type in the working folder when that is inside the parent item and, for types with a home folder, inside that home folder; otherwise in the home folder or item folder as today. Output stays the ID (scripts parse it).
 3. No `plm move`: IDs, links and confirmations are keyed by ID, versions by content (TE-01.1), so `git mv` keeps them; only items whose content changes (old and new parent) turn suspect, as they should. State this once in the documents.
 4. `plm validate` reports an error for a `meta/<ID>.yaml` without an item. Unreachable `item.yaml` no longer exists after 1.
 *Review:* 2026-10-19, plm-reviewer, commit cf69c9b. Verdict: pass, no major. Traceability, budget (4637/5000 docs, 4047/4100 src+test) and `npm test`/`tsc` all clean. Behaviour on a copy of autonomous-fixed-wing unchanged except the intended orphan error. Minor: `improvements.md` missing blank lines before four headings after the new `*Decision:*` lines (cosmetic).
 *Stream:* `src/repo.ts`, `src/validate.ts`, `test/plm.test.ts`; at most +100 net words in `src/`+`test/` (153 free). Documents (requirements author): CO-01.1, CL-02.1, CO-02.2 or a new CO-02.x, TE-01.1 rationale; at most +80 net words. Extension unchanged.
+
+## `npm test` times out on slow machines
+*Found:* 2026-10-19, autonomous-fixed-wing, plm-product-owner
+*Observed:* On the Jetson Orin NX, the test "recorded runs verify requirements until the SUT changes" takes about 7.3 s and fails on Vitest's 5 s default, also on `main`; with `--testTimeout=30000` all tests pass.
+*Impact:* `npm test` is red at every acceptance on this machine; a real failure can hide behind the known one.
+*Proposal:* Set `testTimeout` in the Vitest config, or make the test spawn fewer CLI processes.

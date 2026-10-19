@@ -69,7 +69,7 @@ export function loadRepo(start: string): Repo {
       if (!child.isDirectory() || child.name.startsWith('.')) continue;
       const path = folder ? `${folder}/${child.name}` : child.name;
       if (parent && child.name === homeFolders.requirement) addRequirements(path, parent);
-      else if (parent ? child.name === homeFolders['test-case'] : !folder && child.name === homeFolders['test-run']) walk(path, parent);
+      else if (parent ? child.name === homeFolders['test-case'] : !folder && child.name === homeFolders['test-run']) walk(path);
       else if (existsSync(join(root, path, 'item.yaml'))) {
         const nested = addEntry(path);
         parent?.nested.push(nested.id);

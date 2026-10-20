@@ -77,11 +77,12 @@ This tutorial builds a small quadcopter: aircraft requirements, systems with the
 
 ```sh
 mkdir multicopter && cd multicopter
-plm init
+git init
+printf 'prefixes: {requirement: REQ-, part: PRT-, assembly: ASM-, test-case: TC-, test-run: RUN-}\n' > plm.yaml
 git lfs track "*.bin"
 ```
 
-`plm init` creates a Git repository and a `plm.yaml` with an ID prefix per item type.
+`plm.yaml` marks the repository root and gives an ID prefix per item type.
 
 ### 2. The aircraft and its requirements
 

@@ -80,17 +80,14 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
 *Rationale:* Links are reviewed one by one, or all at once after reviewing an item.
 
+**CL-01.3** `set <id> <field> <value>` shall write `<value>` as a string to `owner` or `status` in `meta/<ID>.yaml`, or to any other field in `item.yaml`, keeping comments and formatting (CO-01.1), refusing a field whose value is not a string.
+*Rationale:* The ID spares finding the file; lists, numbers and `links` stay with `plm link` and hand edits.
+
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
 *Rationale:* Repository templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files. Creating a missing home folder spares preparing structure by hand for a new type.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
-
-**CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types and `informative: [rationale]`.
-*Rationale:* Items can follow at once.
-
-**CL-02.5** `plm set <id> <field> <value>` shall write `<value>` as a string to `owner` or `status` in `meta/<ID>.yaml`, or to any other field in `item.yaml`, keeping comments and formatting (CO-01.1), refusing `links` and non-string, non-list fields.
-*Rationale:* The ID spares finding the file; `links` and structured fields stay with `plm link` and hand edits.
 
 **CL-03.1** `plm test record <test-case>... --sut <ID> --result <result>... [--log <file>...]` shall create a test run in `runs/<ID>/` with date, copies of the log files and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.
 *Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for. One run per rig session keeps its logs together; results per test case keep one failure from discrediting the others.

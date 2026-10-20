@@ -14,7 +14,9 @@ commit() { git add -A && git commit -qm "$1"; }
 LOGS=$(mktemp -d); trap 'rm -rf "$LOGS"' EXIT
 
 rm -rf "$DIR"
-plm -C "$DIR" init
+mkdir -p "$DIR"
+git init -q "$DIR"
+printf 'prefixes: {requirement: REQ-, part: PRT-, assembly: ASM-, test-case: TC-, test-run: RUN-}\n' > "$DIR/plm.yaml"
 cd "$DIR"
 git config user.name >/dev/null || git config user.name Sandbox   # plm confirm needs a name
 git config user.email >/dev/null || git config user.email sandbox@example.com

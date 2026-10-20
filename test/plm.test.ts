@@ -21,6 +21,7 @@ const commit = (root: string) => {
   git(root, ['add', '-A']);
   git(root, ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'change']);
 };
+const bolt = 'id: L\ntype: part\ntitle: Bolt\n';
 const fixture = () => {
   const root = mkdtempSync(join(base, 'repo-'));
   write(root, {
@@ -28,7 +29,7 @@ const fixture = () => {
     'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nuses: [L]\n',
     'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks:\n  - type: satisfies\n    target: R\n',
     'wing/requirements/load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 3g.\n',
-    'bolt/item.yaml': 'id: L\ntype: part\ntitle: Bolt\n',
+    'bolt/item.yaml': bolt,
     'meta/P.yaml': '# reviewed by stress\nstatus: draft\n',
   });
   git(root, ['init', '-q']);
@@ -37,9 +38,10 @@ const fixture = () => {
   return root;
 };
 const plm = (root: string, ...args: string[]) => spawnSync(process.execPath, ['src/cli.ts', '-C', root, ...args], { encoding: 'utf8' });
+const bump = (root: string, extra = '') => write(root, { 'wing/requirements/load.yaml': `id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n${extra}` });
 const json = (root: string, ...args: string[]) => JSON.parse(plm(root, '--format', 'json', ...args).stdout).data;
 
-test('TE-01.1: nested/used changes propagate; git mv keeps ID, links, confirmations', () => {
+test('TE-01.1: mv keeps ID, links, confirmations', () => {
   const root = fixture();
   const before = currentVersions(loadRepo(root));
   write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\nlinks: [{type: satisfies, target: R}]\n' });
@@ -63,7 +65,7 @@ test('TE-01.1: nested/used changes propagate; git mv keeps ID, links, confirmati
   expect(linkStates(repo, now)[0].state).toBe('current');
 });
 
-test('TE-01.2, CO-01.3: uncommitted and committed states yield identical versions; artifacts', () => {
+test('TE-01.2, CO-01.3: versions match; artifacts', () => {
   const root = fixture();
   write(root, { 'wing/spar/drawing.txt': 'rev 2', 'wing/spar/cad/model.step': 'version https://git-lfs.github.com/spec/v1\noid sha256:0\nsize 9\n' });
   expect(json(root, 'show', 'P')).toMatchObject({ path: 'wing/spar', artifacts: [{ path: 'wing/spar/cad/model.step', lfs: 'missing' }, { path: 'wing/spar/drawing.txt' }] });
@@ -73,12 +75,12 @@ test('TE-01.2, CO-01.3: uncommitted and committed states yield identical version
   expect(versionAt(root, 'HEAD', 'A')).toBe(working.get('A'));
 });
 
-test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6: findings with codes and positions', () => {
+test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6: codes, positions', () => {
   const root = fixture();
   write(root, {
     'wing/spar/item.yaml': 'id: P\ntype: part\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: pass\n',
-    'copy/item.yaml': 'id: L\ntype: part\ntitle: Bolt\n',
-    'bolt/item.yaml': 'id: L\ntype: part\ntitle: Bolt\nexternal_ids: { reqif: B1 }\n',
+    'copy/item.yaml': bolt,
+    'bolt/item.yaml': bolt + 'external_ids: { reqif: B1 }\n',
     'wing/requirements/structure/stringer.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
     'wing/misc/panel/item.yaml': 'id: Z\ntype: part\ntitle: Panel\n',
     'wing/.attic/item.yaml': 'id: H\ntype: part\ntitle: Hidden\n',
@@ -93,26 +95,26 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6: findings with code
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
 
-test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: confirm, then a target change makes the link suspect', () => {
+test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: change suspects link', () => {
   const root = fixture();
   let repo = loadRepo(root);
   expect(linkStates(repo, currentVersions(repo))[0].state).toBe('unconfirmed');
   confirm(repo, currentVersions(repo), [], 'P');
-  expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toContain('# reviewed by stress'); // CO-01.1
+  expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toContain('# reviewed by stress');
   const link = () => linkStates(loadRepo(root), new Map())[0].link;
   expect(git(root, ['hash-object', 'wing/requirements/load.yaml'])).toBe(link().version);
   const head = git(root, ['rev-parse', '--short', 'HEAD']);
   expect(link()).toMatchObject({ title: 'Load', by: 'Tess', on: new Date().toISOString().slice(0, 10), commit: head });
   commit(root);
 
-  write(root, { 'wing/requirements/load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
+  bump(root);
   repo = loadRepo(root);
   const [state] = linkStates(repo, currentVersions(repo));
   expect(state.state).toBe('suspect');
   expect(changeSince(repo, state.link)).toMatchObject({ commit: head, diff: expect.stringContaining('+text: Carry 4g.') });
   confirm(repo, currentVersions(repo), [], 'P');
   expect(link()).not.toHaveProperty('commit');
-  write(root, { 'wing/requirements/load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\nrationale: why.\n' });
+  bump(root, 'rationale: why.\n');
   expect(linkStates(loadRepo(root), currentVersions(repo))[0].state).toBe('current');
   write(root, { 'meta/P.yaml': 'confirmed:\n  R:\n    version: bad\n' });
   expect(linkStates(loadRepo(root), currentVersions(repo))[0].state).toBe('suspect');
@@ -124,7 +126,7 @@ test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: confirm, then a target change makes 
   expect(() => confirm(repo, currentVersions(repo), validate(repo), 'P')).toThrow(Refused);
 });
 
-test('CL-02.1–CL-02.2, CL-02.4, CO-01.1, CO-02.2: init, new items nest in cwd', () => {
+test('CL-02.1–CL-02.2, CL-02.4, CO-01.1, CO-02.2: items nest cwd', () => {
   const root = join(base, 'new');
   expect(plm(root, 'init').status).toBe(0);
   expect(readFileSync(join(root, 'plm.yaml'), 'utf8')).toContain('informative');
@@ -152,7 +154,7 @@ test('CL-02.1–CL-02.2, CL-02.4, CO-01.1, CO-02.2: init, new items nest in cwd'
   expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 });
 
-test('CL-01.1, CL-05.1–CL-05.3, TE-03.1: JSON output, exit codes and titles next to IDs', () => {
+test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: JSON, exit codes, allocation', () => {
   const root = fixture();
   expect(plm(root, 'validate').status).toBe(0);
   const suspects = plm(root, '--format', 'json', 'suspects');
@@ -161,11 +163,19 @@ test('CL-01.1, CL-05.1–CL-05.3, TE-03.1: JSON output, exit codes and titles ne
   expect(plm(root, 'suspects', 'A').stdout).toBe('unconfirmed P (Spar) satisfies R (Load)\n');
   expect(plm(root, 'suspects', 'L').status).toBe(0);
   expect(plm(root, 'report', 'coverage').stdout).toBe('unverified R (Load)\n');
-  write(root, { 'wing/requirements/load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
+  bump(root);
   expect(plm(root, 'impact', 'HEAD').stdout).toBe('changed R (Load)\npropagated A (Wing)\n');
+
+  write(root, { 'wing/requirements/gust.yaml': 'id: G\ntype: requirement\ntitle: Gust\n', 'wing/spar/requirements/low.yaml': 'id: Z\ntype: requirement\n' });
+  const alloc = plm(root, 'report', 'coverage', '--allocation');
+  expect(alloc.stdout).toContain('allocated R (Load)');
+  expect(alloc.stdout).toContain('unallocated G (Gust)');
+  expect(alloc.stdout).not.toContain('Z');
+  expect(alloc.status).toBe(1);
+  expect(plm(root, 'report', 'coverage', '--allocation', '--by', 'x').status).toBe(2);
 });
 
-test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: recorded runs verify requirements until the SUT changes', () => {
+test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: runs verify; SUT change', () => {
   const root = fixture();
   const coverage = () => json(root, 'report', 'coverage', 'A')[0].state;
   const record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
@@ -200,7 +210,7 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 }, 15000);
 
-test('TE-05.1–TE-05.2: impact of a change on items, links and test runs', () => {
+test('TE-05.1–TE-05.2: impact: items, links, runs', () => {
   const root = fixture();
   write(root, {
     'runs/X/item.yaml': 'id: X\ntype: test-run\ntitle: Run\nlinks:\n  - type: tests\n    target: A\n',
@@ -208,7 +218,7 @@ test('TE-05.1–TE-05.2: impact of a change on items, links and test runs', () =
   });
   write(root, { 'meta/X.yaml': `confirmed:\n  A:\n    version: ${currentVersions(loadRepo(root)).get('A')}\n` });
   commit(root);
-  write(root, { 'wing/requirements/load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n' });
+  bump(root);
   const impact = (range: string) => json(root, 'impact', range);
   const expected = { changed: [{ id: 'R', title: 'Load' }], propagated: [{ id: 'A', title: 'Wing' }], suspects: [], runs: [{ id: 'X', title: 'Run' }] };
   expect(impact('HEAD')).toMatchObject(expected);
@@ -217,7 +227,7 @@ test('TE-05.1–TE-05.2: impact of a change on items, links and test runs', () =
   expect(plm(root, 'impact', 'nonsense').status).toBe(2);
 });
 
-test('TE-01.1–TE-01.2: a nested repository counts by its commit, without warnings', () => {
+test('TE-01.1–TE-01.2: repo counts by commit', () => {
   const root = fixture();
   const firmware = join(root, 'wing/spar/src');
   write(root, { 'wing/spar/src/main.c': 'int main() {}\n' });
@@ -232,7 +242,7 @@ test('TE-01.1–TE-01.2: a nested repository counts by its commit, without warni
   expect(json(root, 'impact', 'HEAD')).toMatchObject({ changed: [], propagated: [] });
 });
 
-test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search all words by prefix with filters, then link to a result', () => {
+test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search prefix, filters; link result', () => {
   const root = fixture();
   write(root, { 'meta/A.yaml': 'owner: ana\nstatus: draft\n' });
   const repo = loadRepo(root);

@@ -1,4 +1,3 @@
-// TE-02, TE-03, TE-06, CL-03
 import { copyFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
@@ -35,8 +34,8 @@ export function linkStates(repo: Repo, versions: Map<string, string>): LinkState
 // TE-03.1
 export const fromRun = (repo: Repo, state: LinkState) => repo.entries.get(state.source)?.item.data.type === 'test-run';
 
-// TE-02.1, TE-02.2
-export function confirmation(repo: Repo, target: string, version: string | undefined): Omit<Link, 'type' | 'target'> {
+// TE-02.1–TE-02.2
+function confirmation(repo: Repo, target: string, version: string | undefined): Omit<Link, 'type' | 'target'> {
   const by = tryGit(repo, ['config', 'user.name']);
   if (!by) throw new Refused('Set git user.name before confirming');
   const hash = tryGit(repo, ['rev-parse', '--verify', '-q', '--short', 'HEAD']);
@@ -68,7 +67,7 @@ export function addLink(repo: Repo, source: string, type: string, target: string
   writeYaml(repo.root, item);
 }
 
-// CL-03.1, CL-03.2
+// CL-03.1–CL-03.2
 export function recordRun(repo: Repo, testCases: string[], sut: string, results: string[], logs: string[]): string {
   if (results.length !== testCases.length) throw new UsageError('One result per test case');
   const current = currentVersions(repo);
@@ -109,7 +108,7 @@ export const suspects = (repo: Repo, states: LinkState[], root?: string) => {
 };
 
 export interface Coverage {
-  requirement: string; title: string; state: 'verified' | 'pending' | 'unverified';
+  requirement: string; title: string; state: 'verified' | 'pending' | 'unverified' | 'allocated' | 'unallocated';
   tests: { testCase: Named; run?: Named; result?: string; outdated?: boolean }[];
 }
 
@@ -148,4 +147,11 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
     if (passingRun) return { ...row, state: 'verified' };
     return { ...row, state: verifies.length ? 'pending' : 'unverified' };
   });
+}
+
+// TE-06.4
+export function allocation(repo: Repo, states: LinkState[], root?: string): Coverage[] {
+  const inScope = within(repo, root), satisfied = new Set(states.filter((s) => s.link.type === 'satisfies').map((s) => s.link.target));
+  return [...repo.entries.values()].filter((i) => inScope(i.id) && subtree(repo, i.id).slice(1).some((c) => entry(repo, c).requirements.length))
+    .flatMap((i) => i.requirements.map((id) => ({ requirement: id, title: named(repo, id).title, tests: [], state: satisfied.has(id) ? 'allocated' : 'unallocated' })));
 }

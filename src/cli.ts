@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { addLink, confirm, coverage, linkStates, recordRun, suspects, type LinkState } from './links.ts';
+import { addLink, allocation, confirm, coverage, linkStates, recordRun, suspects, type LinkState } from './links.ts';
 import { artifacts, entry, loadRepo, newItem, Refused, UsageError, type Named } from './repo.ts';
 import { results } from './schemas.ts';
 import { search } from './search.ts';
@@ -45,14 +45,14 @@ function exitCodeFor(error: unknown): number {
   return 3;
 }
 
-program.command('validate').description('validate the repository').action(() => {
+program.command('validate').description('validate repository').action(() => {
   const findings = validate(openRepo());
   const lines = findings.map((finding) => `${finding.file}:${finding.line}:${finding.col} ${finding.severity} ${finding.code}: ${finding.message}`);
   output(lines.join('\n'), findings);
   if (findings.some((finding) => finding.severity === 'error')) exitCode = 1;
 });
 
-program.command('show <id>').description('show an item').action((id: string) => {
+program.command('show <id>').description('show item').action((id: string) => {
   const repo = openRepo(), found = entry(repo, id), versions = currentVersions(repo);
   const links = linkStates(repo, versions).filter((state) => state.source === id || state.link.target === id);
   // CO-01.3
@@ -60,7 +60,7 @@ program.command('show <id>').description('show an item').action((id: string) => 
   output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
-program.command('link <source> <type> <target>').description('add an unconfirmed link')
+program.command('link <source> <type> <target>').description('add unconfirmed link')
   .action((source: string, type: string, target: string) => addLink(openRepo(), source, type, target));
 
 // CO-03.2
@@ -70,20 +70,20 @@ program.command('search <query...>').description('search items').action((query: 
 });
 
 // CL-01.2
-program.command('confirm <source> [target]').description('confirm a link, or all').action((source: string, target?: string) => {
+program.command('confirm <source> [target]').description('confirm link, or all').action((source: string, target?: string) => {
   const repo = openRepo();
   const links = confirm(repo, currentVersions(repo), validate(repo), source, target);
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 
-program.command('suspects [item]').description('list suspect and unconfirmed links').action((item?: string) => {
+program.command('suspects [item]').description('suspect, unconfirmed links').action((item?: string) => {
   const states = suspects(...scoped(item));
   output(states.map((state) => `${state.state} ${linkLabel(state)}`).join('\n'), states);
   if (states.length) exitCode = 1;
 });
 
 // TE-05.1
-program.command('impact <range>').description('list affected items, links and runs').action((range: string) => {
+program.command('impact <range>').description('affected items, links, runs').action((range: string) => {
   const repo = openRepo();
   const [base, head] = range.split('..');
   const headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) };
@@ -98,7 +98,7 @@ program.command('impact <range>').description('list affected items, links and ru
 });
 
 // CL-02.4
-program.command('init').description('create a repository').action(() => {
+program.command('init').description('create repository').action(() => {
   const root = workingFolder();
   if (existsSync(join(root, 'plm.yaml'))) throw new UsageError('plm.yaml already exists');
   mkdirSync(root, { recursive: true });
@@ -108,13 +108,13 @@ program.command('init').description('create a repository').action(() => {
 });
 
 // CL-02.1
-program.command('new <type> <title>').description('create an item here').action((type: string, title: string) => {
+program.command('new <type> <title>').description('create item').action((type: string, title: string) => {
   const id = newItem(openRepo(), type, title, workingFolder());
   output(id, { id });
 });
 
 // CL-03.1
-program.command('test').command('record <test-case...>').description('record a run')
+program.command('test').command('record <test-case...>').description('record run')
   .requiredOption('--sut <id>')
   .addOption(new Option('--result <results...>').choices(results).makeOptionMandatory())
   .option('--log <files...>', '', [])
@@ -123,13 +123,15 @@ program.command('test').command('record <test-case...>').description('record a r
     output(id, { id });
   });
 
-// TE-06.2
-program.command('report').command('coverage [item]').description('report requirement verification')
+// TE-06.2, TE-06.4
+program.command('report').command('coverage [item]').description('report verification')
   .option('--by <field>')
+  .option('--allocation')
   .action((item?: string, options?: any) => {
-    const state = scoped(item);
-    const rows = coverage(...state);
-    if (rows.some((row) => row.state !== 'verified')) exitCode = 1;
+    const state = scoped(item), alloc = options?.allocation;
+    if (alloc && options.by) throw new UsageError('--by');
+    const rows = alloc ? allocation(...state) : coverage(...state);
+    if (rows.some((row) => row.state !== (alloc ? 'allocated' : 'verified'))) exitCode = 1;
     if (options?.by) {
       // TE-06.3
       const groups: Record<string, any> = {};

@@ -223,6 +223,7 @@ Add new entries at the end. Format:
 *Impact:* The trial structure migration needed a `sed` pass over `run` fields and script docstrings (3 analyses, 4 scripts); a missed one surfaces only when someone reruns it.
 *Workaround:* Rewrite moved paths with `sed` in the migration script.
 *Proposal:* Define `run` as executed in the item folder, and have `plm validate` warn when the file it names does not exist there.
+*Decision:* 2026-10-20, product owner: rejected as a tool change. `plm` neither defines nor executes `run`: it is a project attribute in the project's schema, and finding "the file it names" means parsing a shell command by one project's convention. A project rule solves it: `run` executes in the item folder and names paths relative to it; such paths move with the item, so `git mv` breaks nothing. The test case with `method: analysis` that reruns the script catches a missed one. Project: state the rule, make the root-relative `run` fields item-relative, delete the `sed` step.
 
 ## Item folders per type are hard-coded
 *Found:* 2026-10-19, autonomous-fixed-wing, chief engineer

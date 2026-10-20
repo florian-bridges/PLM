@@ -28,7 +28,7 @@ function schemaFor(ajv: Ajv2020, root: string, type: string): ValidateFunction |
 
 const newAjv = () => new Ajv2020({ allErrors: true, strictTypes: false });
 
-// VS-01.2: the type's validator for the item form.
+// VS-01.2
 export const itemSchema = (root: string, type: string) => schemaFor(newAjv(), root, type);
 
 export function validate(repo: Repo): Finding[] {
@@ -41,9 +41,9 @@ export function validate(repo: Repo): Finding[] {
     if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', `Unknown item type "${type}"`));
     else if (!validateSchema(item.data)) {
       for (const error of validateSchema.errors ?? []) {
-        const unexpected = error.params.unevaluatedProperty;
-        const path = [...error.instancePath.split('/').slice(1), ...(unexpected ? [unexpected] : [])];
-        findings.push(finding(item, path, 'schema', `${path.join('.') || 'item'} ${error.message}`));
+        const path = [...error.instancePath.split('/').slice(1), ...(error.params.unevaluatedProperty ? [error.params.unevaluatedProperty] : [])];
+        // CO-02.4
+        findings.push({ ...finding(item, path, 'schema', `${path.join('.') || 'item'} ${error.message}`), severity: error.keyword === 'required' && entry.meta.data.status === 'draft' ? 'warning' : 'error' });
       }
     }
 
@@ -87,8 +87,7 @@ function cycles(repo: Repo): Finding[] {
     state.set(id, 'open');
     const entry = repo.entries.get(id)!;
     for (const child of childrenOf(entry)) {
-      const closesCycle = state.get(child) === 'open';
-      if (closesCycle) findings.push(finding(entry.item, ['uses'], 'cycle', `${id} → ${child} closes composition cycle`));
+      if (state.get(child) === 'open') findings.push(finding(entry.item, ['uses'], 'cycle', `${id} → ${child} closes composition cycle`));
       else if (!state.has(child) && repo.entries.has(child)) visit(child);
     }
     state.set(id, 'done');

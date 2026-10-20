@@ -19,8 +19,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.2** The core shall report as errors: items outside their type's home folder (CO-01.1), other items inside them, a `meta/<ID>.yaml` with no item, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late.
 
-**CO-02.4** Each finding shall carry file, line, column, severity and a stable code.
-*Rationale:* Positions let editors and CI point to the problem; stable codes allow filtering and suppression.
+**CO-02.4** Each finding shall carry file, line, column, severity and a stable code, with severity `warning` for a missing required attribute (schema `required`) of a `draft` item, otherwise `error`.
+*Rationale:* Positions let editors and CI point to the problem; stable codes allow filtering and suppression; a draft is expected to be incomplete.
 
 **CO-02.5** Built-in types shall be `requirement`, `part`, `assembly`, `test-case` and `test-run`.
 *Rationale:* Others come by schema.

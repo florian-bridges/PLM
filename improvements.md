@@ -144,6 +144,8 @@ Add new entries at the end. Format:
 
 *Review:* 2026-10-20, quality, commits 438d48d (CO-02.4 text) and ab6a876 (`wp/afw-draft-required-warning`). Verdict: pass, no major. CO-02.4 wording matches the decision, net +23/+40 words. `tsc --noEmit` clean; `npm test` 14/14 green (30 s timeout, the known slow-machine flake). `src/`+`test/` 4098/4100, net −1 word (within ≤+0); `extension/` +0. On a scratch copy of autonomous-fixed-wing with `required` added to `analysis.schema.json`: a missing `result` on a `draft` item gives `warning` (exit 0), the same item `in-review` gives `error` (exit 1), matching CO-02.4. Unmodified, `validate`/`show`/`search`/`suspects` on the real project are byte-identical to the parent commit — no project schema lists `required` yet, so behaviour is unchanged as intended. **Minor:** the new assertion (`test/plm.test.ts:93`) only proves one `required` finding is a `warning`, for the fixture's single `draft` item `P`; no case covers a non-`draft` item missing a required attribute, so a regression collapsing the `error` branch into `warning` would pass unnoticed. Not blocking.
 
+*Accepted:* 2026-10-20, product owner: merged into `integration/afw`; build and `npm test` 14/14 green; `src/`+`test/` 4098/4100. Minor left open: a non-`draft` case does not fit the remaining 2 words; add it when words are freed. Project: add `required` (and `minLength: 1`) to its `schemas/<type>.schema.json`.
+
 ## `analysis.method` has no value for a qualitative assessment
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by safety-engineer)
 *Observed:* `method` allows only `calculation|simulation|measurement`. A functional hazard assessment or a SORA is an assessment against a published method, not a calculation.

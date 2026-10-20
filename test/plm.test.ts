@@ -30,7 +30,7 @@ const fixture = () => {
     'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks:\n  - type: satisfies\n    target: R\n',
     'wing/requirements/load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 3g.\n',
     'bolt/item.yaml': bolt,
-    'meta/P.yaml': '# reviewed by stress\nstatus: draft\n',
+    'meta/P.yaml': '# reviewed\nstatus: draft\n',
   });
   git(root, ['init', '-q']);
   git(root, ['config', 'user.name', 'Tess']);
@@ -44,7 +44,7 @@ const json = (root: string, ...args: string[]) => JSON.parse(plm(root, '--format
 test('TE-01.1: mv keeps ID, links, confirmations', () => {
   const root = fixture();
   const before = currentVersions(loadRepo(root));
-  write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\nlinks: [{type: satisfies, target: R}]\n' });
+  write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks: [{type: satisfies, target: R}]\n' });
   const after = currentVersions(loadRepo(root));
   expect(after.get('P')).not.toBe(before.get('P'));
   expect(after.get('A')).not.toBe(before.get('A'));
@@ -95,12 +95,12 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6: codes, positions',
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
 
-test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: change suspects link', () => {
+test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects link', () => {
   const root = fixture();
   let repo = loadRepo(root);
   expect(linkStates(repo, currentVersions(repo))[0].state).toBe('unconfirmed');
   confirm(repo, currentVersions(repo), [], 'P');
-  expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toContain('# reviewed by stress');
+  expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toContain('# reviewed');
   const link = () => linkStates(loadRepo(root), new Map())[0].link;
   expect(git(root, ['hash-object', 'wing/requirements/load.yaml'])).toBe(link().version);
   const head = git(root, ['rev-parse', '--short', 'HEAD']);
@@ -126,25 +126,33 @@ test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: change suspects link', () => {
   expect(() => confirm(repo, currentVersions(repo), validate(repo), 'P')).toThrow(Refused);
 });
 
+test('CO-02.6: derives-from suspects', () => {
+  const root = fixture();
+  write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks:\n  - type: derives-from\n    target: R\n' });
+  confirm(loadRepo(root), currentVersions(loadRepo(root)), [], 'P');
+  bump(root);
+  expect(linkStates(loadRepo(root), currentVersions(loadRepo(root)))[0].state).toBe('suspect');
+});
+
 test('CL-02.1–CL-02.2, CL-02.4, CO-01.1, CO-02.2: items nest cwd', () => {
   const root = join(base, 'new');
   expect(plm(root, 'init').status).toBe(0);
   expect(readFileSync(join(root, 'plm.yaml'), 'utf8')).toContain('informative');
   expect(plm(root, 'init').status).toBe(2);
   appendFileSync(join(root, 'plm.yaml'), 'folders:\n  assembly: subsystems\n');
-  plm(root, 'new', 'assembly', 'My aircraft');
-  const dir = join(root, 'my-aircraft');
-  const part = plm(dir, 'new', 'part', 'Main spar').stdout.trim();
+  plm(root, 'new', 'assembly', 'Aircraft');
+  const dir = join(root, 'aircraft');
+  const part = plm(dir, 'new', 'part', 'Spar').stdout.trim();
   expect(part).toMatch(/^PRT-[0-9A-HJKMNP-TV-Z]{6}$/);
-  expect(existsSync(join(dir, 'main-spar/item.yaml'))).toBe(true);
-  expect(plm(dir, 'new', 'part', 'Main spar').status).toBe(2);
+  expect(existsSync(join(dir, 'spar/item.yaml'))).toBe(true);
+  expect(plm(dir, 'new', 'part', 'Spar').status).toBe(2);
   mkdirSync(join(dir, 'parts'));
   plm(join(dir, 'parts'), 'new', 'part', 'Rib');
   expect(existsSync(join(dir, 'parts/rib/item.yaml'))).toBe(true);
-  plm(dir, 'new', 'requirement', 'Carry 3g');
+  plm(dir, 'new', 'requirement', 'Climb');
   mkdirSync(join(dir, 'requirements/loads'));
   plm(join(dir, 'requirements/loads'), 'new', 'requirement', 'Gust');
-  expect(existsSync(join(dir, 'requirements/carry-3g.yaml')) && existsSync(join(dir, 'requirements/loads/gust.yaml'))).toBe(true);
+  expect(existsSync(join(dir, 'requirements/climb.yaml')) && existsSync(join(dir, 'requirements/loads/gust.yaml'))).toBe(true);
   plm(dir, 'new', 'test-case', 'Load');
   expect(existsSync(join(dir, 'tests/load/item.yaml'))).toBe(true);
   expect(plm(root, 'new', 'test-case', 'Load').status).toBe(2);
@@ -154,7 +162,7 @@ test('CL-02.1–CL-02.2, CL-02.4, CO-01.1, CO-02.2: items nest cwd', () => {
   expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 });
 
-test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: JSON, exit codes, allocation', () => {
+test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: JSON, exit codes', () => {
   const root = fixture();
   expect(plm(root, 'validate').status).toBe(0);
   const suspects = plm(root, '--format', 'json', 'suspects');
@@ -175,7 +183,7 @@ test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: JSON, exit codes, allocation
   expect(plm(root, 'report', 'coverage', '--allocation', '--by', 'x').status).toBe(2);
 });
 
-test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: runs verify; SUT change', () => {
+test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: runs verify; SUT', () => {
   const root = fixture();
   const coverage = () => json(root, 'report', 'coverage', 'A')[0].state;
   const record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
@@ -183,8 +191,8 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   const wing = currentVersions(loadRepo(root)).get('A');
   expect(json(root, 'report', 'coverage', 'P')).toEqual([]);
   write(root, {
-    'wing/tests/suite/load-test/item.yaml': 'id: T\ntype: test-case\ntitle: Load test\nlinks:\n  - type: verifies\n    target: R\n',
-    'wing/tests/drop-test/item.yaml': 'id: U\ntype: test-case\ntitle: Drop test\nlinks:\n  - type: verifies\n    target: R\n',
+    'wing/tests/suite/load-test/item.yaml': 'id: T\ntype: test-case\ntitle: LoadT\nlinks:\n  - type: verifies\n    target: R\n',
+    'wing/tests/drop-test/item.yaml': 'id: U\ntype: test-case\ntitle: DropT\nlinks:\n  - type: verifies\n    target: R\n',
     'rig.log': 'ok',
   });
   expect(currentVersions(loadRepo(root)).get('A')).not.toBe(wing);
@@ -198,10 +206,10 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   expect(loadRepo(root).entries.get(run)?.meta.data.confirmed?.T.commit).toBe(git(root, ['rev-parse', '--short', 'HEAD']));
   expect(plm(root, 'confirm', run).status).toBe(1);
   expect(validate(loadRepo(root))).toEqual([]);
-  const tests = (outdated: boolean) => [['U', 'Drop test', 'fail'], ['T', 'Load test', 'pass']]
+  const tests = (outdated: boolean) => [['U', 'DropT', 'fail'], ['T', 'LoadT', 'pass']]
     .map(([id, title, result]) => ({ testCase: { id, title }, run: { id: run, title: 'T, U on A' }, result, outdated }));
   expect(json(root, 'report', 'coverage', 'A')[0]).toMatchObject({ state: 'verified', tests: tests(false) });
-  write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Main spar\n' });
+  write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\n' });
   expect(json(root, 'report', 'coverage', 'A')[0]).toEqual({ requirement: 'R', title: 'Load', state: 'pending', tests: tests(true) });
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
@@ -210,7 +218,7 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 }, 15000);
 
-test('TE-05.1–TE-05.2: impact: items, links, runs', () => {
+test('TE-05.1–TE-05.2: impact: items, runs', () => {
   const root = fixture();
   write(root, {
     'runs/X/item.yaml': 'id: X\ntype: test-run\ntitle: Run\nlinks:\n  - type: tests\n    target: A\n',
@@ -227,7 +235,7 @@ test('TE-05.1–TE-05.2: impact: items, links, runs', () => {
   expect(plm(root, 'impact', 'nonsense').status).toBe(2);
 });
 
-test('TE-01.1–TE-01.2: repo counts by commit', () => {
+test('TE-01.1–TE-01.2: counts by commit', () => {
   const root = fixture();
   const firmware = join(root, 'wing/spar/src');
   write(root, { 'wing/spar/src/main.c': 'int main() {}\n' });

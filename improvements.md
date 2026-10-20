@@ -140,6 +140,8 @@ Add new entries at the end. Format:
 *Workaround:* Write `item.yaml` and `meta/<ID>.yaml` by hand from the schema, and check by eye.
 *Proposal:* Have `plm new` write the type's fields as empty stubs, and `plm validate` report an item with a missing required field or no owner.
 
+*Decision:* 2026-10-20, product owner: accepted, trimmed. Key fields are project configuration, not a tool list: a project lists them under `required` (with `minLength: 1` where empty text is incomplete) in `schemas/<type>.schema.json`, which `validate` already enforces (CO-02.1). No flag, no stubs from `plm new` (empty stubs would pass the check). Tool change only: a missing required attribute of an item whose status is `draft` is a warning, otherwise an error. Owner check not included. Streams: (1) requirements author amends CO-02.2 or CO-02.4, net ≤ +40 words in `documents/`. (2) One implementer: `src/validate.ts`, `test/plm.test.ts`, net ≤ +0 words in `src/`+`test/` (4099/4100), `extension/` +0. Project: add `required` to its schemas.
+
 ## `analysis.method` has no value for a qualitative assessment
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by safety-engineer)
 *Observed:* `method` allows only `calculation|simulation|measurement`. A functional hazard assessment or a SORA is an assessment against a published method, not a calculation.

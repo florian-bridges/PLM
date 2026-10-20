@@ -261,3 +261,10 @@ Add new entries at the end. Format:
 *Impact:* Low (one config line), but every project hits it at first adoption of a new link type.
 *Workaround:* `informative: [rationale, links]` in `plm.yaml`.
 *Proposal:* Leave an item's own `links` out of the version incoming links are confirmed against, by default.
+
+## An editorial artifact change suspects every downstream link
+*Found:* 2026-10-20, autonomous-fixed-wing, safety-engineer
+*Observed:* Replacing a stale file reference in the report of `ANA-DQJ17K` (no value changed) turned 43 confirmed `derives-from` links of other owners' requirements suspect (`plm suspects` 6 → 54). `informative:` covers item fields only, not artifacts.
+*Impact:* A one-line cleanup (deleting the superseded `safety-requirement-proposals.md` and fixing its references) was abandoned; the stale file stays in the project until the analysis is re-run anyway. Confirming 43 links on other owners' items is not allowed and would be confirming to silence.
+*Workaround:* Keep the superseded file; do the reference fix with the next substantive change of the analysis.
+*Proposal:* A way to mark a commit or change as editorial for an item (e.g. `plm confirm --editorial <id>` by its owner re-baselining incoming links it declares unchanged in meaning), or a `result`-only version for analyses.

@@ -25,7 +25,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.5** Built-in types shall be `requirement`, `part`, `assembly`, `test-case` and `test-run`.
 *Rationale:* Others come by schema.
 
-**CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, and `tests` from `test-run` to any type.
+**CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, `tests` from `test-run` to any type, and `derives-from` from any type to any type.
 *Rationale:* Fixed semantics keep reports comparable.
 
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.

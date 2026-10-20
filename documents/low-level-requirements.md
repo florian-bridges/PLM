@@ -13,7 +13,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.3** The core shall list as an item's artifacts the paths of files in its folder, except hidden files, `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
 
-**CO-02.1** The core shall validate `item.yaml` with Ajv against the JSON Schema (2020-12) of its type; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
+**CO-02.1** The core shall validate `item.yaml` with Ajv against its type's JSON Schema (2020-12), and `meta/<ID>.yaml` against `schemas/meta.schema.json` if present; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
 *Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add their own attributes.
 
 **CO-02.2** The core shall report as errors: items outside their type's home folder (CO-01.1), other items inside them, a `meta/<ID>.yaml` with no item, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
@@ -74,7 +74,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `set`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Searching upward works from any subfolder.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
@@ -88,6 +88,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **CL-02.4** `plm init` shall run `git init` and write a `plm.yaml` with ID prefixes for the built-in types and `informative: [rationale]`.
 *Rationale:* Items can follow at once.
+
+**CL-02.5** `plm set <id> <field> <value>` shall write `<value>` as a string to `owner` or `status` in `meta/<ID>.yaml`, or to any other field in `item.yaml`, keeping comments and formatting (CO-01.1), refusing `links` and non-string, non-list fields.
+*Rationale:* The ID spares finding the file; `links` and structured fields stay with `plm link` and hand edits.
 
 **CL-03.1** `plm test record <test-case>... --sut <ID> --result <result>... [--log <file>...]` shall create a test run in `runs/<ID>/` with date, copies of the log files and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.
 *Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for. One run per rig session keeps its logs together; results per test case keep one failure from discrediting the others.

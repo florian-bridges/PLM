@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, expect, test } from 'vitest';
@@ -95,7 +95,7 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6: findings', () => {
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
 
-test('CL-01.1, CL-02.5, CO-02.1: set', () => {
+test('CL-01.1, CL-01.3, CO-02.1: set', () => {
   const root = fixture();
   write(root, { 'bolt/item.yaml': bolt + 'mass_kg: 1\n', 'schemas/meta.schema.json': '{"required":["owner"]}' });
   expect(validate(loadRepo(root)).some((f) => f.file === 'meta/P.yaml' && f.code === 'schema')).toBe(true);
@@ -103,6 +103,7 @@ test('CL-01.1, CL-02.5, CO-02.1: set', () => {
   expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toBe('# reviewed\nstatus: draft\nowner: ana\n');
   expect(plm(root, 'set', 'L', 'material', 'Al').status).toBe(0);
   expect(plm(root, 'set', 'P', 'links', 'x').status).toBe(2);
+  expect(plm(root, 'set', 'A', 'uses', 'x').status).toBe(2);
   expect(plm(root, 'set', 'L', 'mass_kg', '2').status).toBe(2);
 });
 
@@ -145,12 +146,9 @@ test('CO-02.6: derives-from', () => {
   expect(linkStates(loadRepo(root), currentVersions(loadRepo(root)))[0].state).toBe('suspect');
 });
 
-test('CL-02.1–CL-02.2, CL-02.4, CO-01.1, CO-02.2: nest', () => {
+test('CL-02.1–CL-02.2, CO-01.1, CO-02.2: nest', () => {
   const root = join(base, 'new');
-  expect(plm(root, 'init').status).toBe(0);
-  expect(readFileSync(join(root, 'plm.yaml'), 'utf8')).toContain('informative');
-  expect(plm(root, 'init').status).toBe(2);
-  appendFileSync(join(root, 'plm.yaml'), 'folders:\n  assembly: subsystems\n');
+  write(root, { 'plm.yaml': 'prefixes: {assembly: ASM-, part: PRT-, requirement: REQ-, test-case: TC-}\n' });
   plm(root, 'new', 'assembly', 'Aircraft');
   const dir = join(root, 'aircraft');
   const part = plm(dir, 'new', 'part', 'Spar').stdout.trim();

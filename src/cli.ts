@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 // CL-01.1
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
@@ -10,11 +8,11 @@ import { artifacts, entry, loadRepo, newItem, Refused, UsageError, writeYaml, ty
 import { results } from './schemas.ts';
 import { search } from './search.ts';
 import { validate } from './validate.ts';
-import { currentVersions, git, snapshotAt } from './version.ts';
+import { currentVersions, snapshotAt } from './version.ts';
 
 const program = new Command('plm')
-    .option('-C, --repo <dir>', 'repo', '.')
-    .option('--format <format>', 'format', 'text')
+    .option('-C, --repo <dir>', '', '.')
+    .option('--format <format>', '', 'text')
     .exitOverride(),
   workingFolder = () => program.opts().repo,
   openRepo = () => loadRepo(workingFolder());
@@ -45,7 +43,7 @@ function exitCodeFor(error: unknown) {
   return 3;
 }
 
-program.command('validate').description('check repository').action(() => {
+program.command('validate').description('check').action(() => {
   const findings = validate(openRepo()),
     lines = findings.map((finding) => `${finding.file}:${finding.line}:${finding.col} ${finding.severity} ${finding.code}: ${finding.message}`);
   output(lines.join('\n'), findings);
@@ -60,14 +58,14 @@ program.command('show <id>').description('details').action((id: string) => {
   output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
-program.command('link <source> <type> <target>').description('add link')
+program.command('link <source> <type> <target>').description('add')
   .action((source: string, type: string, target: string) => addLink(openRepo(), source, type, target));
 
-// CL-02.5
-program.command('set <id> <field> <value>').description('set field').action((id: string, field: string, value: string) => {
+// CL-01.3
+program.command('set <id> <field> <value>').description('set').action((id: string, field: string, value: string) => {
   const repo = openRepo(), found = entry(repo, id), file = field === 'owner' || field === 'status' ? found.meta : found.item,
     current = (file.data as any)[field];
-  if (field === 'links' || (current !== undefined && typeof current !== 'string' && !Array.isArray(current))) throw new UsageError(field);
+  if (current !== undefined && typeof current !== 'string') throw new UsageError(field);
   file.doc.setIn([field], value);
   writeYaml(repo.root, file);
 });
@@ -79,19 +77,19 @@ program.command('search <query...>').description('find').action((query: string[]
 });
 
 // CL-01.2
-program.command('confirm <source> [target]').description('confirm').action((source: string, target?: string) => {
+program.command('confirm <source> [target]').description('confirm link, or all').action((source: string, target?: string) => {
   const repo = openRepo(), links = confirm(repo, currentVersions(repo), validate(repo), source, target);
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 
-program.command('suspects [item]').description('suspects').action((item?: string) => {
+program.command('suspects [item]').description('suspect, unconfirmed links').action((item?: string) => {
   const states = suspects(...scoped(item));
   output(states.map((state) => `${state.state} ${linkLabel(state)}`).join('\n'), states);
   if (states.length) exitCode = 1;
 });
 
 // TE-05.1
-program.command('impact <range>').description('impact').action((range: string) => {
+program.command('impact <range>').description('affected items, links, runs').action((range: string) => {
   const repo = openRepo(), [base, head] = range.split('..'),
     headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) },
     result = impact(snapshotAt(repo.root, base), headSnapshot, changedFiles(repo.root, base, head));
@@ -102,15 +100,6 @@ program.command('impact <range>').description('impact').action((range: string) =
     ...result.runs.map((run) => `outdated run ${label(run)}`),
   ];
   output(lines.join('\n'), result);
-});
-
-// CL-02.4
-program.command('init').description('init').action(() => {
-  const root = workingFolder(), prefixes = { requirement: 'REQ-', part: 'PRT-', assembly: 'ASM-', 'test-case': 'TC-', 'test-run': 'RUN-' };
-  if (existsSync(join(root, 'plm.yaml'))) throw new UsageError('exists');
-  mkdirSync(root, { recursive: true });
-  git(root, ['init', '-q']);
-  writeFileSync(join(root, 'plm.yaml'), stringify({ prefixes, informative: ['rationale'] }));
 });
 
 // CL-02.1

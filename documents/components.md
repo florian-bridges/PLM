@@ -32,7 +32,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 ## CLI (CL)
 
-**CL-01** The CLI shall expose validation, search, link confirmation, impact analysis and reports. (CR-04–CR-07, CR-09, CR-10, CR-13; US-1–US-7)
+**CL-01** The CLI shall expose validation, search, editing, impact analysis and reports. (CR-04–CR-07, CR-09, CR-10, CR-13; US-1–US-7)
 *Rationale:* A CLI makes every function scriptable and usable in CI and on rigs without an editor.
 
 **CL-02** The CLI shall create items from type templates. (CR-04; US-2, US-3)

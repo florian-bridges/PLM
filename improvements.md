@@ -57,7 +57,7 @@ Add new entries at the end. Format:
 *Observed:* `text`, `rationale` and other fields must be appended to the YAML after `plm new`; the file name is derived from the title and has to be found.
 *Impact:* Scripts append YAML by hand and must quote correctly.
 *Proposal:* `plm new requirement "<title>" --set text=… --set verification=…`, printing the path as well as the ID.
-*Decision:* 2026-10-20, product owner: merged into "No CLI for owner and status" (`plm set`).
+*Decision:* 2026-10-20 done via "No CLI for owner and status": `plm set <id> <field> <value>` after `plm new` sets string fields by ID. Not covered: lists and non-string fields stay hand edits or `plm link`.
 
 ## No CLI for owner and status
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer
@@ -71,6 +71,7 @@ Add new entries at the end. Format:
 
 *Decision round 2:* 2026-10-20, product owner, on review ad5cf72. Budget stays 4100 (the owner's limit). Delete `plm init` (CL-02.4 removed; untested; README writes `plm.yaml` with `printf`; `plm new` names a missing prefix). `set` refuses any field whose current value is not a string (moved to CL-01.3, CL-02.5 retired). Restore meaningful help for `confirm`, `suspects`, `impact`; other shortened help may stay.
 *Review round 2:* 2026-10-20, quality, commit f1da9a5 (`wp/afw-plm-set`). Verdict: pass, no major. Both majors closed: `src/`+`test/` 4100/4100 (was 4143); `set` now refuses any field whose current value is not a string, rejecting both a list (`uses`) and a number (`mass_kg`) with exit 2, each with its own test, closing the silent-overwrite gap. `tsc --noEmit` clean; `npm test` 16/16 green. `plm init` deleted with its test; `sandbox.sh`/README adjusted. CL-01.3 text matches the code verbatim. On a scratch copy of AFW: `plm set REQ-XPCV09 owner quality-reviewer` updates `meta/REQ-XPCV09.yaml` in place, comments and structure kept, `plm validate` exits 0; `validate`/`search`/`suspects`/`show` output is byte-identical to the pre-change build. **Minor, not blocking:** CL-01.3 sits under CL-01, whose text ("validation, search, link confirmation, impact analysis and reports") still doesn't name `set`; cosmetic only.
+*Accepted:* 2026-10-20 done, merged into `integration/afw`; CL-01 now names editing.
 
 ## No report of unsatisfied parents
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer

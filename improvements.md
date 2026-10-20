@@ -57,12 +57,15 @@ Add new entries at the end. Format:
 *Observed:* `text`, `rationale` and other fields must be appended to the YAML after `plm new`; the file name is derived from the title and has to be found.
 *Impact:* Scripts append YAML by hand and must quote correctly.
 *Proposal:* `plm new requirement "<title>" --set text=… --set verification=…`, printing the path as well as the ID.
+*Decision:* 2026-10-20, product owner: merged into "No CLI for owner and status" (`plm set`).
 
 ## No CLI for owner and status
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer
 *Observed:* `owner` and `status` live in `meta/<ID>.yaml` and are edited by hand; the values are free text.
 *Impact:* Typos split owners; no defined status flow.
 *Proposal:* `plm set <id> owner|status <value>`, with allowed values configurable in `plm.yaml`.
+
+*Decision:* 2026-10-20, product owner: accepted, trimmed; bundles "`plm new` cannot set attributes". One command `plm set <id> <field> <value>`: `owner` and `status` go to `meta/<ID>.yaml`, any other field to `item.yaml`, as a string, keeping comments; addressed by ID, so the file name need not be found (fields that are not strings, lists, `links` stay hand edits or `plm link`). No `--set` on `plm new`: `new` prints the ID, `set` follows. Allowed values are not a new `plm.yaml` list: `validate` checks `meta/<ID>.yaml` against `schemas/meta.schema.json` if present (CO-02.1 mechanism; `enum` for owners and statuses), so typos by hand or by `set` are errors; without the file anything goes, as today. No status flow and no `approved` restriction in the tool: whoever runs `plm` can edit the YAML, so a CLI check enforces nothing, and who may approve is a project role; it stays a project rule (enforce via review or code owners on `meta/`). Streams: (1) requirements author adds `set` to CL-01.1, a new CL-02.5, meta schema to CO-02.1, net ≤ +60 words in `documents/` (101 free). (2) One implementer: `src/cli.ts`, `src/validate.ts`, `test/plm.test.ts` (`src/repo.ts` if needed), keeping `src/`+`test/` ≤ 4100 (0 free): pay every added word by compacting existing code and tests without dropping covered behaviour. `extension/` +0. Done when a test sets `owner` (meta) and `text` (item) and a meta schema `enum` turns a typo owner into a `validate` error, and on AFW `plm set` on a requirement plus a `schemas/meta.schema.json` with the agent names reports a misspelt owner. Projects: add `schemas/meta.schema.json`; replace hand edits of meta and post-`new` YAML appends with `plm set`.
 
 ## No report of unsatisfied parents
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer

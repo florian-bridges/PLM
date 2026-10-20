@@ -21,12 +21,13 @@ export const builtinTypes: Record<string, object> = {
   'test-run': { properties: { date: str } },
 };
 
-// CO-02.2, CO-02.6: [source types, target types]; '*' allows any type.
+// CO-02.2, CO-02.6: '*' allows any type.
 export const linkRules: Record<string, [string[], string[]]> = {
   satisfies: [['*'], ['requirement']],
   implements: [['*'], ['requirement']],
   verifies: [['test-case'], ['requirement']],
   executes: [['test-run'], ['test-case']],
   tests: [['test-run'], ['*']],
+  'derives-from': [['*'], ['*']],
 };
 export const allows = (types: string[], candidate: string) => types.includes('*') || types.includes(candidate);

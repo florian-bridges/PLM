@@ -76,7 +76,7 @@ test('TE-01.2, CO-01.3: uncommitted and committed states yield identical version
 test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6: findings with codes and positions', () => {
   const root = fixture();
   write(root, {
-    'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: pass\n',
+    'wing/spar/item.yaml': 'id: P\ntype: part\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: pass\n',
     'copy/item.yaml': 'id: L\ntype: part\ntitle: Bolt\n',
     'bolt/item.yaml': 'id: L\ntype: part\ntitle: Bolt\nexternal_ids: { reqif: B1 }\n',
     'wing/requirements/structure/stringer.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
@@ -88,8 +88,9 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6: findings with code
   expect(repo.entries.get('Z')?.path).toBe('wing/misc/panel');
   expect(repo.entries.has('H')).toBe(false);
   const findings = validate(repo);
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', 'schema', 'schema', 'schema', 'schema']);
-  expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ file: 'wing/spar/item.yaml', line: 4, col: 9 });
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', 'schema', 'schema', 'schema', 'schema', 'schema']);
+  expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ file: 'wing/spar/item.yaml', line: 3, col: 9 });
+  expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
 
 test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: confirm, then a target change makes the link suspect', () => {

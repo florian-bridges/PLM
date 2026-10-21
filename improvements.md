@@ -181,6 +181,8 @@ Add new entries at the end. Format:
 *Impact:* Provisional values harden silently. Work built on them cannot be found when the value moves.
 *Proposal:* A `provisional: true` flag with the item that will close it, and a report listing provisional values per subtree.
 
+*Decision:* 2026-10-21, product owner. Rejected: existing features cover it at 0 words (`src/`+`test/` at 4100/4100). Mark: `plm set <ID> provisional <closing ID>` (item attributes are open, CO-02.1); list: `plm search provisional`, `plm search type:requirement TBD` (attributes and text are indexed, CO-03.1). Hardening: the item resting on a value gets a `derives-from` link to the item that owns it, so a change there turns it suspect (TE-03.1); a citation in `rationale` is informative and never does. Project (autonomous-fixed-wing): `ANA-QF8HRH` Baseline sizing `derives-from` `ANA-RYG1MB` Power and latency budgets; `REQ-PVDBV3`, `REQ-Q93TDG` Usable stored energy `derives-from` `ANA-QF8HRH`.
+
 ## `plm validate` and `plm suspects` disagree on exit codes
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by safety-engineer)
 *Observed:* `plm validate` exits 0 on success while `plm suspects` exits 1 when it has unconfirmed links to report, so `plm validate && plm suspects` cannot be used as a gate check.

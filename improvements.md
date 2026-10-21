@@ -273,3 +273,10 @@ Add new entries at the end. Format:
 *Workaround:* Keep the superseded file; do the reference fix with the next substantive change of the analysis.
 *Proposal:* A way to mark a commit or change as editorial for an item (e.g. `plm confirm --editorial <id>` by its owner re-baselining incoming links it declares unchanged in meaning), or a `result`-only version for analyses.
 *Decision:* 2026-10-21, product owner. Rejected (`src/`+`test/` at 4100/4100). Whether a change is editorial is the judgement a confirmation records (TE-02, TE-03); letting the target's author declare it silences links other people own. Artifacts carry results, so excluding them from versions (`informative:` is fields only, TE-03.1) would hide real changes. Existing features make the check cheap: `plm suspects` and "Review link" show the one-line diff (TE-03.2), and each source owner runs `plm confirm <source> <target>` (CL-01.2), scriptable from `plm --format json suspects`. Project (autonomous-fixed-wing): delete `safety-requirement-proposals.md` with its references in `ANA-DQJ17K`; each owner confirms its `derives-from` links after reading the diff, or batch it with the next substantive change.
+
+## A rerun analysis suspects every derived value, also the unchanged ones
+*Found:* 2026-10-21, autonomous-fixed-wing, chief engineer
+*Observed:* Battery resize in `ANA-QF8HRH` Baseline sizing; rerunning `ANA-Z3D0S9` Mass budget changed one of its five subsystem mass allocations (`REQ-QXX47J` 0.280 → 0.634 kg). `plm suspects` lists all five `derives-from` links into `ANA-Z3D0S9`, including `REQ-VPAR6Y`, `REQ-8CPVDR`, `REQ-4VDPZQ` whose values the rerun reproduces exactly.
+*Impact:* Each unchanged requirement has another owner, so one agent run per owner only to confirm (3 here). Every mass or power change in phases 3–4 reruns the budgets and repeats this for 5–6 owners.
+*Workaround:* Unchanged suspects left open until their owners next work on them.
+*Proposal:* Let a `derives-from` link name the output value it takes (e.g. a key in a committed output file); the link turns suspect only when that value changes.

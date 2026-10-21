@@ -75,10 +75,10 @@ test('TE-01.2, CO-01.3: artifacts', () => {
   expect(versionAt(root, 'HEAD', 'A')).toBe(working.get('A'));
 });
 
-test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6: findings', () => {
+test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings', () => {
   const root = fixture();
   write(root, {
-    'wing/spar/item.yaml': 'id: P\ntype: part\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: pass\n',
+    'wing/spar/item.yaml': 'id: P\ntype: part\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: pass\n  - type: derives-from\n    target: A/x\n',
     'copy/item.yaml': bolt,
     'bolt/item.yaml': bolt + 'external_ids: { reqif: B1 }\n',
     'wing/requirements/structure/stringer.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
@@ -90,7 +90,7 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6: findings', () => {
   expect(repo.entries.get('Z')?.path).toBe('wing/misc/panel');
   expect(repo.entries.has('H')).toBe(false);
   const findings = validate(repo);
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', 'schema', 'schema', 'schema', 'schema', 'schema']);
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', 'schema', 'schema', 'schema', 'schema', 'schema', 'unknown-target']);
   expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ file: 'wing/spar/item.yaml', line: 3, col: 9 });
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
@@ -138,12 +138,14 @@ test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
   expect(() => confirm(repo, currentVersions(repo), validate(repo), 'P')).toThrow(Refused);
 });
 
-test('CO-02.6: derives-from', () => {
+test('TE-01.1, TE-03.1: file target', () => {
   const root = fixture();
-  write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks:\n  - type: derives-from\n    target: R\n' });
+  write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks:\n  - type: derives-from\n    target: A/out.csv\n', 'wing/out.csv': '1\n' });
   confirm(loadRepo(root), currentVersions(loadRepo(root)), [], 'P');
-  bump(root);
-  expect(linkStates(loadRepo(root), currentVersions(loadRepo(root)))[0].state).toBe('suspect');
+  write(root, { 'wing/out.csv': '2\n' });
+  const versions = currentVersions(loadRepo(root));
+  expect(versions.get('A/out.csv')).toBe(git(root, ['hash-object', 'wing/out.csv']));
+  expect(linkStates(loadRepo(root), versions)[0]).toMatchObject({ targetTitle: 'Wing', state: 'suspect' });
 });
 
 test('CL-02.1–CL-02.2, CO-01.1, CO-02.2: nest', () => {

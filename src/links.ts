@@ -1,7 +1,7 @@
 import { copyFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, linksOf, named, newId, Refused, selection, subtree, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { entry, linksOf, named, newId, Refused, selection, subtree, targetId, targetPath, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, git, versionAt } from './version.ts';
 
@@ -27,7 +27,7 @@ export function linkStates(repo: Repo, versions: Map<string, string>): LinkState
     return !!confirmed && confirmed === strip(repo, versions.get(link.target)) ? 'current' : 'suspect';
   };
   return [...repo.entries.values()].flatMap((source) => linksOf(source).map((link) => ({
-    source: source.id, title: named(repo, source.id).title, link, targetTitle: named(repo, link.target).title, state: stateOf(link),
+    source: source.id, title: named(repo, source.id).title, link, targetTitle: named(repo, targetId(link.target)).title, state: stateOf(link),
   })));
 }
 
@@ -35,22 +35,22 @@ export function linkStates(repo: Repo, versions: Map<string, string>): LinkState
 export const fromRun = (repo: Repo, state: LinkState) => repo.entries.get(state.source)?.item.data.type === 'test-run';
 
 // TE-02.1–TE-02.2
-function confirmation(repo: Repo, target: string, version: string | undefined): Omit<Link, 'type' | 'target'> {
+function confirmation(repo: Repo, target: string, version: string | undefined) {
   const by = tryGit(repo, ['config', 'user.name']);
   if (!by) throw new Refused('Set git user.name before confirming');
   const hash = tryGit(repo, ['rev-parse', '--verify', '-q', '--short', 'HEAD']);
   const exact = hash && versionAt(repo.root, 'HEAD', target) === version;
-  return { title: String(entry(repo, target).item.data.title), version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }) };
+  return { title: named(repo, targetId(target)).title, version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }) };
 }
 
 // TE-02.1, CL-01.2
-export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, target?: string): Link[] {
+export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, target?: string) {
   const sourceEntry = entry(repo, source);
   // TE-02.2
   if (sourceEntry.item.data.type === 'test-run') throw new Refused('Test runs confirm at recording');
   const links = linksOf(sourceEntry).filter((link) => !target || link.target === target);
   for (const link of links) {
-    const targetFile = repo.entries.get(link.target)?.item.path;
+    const targetFile = repo.entries.get(targetId(link.target))?.item.path;
     const broken = findings.some((finding) => finding.severity === 'error' && finding.file === targetFile);
     if (broken || !versions.has(link.target)) throw new Refused(`${link.target} fails validation; fix before confirming`);
     sourceEntry.meta.doc.setIn(['confirmed', link.target], confirmation(repo, link.target, versions.get(link.target)));
@@ -60,7 +60,7 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
 }
 
 // CL-01.1
-export function addLink(repo: Repo, source: string, type: string, target: string): void {
+export function addLink(repo: Repo, source: string, type: string, target: string) {
   const { item } = entry(repo, source);
   if (item.doc.hasIn(['links'])) item.doc.addIn(['links'], { type, target });
   else item.doc.setIn(['links'], [{ type, target }]);
@@ -68,7 +68,7 @@ export function addLink(repo: Repo, source: string, type: string, target: string
 }
 
 // CL-03.1–CL-03.2
-export function recordRun(repo: Repo, testCases: string[], sut: string, results: string[], logs: string[]): string {
+export function recordRun(repo: Repo, testCases: string[], sut: string, results: string[], logs: string[]) {
   if (results.length !== testCases.length) throw new UsageError('One result per test case');
   const current = currentVersions(repo);
   const links: Link[] = [{ type: 'tests', target: sut }, ...testCases.map((target, i) => ({ type: 'executes', target, result: results[i] }))];
@@ -87,12 +87,13 @@ export function recordRun(repo: Repo, testCases: string[], sut: string, results:
 }
 
 // TE-03.2
-export function changeSince(repo: Repo, link: Link): { commit?: string; diff: string } {
+export function changeSince(repo: Repo, link: Link) {
   const known = link.commit && tryGit(repo, ['rev-parse', '--verify', '-q', `${link.commit}^{commit}`]);
   const commit = known ? link.commit : git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean)
     .find((candidate) => versionAt(repo.root, candidate, link.target) === link.version);
   if (!commit) return { diff: '' };
-  const paths = subtree(repo, link.target).map((id) => entry(repo, id).path);
+  const path = link.target.includes('/') && targetPath(repo, link.target);
+  const paths = path ? [path] : subtree(repo, link.target).map((id) => entry(repo, id).path);
   return { commit, diff: git(repo.root, ['diff', commit, '--', ...paths]) };
 }
 
@@ -143,9 +144,7 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
       const latest = latestRun.get(source);
       return { testCase: named(repo, source), ...(latest && { run: named(repo, latest.source), result: latest.link.result, outdated: outdatedRuns.has(latest.source) }) };
     });
-    const row = { requirement: requirement.id, title: named(repo, requirement.id).title, tests };
-    if (passingRun) return { ...row, state: 'verified' };
-    return { ...row, state: verifies.length ? 'pending' : 'unverified' };
+    return { requirement: requirement.id, title: named(repo, requirement.id).title, tests, state: passingRun ? 'verified' : verifies.length ? 'pending' : 'unverified' };
   });
 }
 

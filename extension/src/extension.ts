@@ -2,7 +2,7 @@
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
 import { changeSince, confirm, coverage, linkStates, recordRun, suspects } from '../../src/links.ts';
-import { childrenOf, entry, findRoot, innermostItem, linksOf, loadRepo, newItem, writeYaml, type Entry, type Repo } from '../../src/repo.ts';
+import { childrenOf, entry, findRoot, innermostItem, linksOf, loadRepo, newItem, targetId, writeYaml, type Entry, type Repo } from '../../src/repo.ts';
 import { results } from '../../src/schemas.ts';
 import { itemSchema, validate } from '../../src/validate.ts';
 import { currentVersions } from '../../src/version.ts';
@@ -55,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
   const reviewLink = (source: string, target: string) => {
     const repo = open();
     const link = linksOf(entry(repo, source)).find((found) => found.target === target)!;
-    const { commit, diff } = link.version ? changeSince(repo, link) : { commit: '', diff: String(entry(repo, target).item.doc) };
+    const { commit, diff } = link.version ? changeSince(repo, link) : { commit: '', diff: String(entry(repo, targetId(target)).item.doc) };
     const change = link.version && !commit ? 'No commit has the confirmed version' : diff || 'No change';
     const panel = vscode.window.createWebviewPanel('plm.review', target, vscode.ViewColumn.Active, { enableScripts: true });
     panel.webview.html = logic.reviewHtml(repo, source, link, change, validate(repo));

@@ -82,8 +82,9 @@ export function loadRepo(start: string): Repo {
 }
 
 // TE-01.1
+export const targetId = (target: string) => target.split('/')[0];
 export function targetPath(repo: Repo, target: string) {
-  const id = target.split('/')[0], path = repo.entries.get(id)?.path;
+  const id = targetId(target), path = repo.entries.get(id)?.path;
   return path && `${path}${target.slice(id.length)}`;
 }
 

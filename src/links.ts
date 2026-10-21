@@ -1,14 +1,13 @@
 import { copyFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, linksOf, named, newId, Refused, selection, subtree, targetPath, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { entry, linksOf, named, newId, Refused, selection, subtree, targetId, targetPath, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, git, versionAt } from './version.ts';
 
 export interface LinkState { source: string; title: string; link: Link; targetTitle: string; state: 'current' | 'suspect' | 'unconfirmed' }
 
 const tryGit = (repo: Repo, args: string[]) => { try { return git(repo.root, args); } catch { return ''; } };
-const targetId = (target: string) => target.split('/')[0]; // TE-01.1
 
 // TE-03.1
 const strip = (repo: Repo, hash?: string) => {
@@ -93,7 +92,7 @@ export function changeSince(repo: Repo, link: Link) {
   const commit = known ? link.commit : git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean)
     .find((candidate) => versionAt(repo.root, candidate, link.target) === link.version);
   if (!commit) return { diff: '' };
-  const path = link.target.includes('/') && targetPath(repo, link.target); // TE-01.1
+  const path = link.target.includes('/') && targetPath(repo, link.target);
   const paths = path ? [path] : subtree(repo, link.target).map((id) => entry(repo, id).path);
   return { commit, diff: git(repo.root, ['diff', commit, '--', ...paths]) };
 }

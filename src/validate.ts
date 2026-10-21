@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, innermostItem, linksOf, targetPath, usesOf, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, innermostItem, linksOf, targetId, targetPath, usesOf, type Repo, type YamlFile } from './repo.ts';
 import { allows, baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
 // CO-02.4
@@ -62,7 +62,7 @@ export function validate(repo: Repo) {
     });
 
     linksOf(entry).forEach((link, index) => {
-      const path = targetPath(repo, link.target), targetEntry = repo.entries.get(link.target.split('/')[0]), // TE-01.1
+      const path = targetPath(repo, link.target), targetEntry = repo.entries.get(targetId(link.target)),
         [sourceTypes, targetTypes] = linkRules[link.type] ?? [[], []];
       if (!path || !existsSync(join(repo.root, path))) {
         findings.push(finding(item, ['links', index, 'target'], 'unknown-target', `Unknown link target ${link.target}`));

@@ -21,7 +21,7 @@ export const builtinTypes: Record<string, object> = {
   'test-run': { properties: { date: str } },
 };
 
-// CO-02.2, CO-02.6: '*' allows any type.
+// CO-02.2, CO-02.6
 export const linkRules: Record<string, [string[], string[]]> = {
   satisfies: [['*'], ['requirement']],
   implements: [['*'], ['requirement']],

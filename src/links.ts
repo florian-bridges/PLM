@@ -63,12 +63,9 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
 export function link(repo: Repo, source: string, type: string, target: string, remove?: boolean) {
   const { item, meta } = entry(repo, source), links = list<Link>(item.data.links),
     at = links.findIndex((l) => l.type === type && l.target === target);
-  if (remove) {
-    if (at < 0) throw new UsageError(target);
-    item.doc.deleteIn(['links', at]);
-    if (links.every((l, i) => i === at || l.target !== target)) meta.doc.deleteIn(['confirmed', target]) && writeYaml(repo.root, meta);
-  } else if (item.doc.hasIn(['links'])) item.doc.addIn(['links'], { type, target });
-  else item.doc.setIn(['links'], [{ type, target }]);
+  if (!remove) item.doc.setIn(['links', links.length], { type, target });
+  else if (at < 0) throw new UsageError(target);
+  else item.doc.deleteIn(['links', at]), meta.doc.deleteIn(['confirmed', target]), writeYaml(repo.root, meta);
   writeYaml(repo.root, item);
 }
 

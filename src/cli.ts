@@ -16,7 +16,7 @@ const program = new Command('plm')
     .exitOverride(),
   workingFolder = () => program.opts().repo,
   openRepo = () => loadRepo(workingFolder());
-// CL-01.1, TE-06.2
+// TE-06.2
 const scoped = (item?: string) => {
   const repo = openRepo();
   return [repo, linkStates(repo, currentVersions(repo)), item && entry(repo, item).id] as const;
@@ -36,12 +36,8 @@ const record = (found: any) => ({ ...found.item.data, path: found.path, meta: fo
 // CL-05.2
 let exitCode = 0;
 
-function exitCodeFor(error: unknown) {
-  if (error instanceof CommanderError) return error.exitCode === 0 ? 0 : 2;
-  if (error instanceof UsageError) return 2;
-  if (error instanceof Refused) return 1;
-  return 3;
-}
+const exitCodeFor = (error: unknown) =>
+  error instanceof CommanderError ? (error.exitCode && 2) : error instanceof UsageError ? 2 : error instanceof Refused ? 1 : 3;
 
 program.command('validate').description('check').action(() => {
   const findings = validate(openRepo()),

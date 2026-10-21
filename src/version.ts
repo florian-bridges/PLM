@@ -41,15 +41,14 @@ function objectHashes(root: string, tree: string): Map<string, string> {
   const rows = git(root, ['ls-tree', '-r', '-t', '-z', tree]).split('\0').filter(Boolean);
   return new Map(rows.map((row) => {
     const [info, path] = row.split('\t');
-    const [, , hash] = info.split(' ');
-    return [path, hash];
+    return [path, info.split(' ')[2]];
   }));
 }
 
 // TE-01.1
 function versionsFromHashes(repo: Repo, hashes: Map<string, string>) {
   const usesOfId = (id: string) => usesOf(repo.entries.get(id));
-  const targets = [...repo.entries.values()].flatMap((e) => linksOf(e).map((l) => l.target)); // TE-01.1
+  const targets = [...repo.entries.values()].flatMap((e) => linksOf(e).map((l) => l.target));
   return computeVersions([...repo.entries.keys(), ...targets], hashes, (id) => targetPath(repo, id), usesOfId);
 }
 

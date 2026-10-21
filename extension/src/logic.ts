@@ -93,6 +93,6 @@ export function hoverMarkdown(repo: Repo, states: LinkState[], id: string, sourc
 export function reviewHtml(repo: Repo, source: string, link: Link, change: string, findings: Finding[]) {
   const target = entry(repo, targetId(link.target)); // TE-01.1
   return `<pre>${[`${source} ${link.type} ${link.target}`, entry(repo, source).item.data.text, target.item.data.text, change, link.by && `Confirmed by ${link.by} on ${link.on}`,
-    ...findings.filter((finding) => finding.file === target.item.path).map((finding) => finding.message)].filter(Boolean).map(escape).join('</pre><pre>')}</pre>
+    ...findings.filter((finding) => finding.file === target.item.path).map((f) => `${f.code} ${f.message}`)].filter(Boolean).map(escape).join('</pre><pre>')}</pre>
 <button onclick="vscode.postMessage(1)">Confirm</button><button onclick="vscode.postMessage(0)">Cancel</button><script>const vscode = acquireVsCodeApi()</script>`;
 }

@@ -31,11 +31,10 @@ export function writeYaml(root: string, file: Pick<YamlFile<unknown>, 'path' | '
 }
 
 // CL-01.1
-export function findRoot(start: string): string {
+export function findRoot(start: string) {
   for (let folder = resolve(start); ; folder = dirname(folder)) {
     if (existsSync(join(folder, 'plm.yaml'))) return folder;
-    const isFileSystemRoot = folder === dirname(folder);
-    if (isFileSystemRoot) throw new UsageError(`No plm.yaml up from ${start}`);
+    if (folder === dirname(folder)) throw new UsageError(`No plm.yaml up from ${start}`);
   }
 }
 
@@ -82,6 +81,12 @@ export function loadRepo(start: string): Repo {
   return repo;
 }
 
+// TE-01.1
+export function targetPath(repo: Repo, target: string) {
+  const id = target.split('/')[0], path = repo.entries.get(id)?.path;
+  return path && `${path}${target.slice(id.length)}`;
+}
+
 export const isRequirementFile = (path: string) => path.endsWith('.yaml');
 export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
 export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
@@ -94,16 +99,14 @@ export const innermostItem = (repo: Repo, file: string) => [...repo.entries.valu
   .sort((a, b) => b.path.length - a.path.length)[0]?.id;
 
 // CL-02.2
-export function newId(repo: Repo, type: string): string {
+export function newId(repo: Repo, type: string) {
   const prefix = repo.settings.prefixes?.[type];
   if (!prefix) throw new UsageError(`No prefix for ${type} in plm.yaml`);
-  const crockfordBase32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-  const characters = Array.from(randomBytes(6), (byte) => crockfordBase32[byte & 31]);
-  return prefix + characters.join('');
+  return prefix + Array.from(randomBytes(6), (byte) => '0123456789ABCDEFGHJKMNPQRSTVWXYZ'[byte & 31]).join('');
 }
 
 // CL-02.1
-export function newItem(repo: Repo, type: string, title: string, folder: string): string {
+export function newItem(repo: Repo, type: string, title: string, folder: string) {
   const cwd = relative(repo.root, resolve(folder));
   const parent = repo.entries.get(innermostItem(repo, cwd) ?? '');
   if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item folder`);
@@ -140,7 +143,7 @@ export function artifacts(repo: Repo, { path }: Entry) {
 export interface Named { id: string; title: string }
 export const named = (repo: Repo, id: string): Named => ({ id, title: String(repo.entries.get(id)?.item.data.title ?? '') });
 
-export function entry(repo: Repo, id: string): Entry {
+export function entry(repo: Repo, id: string) {
   const found = repo.entries.get(id);
   if (!found) throw new UsageError(`Unknown item ${id}`);
   return found;
@@ -150,8 +153,7 @@ export function entry(repo: Repo, id: string): Entry {
 export function subtree(repo: Repo, id: string, seen = new Set<string>()): string[] {
   if (seen.has(id) || !repo.entries.has(id)) return [];
   seen.add(id);
-  const children = childrenOf(repo.entries.get(id));
-  return [id, ...children.flatMap((child) => subtree(repo, child, seen))];
+  return [id, ...childrenOf(repo.entries.get(id)).flatMap((child) => subtree(repo, child, seen))];
 }
 
 // TE-06.2

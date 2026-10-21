@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, innermostItem, linksOf, usesOf, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, innermostItem, linksOf, targetPath, usesOf, type Repo, type YamlFile } from './repo.ts';
 import { allows, baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
 // CO-02.4
@@ -40,7 +40,7 @@ function schemaFindings(file: YamlFile<unknown>, check: ValidateFunction, data: 
   });
 }
 
-export function validate(repo: Repo): Finding[] {
+export function validate(repo: Repo) {
   const ajv = newAjv(), findings: Finding[] = [];
   for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
     const { id, item, meta } = entry, type = String(item.data.type), draft = meta.data.status === 'draft',
@@ -62,14 +62,14 @@ export function validate(repo: Repo): Finding[] {
     });
 
     linksOf(entry).forEach((link, index) => {
-      const [id, ...path] = link.target.split('/'), targetEntry = repo.entries.get(id), // TE-01.1
+      const path = targetPath(repo, link.target), targetEntry = repo.entries.get(link.target.split('/')[0]), // TE-01.1
         [sourceTypes, targetTypes] = linkRules[link.type] ?? [[], []];
-      if (!targetEntry || (path.length && !existsSync(join(repo.root, targetEntry.path, ...path)))) {
+      if (!path || !existsSync(join(repo.root, path))) {
         findings.push(finding(item, ['links', index, 'target'], 'unknown-target', `Unknown link target ${link.target}`));
         return;
       }
-      if (!allows(sourceTypes, type) || !allows(targetTypes, targetEntry.item.data.type)) {
-        findings.push(finding(item, ['links', index, 'type'], 'link-type', `${link.type} not allowed from ${type} to ${targetEntry.item.data.type}`));
+      if (!allows(sourceTypes, type) || !allows(targetTypes, targetEntry!.item.data.type)) {
+        findings.push(finding(item, ['links', index, 'type'], 'link-type', `${link.type} not allowed from ${type} to ${targetEntry!.item.data.type}`));
       }
     });
   }

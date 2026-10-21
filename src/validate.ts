@@ -45,7 +45,7 @@ export function validate(repo: Repo) {
   for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
     const { id, item, meta } = entry, type = String(item.data.type), draft = meta.data.status === 'draft',
       validateSchema = schemaFor(ajv, repo.root, type, baseSchema), validateMeta = schemaFor(ajv, repo.root, 'meta');
-    if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', `Unknown item type "${type}"`));
+    if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', type));
     else findings.push(...schemaFindings(item, validateSchema, item.data, draft));
     // CO-02.1
     if (validateMeta) findings.push(...schemaFindings(meta, validateMeta, meta.data, false));
@@ -55,28 +55,28 @@ export function validate(repo: Repo) {
       misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
     if (misplaced) findings.push(finding(item, ['type'], 'misplaced', `outside ${home}`));
 
-    if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', `Duplicate id ${id}`));
+    if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', id));
 
     usesOf(entry).forEach((used, index) => {
-      if (!repo.entries.has(used)) findings.push(finding(item, ['uses', index], 'unknown-use', `Unknown used item ${used}`));
+      if (!repo.entries.has(used)) findings.push(finding(item, ['uses', index], 'unknown-use', used));
     });
 
     linksOf(entry).forEach((link, index) => {
       const path = targetPath(repo, link.target), targetEntry = repo.entries.get(targetId(link.target)),
         [sourceTypes, targetTypes] = linkRules[link.type] ?? [[], []];
       if (!path || !existsSync(join(repo.root, path))) {
-        findings.push(finding(item, ['links', index, 'target'], 'unknown-target', `Unknown link target ${link.target}`));
+        findings.push(finding(item, ['links', index, 'target'], 'unknown-target', link.target));
         return;
       }
       if (!allows(sourceTypes, type) || !allows(targetTypes, targetEntry!.item.data.type)) {
-        findings.push(finding(item, ['links', index, 'type'], 'link-type', `${link.type} not allowed from ${type} to ${targetEntry!.item.data.type}`));
+        findings.push(finding(item, ['links', index, 'type'], 'link-type', `${type} ${link.type} ${targetEntry!.item.data.type}`));
       }
     });
   }
   // CO-02.2
   const metaFolder = join(repo.root, 'meta'),
     orphans = existsSync(metaFolder) ? readdirSync(metaFolder).filter((f) => f.endsWith('.yaml') && !repo.entries.has(f.slice(0, -5))) : [];
-  for (const file of orphans) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: `No item: meta/${file}` });
+  for (const file of orphans) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: file });
 
   return [...findings, ...cycles(repo)];
 }
@@ -88,7 +88,7 @@ function cycles(repo: Repo) {
     state.set(id, 'open');
     const entry = repo.entries.get(id)!;
     for (const child of childrenOf(entry)) {
-      if (state.get(child) === 'open') findings.push(finding(entry.item, ['uses'], 'cycle', `${id} → ${child} closes composition cycle`));
+      if (state.get(child) === 'open') findings.push(finding(entry.item, ['uses'], 'cycle', `${id} → ${child}`));
       else if (!state.has(child) && repo.entries.has(child)) visit(child);
     }
     state.set(id, 'done');

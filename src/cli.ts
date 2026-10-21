@@ -3,7 +3,7 @@
 import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { addLink, allocation, confirm, coverage, linkStates, recordRun, suspects, type LinkState } from './links.ts';
+import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, type LinkState } from './links.ts';
 import { artifacts, entry, loadRepo, newItem, Refused, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
 import { search } from './search.ts';
@@ -16,7 +16,7 @@ const program = new Command('plm')
     .exitOverride(),
   workingFolder = () => program.opts().repo,
   openRepo = () => loadRepo(workingFolder());
-// CL-01.1, TE-06.2
+// TE-06.2
 const scoped = (item?: string) => {
   const repo = openRepo();
   return [repo, linkStates(repo, currentVersions(repo)), item && entry(repo, item).id] as const;
@@ -36,12 +36,8 @@ const record = (found: any) => ({ ...found.item.data, path: found.path, meta: fo
 // CL-05.2
 let exitCode = 0;
 
-function exitCodeFor(error: unknown) {
-  if (error instanceof CommanderError) return error.exitCode === 0 ? 0 : 2;
-  if (error instanceof UsageError) return 2;
-  if (error instanceof Refused) return 1;
-  return 3;
-}
+const exitCodeFor = (error: unknown) =>
+  error instanceof CommanderError ? (error.exitCode && 2) : error instanceof UsageError ? 2 : error instanceof Refused ? 1 : 3;
 
 program.command('validate').description('check').action(() => {
   const findings = validate(openRepo()),
@@ -59,7 +55,8 @@ program.command('show <id>').description('details').action((id: string) => {
 });
 
 program.command('link <source> <type> <target>').description('add')
-  .action((source: string, type: string, target: string) => addLink(openRepo(), source, type, target));
+  .option('--remove')
+  .action((source: string, type: string, target: string, options: any) => link(openRepo(), source, type, target, options.remove));
 
 // CL-01.3
 program.command('set <id> <field> <value>').description('set').action((id: string, field: string, value: string) => {

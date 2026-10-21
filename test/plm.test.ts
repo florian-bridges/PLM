@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, w
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, expect, test } from 'vitest';
-import { addLink, changeSince, confirm, linkStates, recordRun } from '../src/links.ts';
+import { changeSince, confirm, link, linkStates, recordRun } from '../src/links.ts';
 import { linksOf, loadRepo, Refused } from '../src/repo.ts';
 import { search } from '../src/search.ts';
 import { validate } from '../src/validate.ts';
@@ -95,16 +95,21 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings'
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
 
-test('CL-01.1, CL-01.3, CO-02.1: set', () => {
+test('CL-01.1, CL-01.3, CO-01.1, CO-02.1: set', () => {
   const root = fixture();
   write(root, { 'bolt/item.yaml': bolt + 'mass_kg: 1\n', 'schemas/meta.schema.json': '{"required":["owner"]}' });
   expect(validate(loadRepo(root)).some((f) => f.file === 'meta/P.yaml' && f.code === 'schema')).toBe(true);
-  plm(root, 'set', 'P', 'owner', 'ana');
-  expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toBe('# reviewed\nstatus: draft\nowner: ana\n');
+  plm(root, 'set', 'P', 'owner', 'a b'.repeat(40));
+  expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toBe(`# reviewed\nstatus: draft\nowner: ${'a b'.repeat(40)}\n`);
   expect(plm(root, 'set', 'L', 'material', 'Al').status).toBe(0);
   expect(plm(root, 'set', 'P', 'links', 'x').status).toBe(2);
   expect(plm(root, 'set', 'A', 'uses', 'x').status).toBe(2);
   expect(plm(root, 'set', 'L', 'mass_kg', '2').status).toBe(2);
+  plm(root, 'link', 'P', 'derives-from', 'L');
+  plm(root, 'confirm', 'P');
+  plm(root, 'link', 'P', 'derives-from', 'L', '--remove');
+  expect(linksOf(loadRepo(root).entries.get('P')!).map((l) => l.target)).toEqual(['R']);
+  expect(loadRepo(root).entries.get('P')!.meta.data.confirmed?.L).toBeUndefined();
 });
 
 test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
@@ -270,7 +275,6 @@ test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
   expect(search(repo, 'carry spar')).toEqual([]);
   expect(search(repo, 'owner:ana status:draft')).toEqual([{ id: 'A', title: 'Wing' }]);
   expect(plm(root, 'search', 'bo').stdout).toBe('L (Bolt)\n');
-  addLink(repo, 'L', 'satisfies', 'R');
-  expect(linksOf(loadRepo(root).entries.get('L')!)).toEqual([{ type: 'satisfies', target: 'R' }]);
+  link(repo, 'L', 'satisfies', 'R');
   expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {}, links: [{ target: 'R' }] }]);
 });

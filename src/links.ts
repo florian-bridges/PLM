@@ -1,7 +1,7 @@
 import { copyFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, linksOf, named, newId, Refused, selection, subtree, targetId, targetPath, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { entry, linksOf, list, named, newId, Refused, selection, subtree, targetId, targetPath, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, git, versionAt } from './version.ts';
 
@@ -60,10 +60,12 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
 }
 
 // CL-01.1
-export function addLink(repo: Repo, source: string, type: string, target: string) {
-  const { item } = entry(repo, source);
-  if (item.doc.hasIn(['links'])) item.doc.addIn(['links'], { type, target });
-  else item.doc.setIn(['links'], [{ type, target }]);
+export function link(repo: Repo, source: string, type: string, target: string, remove?: boolean) {
+  const { item, meta } = entry(repo, source), links = list<Link>(item.data.links),
+    at = links.findIndex((l) => l.type === type && l.target === target);
+  if (!remove) item.doc.setIn(['links', links.length], { type, target });
+  else if (at < 0) throw new UsageError(target);
+  else item.doc.deleteIn(['links', at]), meta.doc.deleteIn(['confirmed', target]), writeYaml(repo.root, meta);
   writeYaml(repo.root, item);
 }
 

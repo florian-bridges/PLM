@@ -27,7 +27,7 @@ export function readYaml<T>(root: string, path: string): YamlFile<T> {
 export function writeYaml(root: string, file: Pick<YamlFile<unknown>, 'path' | 'doc'>): void {
   const target = join(root, file.path);
   mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, String(file.doc));
+  writeFileSync(target, file.doc.toString({ lineWidth: 0 }));
 }
 
 // CL-01.1

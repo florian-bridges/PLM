@@ -8,6 +8,7 @@ import { currentVersions, git, versionAt } from './version.ts';
 export interface LinkState { source: string; title: string; link: Link; targetTitle: string; state: 'current' | 'suspect' | 'unconfirmed' }
 
 const tryGit = (repo: Repo, args: string[]) => { try { return git(repo.root, args); } catch { return ''; } };
+const targetId = (target: string) => target.split('/')[0]; // TE-01.1
 
 // TE-03.1
 const strip = (repo: Repo, hash?: string) => {
@@ -27,7 +28,7 @@ export function linkStates(repo: Repo, versions: Map<string, string>): LinkState
     return !!confirmed && confirmed === strip(repo, versions.get(link.target)) ? 'current' : 'suspect';
   };
   return [...repo.entries.values()].flatMap((source) => linksOf(source).map((link) => ({
-    source: source.id, title: named(repo, source.id).title, link, targetTitle: named(repo, link.target).title, state: stateOf(link),
+    source: source.id, title: named(repo, source.id).title, link, targetTitle: named(repo, targetId(link.target)).title, state: stateOf(link),
   })));
 }
 
@@ -40,7 +41,7 @@ function confirmation(repo: Repo, target: string, version: string | undefined): 
   if (!by) throw new Refused('Set git user.name before confirming');
   const hash = tryGit(repo, ['rev-parse', '--verify', '-q', '--short', 'HEAD']);
   const exact = hash && versionAt(repo.root, 'HEAD', target) === version;
-  return { title: String(entry(repo, target).item.data.title), version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }) };
+  return { title: named(repo, targetId(target)).title, version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }) };
 }
 
 // TE-02.1, CL-01.2
@@ -50,7 +51,7 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
   if (sourceEntry.item.data.type === 'test-run') throw new Refused('Test runs confirm at recording');
   const links = linksOf(sourceEntry).filter((link) => !target || link.target === target);
   for (const link of links) {
-    const targetFile = repo.entries.get(link.target)?.item.path;
+    const targetFile = repo.entries.get(targetId(link.target))?.item.path;
     const broken = findings.some((finding) => finding.severity === 'error' && finding.file === targetFile);
     if (broken || !versions.has(link.target)) throw new Refused(`${link.target} fails validation; fix before confirming`);
     sourceEntry.meta.doc.setIn(['confirmed', link.target], confirmation(repo, link.target, versions.get(link.target)));
@@ -92,7 +93,8 @@ export function changeSince(repo: Repo, link: Link): { commit?: string; diff: st
   const commit = known ? link.commit : git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean)
     .find((candidate) => versionAt(repo.root, candidate, link.target) === link.version);
   if (!commit) return { diff: '' };
-  const paths = subtree(repo, link.target).map((id) => entry(repo, id).path);
+  const file = link.target.slice(targetId(link.target).length + 1); // TE-01.1
+  const paths = file ? [`${entry(repo, targetId(link.target)).path}/${file}`] : subtree(repo, link.target).map((id) => entry(repo, id).path);
   return { commit, diff: git(repo.root, ['diff', commit, '--', ...paths]) };
 }
 

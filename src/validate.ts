@@ -62,14 +62,14 @@ export function validate(repo: Repo): Finding[] {
     });
 
     linksOf(entry).forEach((link, index) => {
-      const target = repo.entries.get(link.target)?.item.data,
+      const [id, ...path] = link.target.split('/'), targetEntry = repo.entries.get(id), // TE-01.1
         [sourceTypes, targetTypes] = linkRules[link.type] ?? [[], []];
-      if (!target) {
+      if (!targetEntry || (path.length && !existsSync(join(repo.root, targetEntry.path, ...path)))) {
         findings.push(finding(item, ['links', index, 'target'], 'unknown-target', `Unknown link target ${link.target}`));
         return;
       }
-      if (!allows(sourceTypes, type) || !allows(targetTypes, target.type)) {
-        findings.push(finding(item, ['links', index, 'type'], 'link-type', `${link.type} not allowed from ${type} to ${target.type}`));
+      if (!allows(sourceTypes, type) || !allows(targetTypes, targetEntry.item.data.type)) {
+        findings.push(finding(item, ['links', index, 'type'], 'link-type', `${link.type} not allowed from ${type} to ${targetEntry.item.data.type}`));
       }
     });
   }

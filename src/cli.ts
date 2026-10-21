@@ -3,7 +3,7 @@
 import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { addLink, allocation, confirm, coverage, linkStates, recordRun, suspects, type LinkState } from './links.ts';
+import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, type LinkState } from './links.ts';
 import { artifacts, entry, loadRepo, newItem, Refused, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
 import { search } from './search.ts';
@@ -59,7 +59,8 @@ program.command('show <id>').description('details').action((id: string) => {
 });
 
 program.command('link <source> <type> <target>').description('add')
-  .action((source: string, type: string, target: string) => addLink(openRepo(), source, type, target));
+  .option('--remove')
+  .action((source: string, type: string, target: string, options: any) => link(openRepo(), source, type, target, options.remove));
 
 // CL-01.3
 program.command('set <id> <field> <value>').description('set').action((id: string, field: string, value: string) => {

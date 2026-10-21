@@ -36,7 +36,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## Traceability engine
 
-**TE-01.1** An item's version shall be the SHA-256 hex digest of its folder's Git tree hash followed by the versions of the items it uses, in listed order; a requirement's version shall be its file's Git blob hash.
+**TE-01.1** An item's version shall be the SHA-256 hex digest of its folder's Git tree hash followed by the versions of the items it uses, in listed order; a requirement's version, and a link targeting one file of an item (`<ID>/<path>`), shall be its Git blob hash.
 *Rationale:* Git hashes capture all files, including nested items and LFS pointers; adding used items' versions propagates their changes. Content, not path, decides a version, so `git mv` keeps an item's ID, links and confirmations; only the old and new parent folders turn suspect.
 
 **TE-01.2** Hashes of the working tree shall be computed by staging into a temporary Git index, so LFS filters apply and uncommitted and committed states yield identical versions.
@@ -48,7 +48,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset, and for links of test runs.
 *Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review. Run links are confirmed when recording (CL-03.2).
 
-**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none; for a requirement target, versions are compared with the fields listed under `informative:` in `plm.yaml` (default `[rationale]`) removed from both, read from Git, and a confirmed blob missing from Git keeps the link suspect. Links from test runs are evidence, not links to review: suspect lists, of the repository or an item subtree, shall omit them, and a run with a suspect link is outdated.
+**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none; for a requirement target, versions are compared with the fields listed under `informative:` in `plm.yaml` (default `[rationale]`) removed from both, read from Git, and a confirmed blob missing from Git keeps the link suspect. Links from test runs are evidence, not links to review: suspect lists, of the repository or an item subtree, shall omit them, and a run with a suspect link is outdated. A link naming one file (`<ID>/<path>`, TE-01.1) is suspect only when that file's version differs.
 *Rationale:* Separating unconfirmed from suspect distinguishes new, unreviewed links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
 
 **TE-03.2** To show what changed, the engine shall return the diff of the target's subtree since the link's `commit` or, if it is missing or unknown, since the latest commit at which the target had the confirmed version.
@@ -74,7 +74,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link`, `confirm`, `set`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>/<path>`), `confirm`, `set`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Searching upward works from any subfolder.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.

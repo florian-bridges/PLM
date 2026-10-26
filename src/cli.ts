@@ -4,7 +4,7 @@ import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, type LinkState } from './links.ts';
-import { artifacts, entry, loadRepo, named, newItem, Refused, UsageError, writeYaml, type Named } from './repo.ts';
+import { artifacts, entry, loadRepo, newItem, Refused, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
 import { entries, parseFilters, search } from './search.ts';
 import { validate } from './validate.ts';
@@ -74,19 +74,19 @@ program.command('search <query...>').description('find').action((query: string[]
 });
 
 // CL-01.2
-program.command('confirm <source> [target]').description('confirm link, or all').action((source: string, target?: string) => {
+program.command('confirm <source> [target]').description('confirm').action((source: string, target?: string) => {
   const repo = openRepo(), links = confirm(repo, currentVersions(repo), validate(repo), source, target);
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 
-program.command('suspects [item]').description('suspect, unconfirmed links').action((item?: string) => {
+program.command('suspects [item]').description('suspects').action((item?: string) => {
   const states = suspects(...scoped(item));
   output(states.map((state) => `${state.state} ${linkLabel(state)}`).join('\n'), states);
   if (states.length) exitCode = 1;
 });
 
 // TE-05.1
-program.command('impact <range>').description('affected items, links, runs').action((range: string) => {
+program.command('impact <range>').description('impact').action((range: string) => {
   const repo = openRepo(), [base, head] = range.split('..'),
     headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) },
     result = impact(snapshotAt(repo.root, base), headSnapshot, changedFiles(repo.root, base, head)),
@@ -145,7 +145,7 @@ report.command('coverage [item]').description('coverage')
 report.command('entries [args...]').description('entries').action((args: string[] = []) => {
   const { filters, text } = parseFilters(args.join(' ')),
     [repo, , id] = scoped(text), matches = entries(repo, filters, id),
-    lines = matches.map((m) => `${m.source} ${label(named(repo, m.refers))} ${Object.entries(m).slice(2).map((e) => e.join(':')).join(' ')}`);
+    lines = matches.map((m) => Object.entries(m).map((e) => e.join(':')).join(' '));
   output(lines.join('\n'), matches);
   if (matches.length) exitCode = 1;
 });

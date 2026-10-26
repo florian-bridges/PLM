@@ -17,10 +17,8 @@ export class UsageError extends Error {}
 export class Refused extends Error {}
 
 export function readYaml<T>(root: string, path: string): YamlFile<T> {
-  const file = join(root, path);
-  const lines = new LineCounter();
-  const text = existsSync(file) ? readFileSync(file, 'utf8') : '';
-  const doc = parseDocument(text, { lineCounter: lines });
+  const file = join(root, path), lines = new LineCounter(), text = existsSync(file) ? readFileSync(file, 'utf8') : '',
+    doc = parseDocument(text, { lineCounter: lines });
   return { path, doc, lines, data: (doc.toJS() ?? {}) as T };
 }
 

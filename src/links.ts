@@ -94,8 +94,8 @@ export function changeSince(repo: Repo, link: Link) {
   const commit = known ? link.commit : git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean)
     .find((candidate) => versionAt(repo.root, candidate, link.target) === link.version);
   if (!commit) return { diff: '' };
-  const path = link.target.includes('/') && targetPath(repo, link.target);
-  const paths = path ? [path] : subtree(repo, link.target).map((id) => entry(repo, id).path);
+  const path = link.target.includes('/') && targetPath(repo, link.target),
+    paths = path ? [path] : subtree(repo, link.target).map((id) => entry(repo, id).path);
   return { commit, diff: git(repo.root, ['diff', commit, '--', ...paths]) };
 }
 

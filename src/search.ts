@@ -20,8 +20,8 @@ export function parseFilters(query: string) {
 
 // CO-03.2
 export function search(repo: Repo, query: string): Named[] {
-  const { filters, text } = parseFilters(query);
-  const filter = (result: Record<string, unknown>) => filters.every(([field, value]) => result[field] === value);
+  const { filters, text } = parseFilters(query),
+    filter = (result: Record<string, unknown>) => filters.every(([field, value]) => result[field] === value);
   return searchIndex(repo).search(text || MiniSearch.wildcard, { prefix: true, combineWith: 'AND', filter }).map((result) => named(repo, result.id));
 }
 
@@ -30,8 +30,8 @@ export function entries(repo: Repo, extra: string[][], root?: string) {
   const scope = root && new Set(selection(repo, root));
   return Object.entries(repo.settings.entries ?? {}).flatMap(([field, config]) => {
     const required = [...parseFilters(config).filters, ...extra];
-    return [...repo.entries.values()].flatMap((source) => list<any>(source.item.data[field]).flatMap((data: any) =>
-      (Object.values(data) as string[])
+    return [...repo.entries.values()].flatMap((source) => list<Record<string,string>>(source.item.data[field]).flatMap((data) =>
+      Object.values(data)
         .filter((refers) => repo.entries.has(refers) && (!scope || scope.has(refers))
           && required.every(([k, val]) => String(data[k] ?? repo.entries.get(refers)?.meta.data[k as never]) === val))
         .map((refers) => ({ source: source.id, refers, ...data }))));

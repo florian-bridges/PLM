@@ -44,15 +44,15 @@ export function validate(repo: Repo) {
   const ajv = newAjv(), findings: Finding[] = [];
   for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
     const { id, item, meta } = entry, type = String(item.data.type), draft = meta.data.status === 'draft',
-      validateSchema = schemaFor(ajv, repo.root, type, baseSchema), validateMeta = schemaFor(ajv, repo.root, 'meta');
+      validateSchema = schemaFor(ajv, repo.root, type, baseSchema), validateMeta = schemaFor(ajv, repo.root, 'meta'),
+      // CO-02.2
+      folders = dirname(entry.path).split('/'), home = repo.settings.folders![type],
+      misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
     if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', type));
     else findings.push(...schemaFindings(item, validateSchema, item.data, draft));
     // CO-02.1
     if (validateMeta) findings.push(...schemaFindings(meta, validateMeta, meta.data, false));
 
-    // CO-02.2
-    const folders = dirname(entry.path).split('/'), home = repo.settings.folders![type],
-      misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
     if (misplaced) findings.push(finding(item, ['type'], 'misplaced', `outside ${home}`));
 
     if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', id));

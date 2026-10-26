@@ -4,7 +4,7 @@ import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, type LinkState } from './links.ts';
-import { artifacts, entry, loadRepo, newItem, Refused, UsageError, writeYaml, type Named } from './repo.ts';
+import { artifacts, entry, loadRepo, named, newItem, Refused, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
 import { entries, parseFilters, search } from './search.ts';
 import { validate } from './validate.ts';
@@ -19,19 +19,19 @@ const program = new Command('plm')
 // TE-06.2
 const scoped = (item?: string) => {
   const repo = openRepo();
-  return [repo,linkStates(repo, currentVersions(repo)),item && entry(repo, item).id] as const;
+  return [repo, linkStates(repo, currentVersions(repo)), item && entry(repo, item).id] as const;
 };
 
 // CL-05.1
 function output(text: string, data: unknown) {
   const json = program.opts().format === 'json';
-  console.log(json ? JSON.stringify({ schema: 4,data },null,2) : text);
+  console.log(json ? JSON.stringify({ schema: 4, data }, null, 2) : text);
 }
 
 // CL-05.3
-const record = (found: any) => ({ ...found.item.data,path: found.path,meta: found.meta.data }),
-  label = ({ id,title }: Named) => (title ? `${id} (${title})` : id),
-  linkLabel = (state: LinkState) => `${label({ id: state.source,title: state.title })} ${state.link.type} ${label({ id: state.link.target,title: state.targetTitle })}`;
+const record = (found: any) => ({ ...found.item.data, path: found.path, meta: found.meta.data }),
+  label = ({ id, title }: Named) => (title ? `${id} (${title})` : id),
+  linkLabel = (state: LinkState) => `${label({ id: state.source, title: state.title })} ${state.link.type} ${label({ id: state.link.target, title: state.targetTitle })}`;
 
 // CL-05.2
 let exitCode = 0;
@@ -42,7 +42,7 @@ const exitCodeFor = (error: unknown) =>
 program.command('validate').description('check').action(() => {
   const findings = validate(openRepo()),
     lines = findings.map((finding) => `${finding.file}:${finding.line}:${finding.col} ${finding.severity} ${finding.code}: ${finding.message}`);
-  output(lines.join('\n'),findings);
+  output(lines.join('\n'), findings);
   if (findings.some((finding) => finding.severity === 'error')) exitCode = 1;
 });
 
@@ -50,8 +50,8 @@ program.command('show <id>').description('details').action((id: string) => {
   const repo = openRepo(), found = entry(repo, id), versions = currentVersions(repo),
     links = linkStates(repo, versions).filter((state) => state.source === id || state.link.target === id),
     // CO-01.3, CO-03.3
-    data = { ...record(found),version: versions.get(id),links,artifacts: artifacts(repo, found),entries: entries(repo, []).filter((m) => m.refers === id) };
-  output(stringify(data, { aliasDuplicateObjects: false }),data);
+    data = { ...record(found), version: versions.get(id), links, artifacts: artifacts(repo, found), entries: entries(repo, []).filter((m) => m.refers === id) };
+  output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
 program.command('link <source> <type> <target>').description('add')
@@ -63,25 +63,25 @@ program.command('set <id> <field> <value>').description('set').action((id: strin
   const repo = openRepo(), found = entry(repo, id), file = field === 'owner' || field === 'status' ? found.meta : found.item,
     current = (file.data as any)[field];
   if (current !== undefined && typeof current !== 'string') throw new UsageError(field);
-  file.doc.setIn([field],value);
-  writeYaml(repo.root,file);
+  file.doc.setIn([field], value);
+  writeYaml(repo.root, file);
 });
 
 // CO-03.2
 program.command('search <query...>').description('find').action((query: string[]) => {
-  const repo = openRepo(),found = search(repo, query.join(' ')).map((item) => record(entry(repo, item.id)));
-  output(found.map(label).join('\n'),found);
+  const repo = openRepo(), found = search(repo, query.join(' ')).map((item) => record(entry(repo, item.id)));
+  output(found.map(label).join('\n'), found);
 });
 
 // CL-01.2
 program.command('confirm <source> [target]').description('confirm').action((source: string, target?: string) => {
   const repo = openRepo(), links = confirm(repo, currentVersions(repo), validate(repo), source, target);
-  output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'),links);
+  output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 
 program.command('suspects [item]').description('suspects').action((item?: string) => {
   const states = suspects(...scoped(item));
-  output(states.map((state) => `${state.state} ${linkLabel(state)}`).join('\n'),states);
+  output(states.map((state) => `${state.state} ${linkLabel(state)}`).join('\n'), states);
   if (states.length) exitCode = 1;
 });
 
@@ -96,13 +96,13 @@ program.command('impact <range>').description('impact').action((range: string) =
       ...result.suspects.map((state) => `suspect ${linkLabel(state)}`),
       ...result.runs.map((run) => `outdated run ${label(run)}`),
     ];
-  output(lines.join('\n'),result);
+  output(lines.join('\n'), result);
 });
 
 // CL-02.1
 program.command('new <type> <title>').description('create').action((type: string, title: string) => {
   const id = newItem(openRepo(), type, title, workingFolder());
-  output(id,{ id });
+  output(id, { id });
 });
 
 // CL-03.1
@@ -112,7 +112,7 @@ program.command('test').command('record <test-case...>').description('record')
   .option('--log <files...>', '', [])
   .action((testCases: string[], options: { sut: string; result: string[]; log: string[] }) => {
     const id = recordRun(openRepo(), testCases, options.sut, options.result, options.log);
-    output(id,{ id });
+    output(id, { id });
   });
 
 const report = program.command('report');
@@ -134,19 +134,19 @@ report.command('coverage [item]').description('coverage')
           g = groups[value] ??= { value, verified: 0, pending: 0, unverified: 0, total: 0 };
         g[row.state]++; g.total++;
       });
-      return output(Object.values(groups).map((g) => Object.entries(g).flat().slice(1).join(' ')).join('\n'),Object.values(groups));
+      return output(Object.values(groups).map((g) => Object.entries(g).flat().slice(1).join(' ')).join('\n'), Object.values(groups));
     }
     const lines = rows.flatMap((row) => [[row.state, label({ id: row.requirement, title: row.title })],
       ...row.tests.map((test) => ['  ' + label(test.testCase), test.run && label(test.run), test.result, test.outdated && 'outdated'])]);
-    output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'),rows);
+    output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'), rows);
   });
 
 // CO-03.3, CL-01.1
 report.command('entries [args...]').description('entries').action((args: string[] = []) => {
-  const { filters,text } = parseFilters(args.join(' ')),
-    [repo, , id] = scoped(text),matches = entries(repo, filters, id),
-    lines = matches.map((m) => Object.entries(m).map((e) => e.join(':')).join(' '));
-  output(lines.join('\n'),matches);
+  const { filters, text } = parseFilters(args.join(' ')),
+    [repo, , id] = scoped(text), matches = entries(repo, filters, id),
+    lines = matches.map((m) => `${m.source} ${label(named(repo, m.refers))} ${Object.entries(m).slice(2).map((e) => e.join(':')).join(' ')}`);
+  output(lines.join('\n'), matches);
   if (matches.length) exitCode = 1;
 });
 

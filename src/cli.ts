@@ -107,10 +107,10 @@ program.command('new <type> <title>').description('create').action((type: string
 
 // CL-03.1
 program.command('test').command('record <test-case...>').description('record')
-  .requiredOption('--sut <id>')
+  .requiredOption('--sut <ids...>')
   .addOption(new Option('--result <results...>').choices(results).makeOptionMandatory())
   .option('--log <files...>', '', [])
-  .action((testCases: string[], options: { sut: string; result: string[]; log: string[] }) => {
+  .action((testCases: string[], options: { sut: string[]; result: string[]; log: string[] }) => {
     const id = recordRun(openRepo(), testCases, options.sut, options.result, options.log);
     output(id, { id });
   });

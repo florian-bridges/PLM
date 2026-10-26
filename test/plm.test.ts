@@ -195,7 +195,7 @@ test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: exit', () => {
 
 test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
   const coverage = () => json(root, 'report', 'coverage', 'A')[0].state,
-    record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
+    record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'L', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
   expect(coverage()).toBe('unverified');
   const wing = currentVersions(loadRepo(root)).get('A');
   expect(json(root, 'report', 'coverage', 'P')).toEqual([]);
@@ -207,16 +207,17 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   expect(currentVersions(loadRepo(root)).get('A')).not.toBe(wing);
   expect(plm(root, 'confirm', 'T').status + plm(root, 'confirm', 'U').status).toBe(0);
   expect(coverage()).toBe('pending');
-  expect(() => recordRun(loadRepo(root), ['T'], 'A', ['pass'], [])).toThrow(Refused);
+  expect(() => recordRun(loadRepo(root), ['T'], ['A'], ['pass'], [])).toThrow(Refused);
   commit(root);
   expect(record('pass', 'maybe').status + record('pass').status).toBe(4);
   const run = record('pass', 'fail').stdout.trim();
   expect(existsSync(join(root, `runs/${run}/rig.log`))).toBe(true);
+  expect(linksOf(loadRepo(root).entries.get(run)!).filter((l) => l.type === 'tests')).toHaveLength(2);
   expect(loadRepo(root).entries.get(run)?.meta.data.confirmed?.T.commit).toBe(git(root, ['rev-parse', '--short', 'HEAD']));
   expect(plm(root, 'confirm', run).status).toBe(1);
   expect(validate(loadRepo(root))).toEqual([]);
   const tests = (outdated: boolean) => [['U', 'DropT', 'fail'], ['T', 'LoadT', 'pass']]
-    .map(([id, title, result]) => ({ testCase: { id, title }, run: { id: run, title: 'T, U on A' }, result, outdated }));
+    .map(([id, title, result]) => ({ testCase: { id, title }, run: { id: run, title: 'T, U on L, A' }, result, outdated }));
   expect(json(root, 'report', 'coverage', 'A')[0]).toMatchObject({ state: 'verified', tests: tests(false) });
   write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\n' });
   expect(json(root, 'report', 'coverage', 'A')[0]).toEqual({ requirement: 'R', title: 'Load', state: 'pending', tests: tests(true) });

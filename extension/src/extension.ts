@@ -115,7 +115,7 @@ export function activate(context: vscode.ExtensionContext) {
       picked.push(result);
     }
     const logs = await vscode.window.showOpenDialog({ canSelectMany: true, openLabel: 'Attach logs' }) ?? [];
-    vscode.window.showInformationMessage(`Recorded ${recordRun(repo, testCases, sut.label, picked, logs.map((log) => log.fsPath))}`);
+    vscode.window.showInformationMessage(`Recorded ${recordRun(repo, testCases, [sut.label], picked, logs.map((log) => log.fsPath))}`);
   };
 
   // VS-04.3

@@ -338,6 +338,7 @@ Add new entries at the end. Format:
 *Impact:* A changed value leaves stale copies that nothing detects, e.g. the simulation flies the old speed; suspects are per item or file, not per value; TBD and provisional state are prose.
 *Workaround:* Hand search at each change; file links; reviewers.
 *Proposal:* Concept request, no code: a short concept for the owner's decision before any requirement. Scope: a parameter is a named value with unit and state (TBD, provisional, final) owned by one item, typically written by an analysis to an output file; requirements, analyses and scripts reference it by name (e.g. `ANA-QF8HRH:v_cruise`); `plm` resolves references, checks stated values against the source, suspects per parameter, lists TBD parameters and their dependents; scripts read parameters from the files. The concept states the data model, two or three examples from this project, and which existing mechanisms it replaces (file-level `derives-from`, "A TBD value and what derives from it cannot be listed") to fit the word budget.
+*Decision:* 2026-10-26, product owner: concept written, awaiting owner decision: `concepts/parameters.md` (outside `documents/`, which has 34 words free; deleted when decided).
 
 ## `plm test record` leaves the new run's owner unset
 *Found:* 2026-10-26, autonomous-fixed-wing, simulation-engineer

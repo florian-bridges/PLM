@@ -92,13 +92,13 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
 
-**CL-03.1** `plm test record <test-case>... --sut <ID> --result <result>... [--log <file>...]` shall create a test run in `runs/<ID>/` with date, copies of the log files and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.
+**CL-03.1** `plm test record <test-case>... --sut <ID>... --result <result>... [--log <file>...]` shall create a test run in `runs/<ID>/` with date, copies of the log files, a `tests` link to each `--sut` ID and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.
 *Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for. One run per rig session keeps its logs together; results per test case keep one failure from discrediting the others.
 
 **CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation per TE-02.1 with the versions at `HEAD`, recorded as `commit`.
 *Rationale:* The run must record exactly which version was tested; the commit makes it reproducible.
 
-**CL-03.3** Recording shall be refused while the system under test or a test case differs from `HEAD`.
+**CL-03.3** Recording shall be refused while a system under test or a test case differs from `HEAD`.
 *Rationale:* Uncommitted states cannot be reproduced and so cannot serve as evidence.
 
 **CL-05.1** Every command shall accept `--format json`, with the JSON output schema versioned.

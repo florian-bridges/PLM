@@ -344,3 +344,4 @@ Add new entries at the end. Format:
 *Proposal:* `plm test record` sets the new run's `owner` itself (e.g. to the test-case's own owner, or the current agent), like `plm new` does for other items.
 *Decision:* 2026-10-26, product owner: accepted, trimmed, bundled into `wp/afw-entries` (above): the new run's `meta` gets the `owner` of its first test case, if set. No current-agent detection; `plm new` unchanged.
 *Re-decision:* 2026-10-26, product owner: bundle withdrawn, rejected for the word budget: `plm set RUN-<ID> owner <name>` (CL-01.3) already solves it in one command, and `plm validate` reports the missing owner.
+*Review round 3:* 2026-10-26, quality, commit 30a942c (`wp/afw-entries`), major only. **Closed.** `test/plm.test.ts` now asserts each of the four exit codes separately instead of summing them; `npm test` 18/18 green. `src/`+`test/` 4100/4100 (`scripts/wordcount.py --max-src 4100`, exit 0). No new majors.

@@ -176,6 +176,8 @@ Add new entries at the end. Format:
 *Workaround:* The FHA script reads the requirement files from disk and reports each proposal as open or closed, which makes the handover checkable but not linkable.
 *Proposal:* A `hazard` item type, and a link type from a hazard to the requirement that mitigates it.
 
+*Decision:* 2026-10-26, product owner. Rejected as code, solved by configuration (0 words; `src/`+`test/` at 4100/4100). Types beyond the built-ins come by schema (CO-02.5), prefixes and home folders by `plm.yaml` (CO-01.1, CL-02.2). Mitigation is `<hazard> derives-from <requirement>` (CO-02.6), so a changed requirement turns the hazard suspect (TE-03.1). A requirement proposal is a `draft` requirement owned by its receiver. Checked on a scratch repository. Project: (1) `plm.yaml`: `prefixes: {hazard: HAZ-}`, `folders: {hazard: hazards}`. (2) `schemas/hazard.schema.json` with its fields and `required: [links]`, `links: {minItems: 1}`; `plm validate` then lists each unmitigated hazard (warning while `draft`, error otherwise, CO-02.4). Hazards carry mitigation links only. (3) Proposals: `plm search type:requirement status:draft owner:<receiver>`. (4) Delete the markdown list, the hazard file and the script's open/closed check.
+
 ## No way to mark a value as provisional
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by safety-engineer)
 *Observed:* A requirement carrying a deliberately provisional value (a safe climb height of 35 m, to be confirmed by phase 2 sizing) is indistinguishable from one whose value is settled. The only alternatives are a hard number or `TBD`.
@@ -189,6 +191,8 @@ Add new entries at the end. Format:
 *Observed:* `plm validate` exits 0 on success while `plm suspects` exits 1 when it has unconfirmed links to report, so `plm validate && plm suspects` cannot be used as a gate check.
 *Impact:* Gate scripts need per-command special casing.
 *Proposal:* Document the exit codes, and give `suspects` a flag that separates "there is something to report" from "the check failed".
+
+*Decision:* 2026-10-26, product owner. Rejected: the commands agree. Both exit 1 for findings, 2 for usage errors and 3 for internal errors (CL-05.2, README). So `plm validate && plm suspects` fails a gate while suspects are open, as it should. A script that tolerates findings tests `[ $? -le 1 ]`.
 
 ## `plm show` lists untracked and ignored files as artifacts
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by simulation-engineer)

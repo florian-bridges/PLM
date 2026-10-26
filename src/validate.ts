@@ -83,8 +83,8 @@ export function validate(repo: Repo) {
 
 // CO-02.2
 function cycles(repo: Repo) {
-  const state = new Map<string, 'open' | 'done'>(), findings: Finding[] = [];
-  const visit = (id: string) => {
+  const state = new Map<string, 'open' | 'done'>(), findings: Finding[] = [],
+    visit = (id: string) => {
     state.set(id, 'open');
     const entry = repo.entries.get(id)!;
     for (const child of childrenOf(entry)) {

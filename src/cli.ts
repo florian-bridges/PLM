@@ -4,9 +4,9 @@ import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, type LinkState } from './links.ts';
-import { artifacts, entry, loadRepo, newItem, Refused, UsageError, writeYaml, type Named } from './repo.ts';
+import { artifacts, entry, loadRepo, named, newItem, Refused, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
-import { search } from './search.ts';
+import { entries, parseFilters, search } from './search.ts';
 import { validate } from './validate.ts';
 import { currentVersions, snapshotAt } from './version.ts';
 
@@ -48,9 +48,9 @@ program.command('validate').description('check').action(() => {
 
 program.command('show <id>').description('details').action((id: string) => {
   const repo = openRepo(), found = entry(repo, id), versions = currentVersions(repo),
-    links = linkStates(repo, versions).filter((state) => state.source === id || state.link.target === id);
-  // CO-01.3
-  const data = { ...record(found), version: versions.get(id), links, artifacts: artifacts(repo, found) };
+    links = linkStates(repo, versions).filter((state) => state.source === id || state.link.target === id),
+    // CO-01.3, CO-03.3
+    data = { ...record(found), version: versions.get(id), links, artifacts: artifacts(repo, found), entries: entries(repo, []).filter((m) => m.refers === id) };
   output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
@@ -89,13 +89,13 @@ program.command('suspects [item]').description('suspect, unconfirmed links').act
 program.command('impact <range>').description('affected items, links, runs').action((range: string) => {
   const repo = openRepo(), [base, head] = range.split('..'),
     headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) },
-    result = impact(snapshotAt(repo.root, base), headSnapshot, changedFiles(repo.root, base, head));
-  const lines = [
-    ...result.changed.map((item) => `changed ${label(item)}`),
-    ...result.propagated.map((item) => `propagated ${label(item)}`),
-    ...result.suspects.map((state) => `suspect ${linkLabel(state)}`),
-    ...result.runs.map((run) => `outdated run ${label(run)}`),
-  ];
+    result = impact(snapshotAt(repo.root, base), headSnapshot, changedFiles(repo.root, base, head)),
+    lines = [
+      ...result.changed.map((item) => `changed ${label(item)}`),
+      ...result.propagated.map((item) => `propagated ${label(item)}`),
+      ...result.suspects.map((state) => `suspect ${linkLabel(state)}`),
+      ...result.runs.map((run) => `outdated run ${label(run)}`),
+    ];
   output(lines.join('\n'), result);
 });
 
@@ -115,8 +115,10 @@ program.command('test').command('record <test-case...>').description('record')
     output(id, { id });
   });
 
+const report = program.command('report');
+
 // TE-06.2, TE-06.4
-program.command('report').command('coverage [item]').description('coverage')
+report.command('coverage [item]').description('coverage')
   .option('--by <field>')
   .option('--allocation')
   .action((item?: string, options?: any) => {
@@ -138,6 +140,15 @@ program.command('report').command('coverage [item]').description('coverage')
       ...row.tests.map((test) => ['  ' + label(test.testCase), test.run && label(test.run), test.result, test.outdated && 'outdated'])]);
     output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'), rows);
   });
+
+// CO-03.3, CL-01.1
+report.command('entries [args...]').description('entries').action((args: string[] = []) => {
+  const { filters, text } = parseFilters(args.join(' ')),
+    [repo, , id] = scoped(text), matches = entries(repo, filters, id),
+    lines = matches.map((m) => `${m.source} ${label(named(repo, m.refers))} ${Object.entries(m).slice(2).map((e) => e.join(':')).join(' ')}`);
+  output(lines.join('\n'), matches);
+  if (matches.length) exitCode = 1;
+});
 
 try {
   program.parse();

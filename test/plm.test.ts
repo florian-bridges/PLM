@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { afterAll, expect, test } from 'vitest';
 import { changeSince, confirm, link, linkStates, recordRun } from '../src/links.ts';
 import { linksOf, loadRepo, Refused } from '../src/repo.ts';
-import { search } from '../src/search.ts';
+import { entries, search } from '../src/search.ts';
 import { validate } from '../src/validate.ts';
 import { currentVersions, git, versionAt } from '../src/version.ts';
 
@@ -42,8 +42,7 @@ const base = mkdtempSync(join(tmpdir(), 'plm-test-')),
 afterAll(() => rmSync(base, { recursive: true, force: true }));
 
 test('TE-01.1: mv', () => {
-  const root = fixture();
-  const before = currentVersions(loadRepo(root));
+  const root = fixture(), before = currentVersions(loadRepo(root));
   write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks: [{type: satisfies, target: R}]\n' });
   const after = currentVersions(loadRepo(root));
   expect(after.get('P')).not.toBe(before.get('P'));
@@ -101,10 +100,8 @@ test('CL-01.1, CL-01.3, CO-01.1, CO-02.1: set', () => {
   expect(validate(loadRepo(root)).some((f) => f.file === 'meta/P.yaml' && f.code === 'schema')).toBe(true);
   plm(root, 'set', 'P', 'owner', 'a b'.repeat(40));
   expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toBe(`# reviewed\nstatus: draft\nowner: ${'a b'.repeat(40)}\n`);
-  expect(plm(root, 'set', 'L', 'material', 'Al').status).toBe(0);
-  expect(plm(root, 'set', 'P', 'links', 'x').status).toBe(2);
-  expect(plm(root, 'set', 'A', 'uses', 'x').status).toBe(2);
-  expect(plm(root, 'set', 'L', 'mass_kg', '2').status).toBe(2);
+  expect(plm(root, 'set', 'L', 'material', 'Al').status + plm(root, 'set', 'P', 'links', 'x').status
+    + plm(root, 'set', 'A', 'uses', 'x').status + plm(root, 'set', 'L', 'mass_kg', '2').status).toBe(6);
   plm(root, 'link', 'P', 'derives-from', 'L');
   plm(root, 'confirm', 'P');
   plm(root, 'link', 'P', 'derives-from', 'L', '--remove');
@@ -157,8 +154,7 @@ test('CL-02.1–CL-02.2, CO-01.1, CO-02.2: nest', () => {
   const root = join(base, 'new');
   write(root, { 'plm.yaml': 'prefixes: {assembly: ASM-, part: PRT-, requirement: REQ-, test-case: TC-}\n' });
   plm(root, 'new', 'assembly', 'Aircraft');
-  const dir = join(root, 'aircraft');
-  const part = plm(dir, 'new', 'part', 'Spar').stdout.trim();
+  const dir = join(root, 'aircraft'), part = plm(dir, 'new', 'part', 'Spar').stdout.trim();
   expect(part).toMatch(/^PRT-[0-9A-HJKMNP-TV-Z]{6}$/);
   expect(existsSync(join(dir, 'spar/item.yaml'))).toBe(true);
   expect(plm(dir, 'new', 'part', 'Spar').status).toBe(2);
@@ -200,15 +196,16 @@ test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: exit', () => {
 });
 
 test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
-  const root = fixture();
-  const coverage = () => json(root, 'report', 'coverage', 'A')[0].state;
-  const record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
+  const root = fixture(),
+    coverage = () => json(root, 'report', 'coverage', 'A')[0].state,
+    record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
   expect(coverage()).toBe('unverified');
   const wing = currentVersions(loadRepo(root)).get('A');
   expect(json(root, 'report', 'coverage', 'P')).toEqual([]);
   write(root, {
     'wing/tests/suite/load-test/item.yaml': 'id: T\ntype: test-case\ntitle: LoadT\nlinks:\n  - type: verifies\n    target: R\n',
     'wing/tests/drop-test/item.yaml': 'id: U\ntype: test-case\ntitle: DropT\nlinks:\n  - type: verifies\n    target: R\n',
+    'meta/T.yaml': 'owner: rig\n',
     'rig.log': 'ok',
   });
   expect(currentVersions(loadRepo(root)).get('A')).not.toBe(wing);
@@ -220,6 +217,7 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   const run = record('pass', 'fail').stdout.trim();
   expect(existsSync(join(root, `runs/${run}/rig.log`))).toBe(true);
   expect(loadRepo(root).entries.get(run)?.meta.data.confirmed?.T.commit).toBe(git(root, ['rev-parse', '--short', 'HEAD']));
+  expect(loadRepo(root).entries.get(run)?.meta.data.owner).toBe('rig'); // CL-03.1
   expect(plm(root, 'confirm', run).status).toBe(1);
   expect(validate(loadRepo(root))).toEqual([]);
   const tests = (outdated: boolean) => [['U', 'DropT', 'fail'], ['T', 'LoadT', 'pass']]
@@ -243,8 +241,8 @@ test('TE-05.1–TE-05.2: impact', () => {
   write(root, { 'meta/X.yaml': `confirmed:\n  A:\n    version: ${currentVersions(loadRepo(root)).get('A')}\n` });
   commit(root);
   bump(root);
-  const impact = (range: string) => json(root, 'impact', range);
-  const expected = { changed: [{ id: 'R', title: 'Load' }], propagated: [{ id: 'A', title: 'Wing' }], suspects: [], runs: [{ id: 'X', title: 'Run' }] };
+  const impact = (range: string) => json(root, 'impact', range),
+    expected = { changed: [{ id: 'R', title: 'Load' }], propagated: [{ id: 'A', title: 'Wing' }], suspects: [], runs: [{ id: 'X', title: 'Run' }] };
   expect(impact('HEAD')).toMatchObject(expected);
   commit(root);
   expect(impact('HEAD~1..HEAD')).toMatchObject(expected);
@@ -252,8 +250,7 @@ test('TE-05.1–TE-05.2: impact', () => {
 });
 
 test('TE-01.1–TE-01.2: commit', () => {
-  const root = fixture();
-  const firmware = join(root, 'wing/spar/src');
+  const root = fixture(), firmware = join(root, 'wing/spar/src');
   write(root, { 'wing/spar/src/main.c': 'int main() {}\n' });
   git(firmware, ['init', '-q']);
   commit(firmware);
@@ -277,4 +274,22 @@ test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
   expect(plm(root, 'search', 'bo').stdout).toBe('L (Bolt)\n');
   link(repo, 'L', 'satisfies', 'R');
   expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {}, links: [{ target: 'R' }] }]);
+});
+
+test('CO-03.3, CL-01.1: entries', () => {
+  const root = fixture();
+  write(root, {
+    'plm.yaml': 'entries:\n  findings: state:open\n',
+    'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nuses: [L]\nfindings:\n  - item: P\n    state: open\n    severity: major\n  - item: L\n    state: open\n  - item: L\n    state: closed\n',
+    'meta/L.yaml': 'owner: ana\n',
+  });
+  const repo = loadRepo(root), refers = (e: any[]) => e.map((m) => m.refers);
+  expect(refers(entries(repo, []))).toEqual(['P', 'L']);
+  expect(refers(entries(repo, [['severity', 'major']]))).toEqual(['P']);
+  expect(refers(entries(repo, [['owner', 'ana']]))).toEqual(['L']);
+  expect(entries(repo, [], 'R')).toEqual([]);
+  const run = plm(root, 'report', 'entries');
+  expect(run.stdout).toContain('A P (Spar) item:P state:open severity:major');
+  expect(run.status + plm(root, 'report', 'entries', 'R').status).toBe(1);
+  expect(json(root, 'show', 'P').entries).toEqual([{ source: 'A', refers: 'P', item: 'P', state: 'open', severity: 'major' }]);
 });

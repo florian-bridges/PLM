@@ -90,9 +90,9 @@ export function recordRun(repo: Repo, testCases: string[], sut: string, results:
 
 // TE-03.2
 export function changeSince(repo: Repo, link: Link) {
-  const known = link.commit && tryGit(repo, ['rev-parse', '--verify', '-q', `${link.commit}^{commit}`]);
-  const commit = known ? link.commit : git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean)
-    .find((candidate) => versionAt(repo.root, candidate, link.target) === link.version);
+  const known = link.commit && tryGit(repo, ['rev-parse', '--verify', '-q', `${link.commit}^{commit}`]),
+    commit = known ? link.commit : git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean)
+      .find((candidate) => versionAt(repo.root, candidate, link.target) === link.version);
   if (!commit) return { diff: '' };
   const path = link.target.includes('/') && targetPath(repo, link.target),
     paths = path ? [path] : subtree(repo, link.target).map((id) => entry(repo, id).path);

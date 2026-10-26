@@ -19,11 +19,11 @@ export function computeVersions(
   pathOf: (id: string) => string | undefined,
   usesOfId: (id: string) => string[],
 ) {
-  const versions = new Map<string, string>();
-  const visit = (id: string, usedBy: string[]) => {
-    const base = id.split('/')[0], basePath = pathOf(base), path = basePath && `${basePath}${id.slice(base.length)}`;
-    const hash = path && hashes.get(path);
-    if (!hash || versions.has(id)) return versions.get(id) ?? hash;
+  const versions = new Map<string, string>(),
+    visit = (id: string, usedBy: string[]) => {
+      const base = id.split('/')[0], basePath = pathOf(base), path = basePath && `${basePath}${id.slice(base.length)}`,
+        hash = path && hashes.get(path);
+      if (!hash || versions.has(id)) return versions.get(id) ?? hash;
     if (usedBy.includes(id)) return undefined;
     if (isRequirementFile(path) || id.includes('/')) versions.set(id, hash);
     else {
@@ -47,8 +47,8 @@ function objectHashes(root: string, tree: string): Map<string, string> {
 
 // TE-01.1
 function versionsFromHashes(repo: Repo, hashes: Map<string, string>) {
-  const usesOfId = (id: string) => usesOf(repo.entries.get(id));
-  const targets = [...repo.entries.values()].flatMap((e) => linksOf(e).map((l) => l.target));
+  const usesOfId = (id: string) => usesOf(repo.entries.get(id)),
+    targets = [...repo.entries.values()].flatMap((e) => linksOf(e).map((l) => l.target));
   return computeVersions([...repo.entries.keys(), ...targets], hashes, (id) => targetPath(repo, id), usesOfId);
 }
 
@@ -68,14 +68,14 @@ export function currentVersions(repo: Repo): Map<string, string> {
 
 // TE-03.2
 export function versionAt(root: string, commit: string, target: string) {
-  const hashes = objectHashes(root, commit);
-  const pathOf = (wanted: string) => {
-    let files = '';
-    try { files = git(root, ['grep', '-l', `^id: ${wanted}$`, commit, '--', '*.yaml']); } catch { /* */ }
-    const path = files.split('\n')[0].slice(commit.length + 1);
-    return basename(path) === 'item.yaml' ? dirname(path) : path || undefined;
-  };
-  const usesOfId = (wanted: string) => list<string>(parse(git(root, ['show', `${commit}:${pathOf(wanted)}/item.yaml`]))?.uses);
+  const hashes = objectHashes(root, commit),
+    pathOf = (wanted: string) => {
+      let files = '';
+      try { files = git(root, ['grep', '-l', `^id: ${wanted}$`, commit, '--', '*.yaml']); } catch { /* */ }
+      const path = files.split('\n')[0].slice(commit.length + 1);
+      return basename(path) === 'item.yaml' ? dirname(path) : path || undefined;
+    },
+    usesOfId = (wanted: string) => list<string>(parse(git(root, ['show', `${commit}:${pathOf(wanted)}/item.yaml`]))?.uses);
   return computeVersions([target], hashes, pathOf, usesOfId).get(target);
 }
 
@@ -88,8 +88,7 @@ export function snapshotAt(root: string, commit: string): Snapshot {
   } catch {
     throw new UsageError(`Unknown commit ${commit}`);
   }
-  const prefix = git(root, ['rev-parse', '--show-prefix']);
-  const worktree = mkdtempSync(join(tmpdir(), 'plm-'));
+  const prefix = git(root, ['rev-parse', '--show-prefix']), worktree = mkdtempSync(join(tmpdir(), 'plm-'));
   try {
     git(root, ['worktree', 'add', '--detach', '-q', worktree, commit], { GIT_LFS_SKIP_SMUDGE: '1' });
     const repo = loadRepo(join(worktree, prefix));

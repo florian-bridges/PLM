@@ -5,7 +5,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 ## Core library
 
 **CO-01.1** The core shall read `plm.yaml` (repository settings, including `folders: {<type>: <folder>}` overriding or extending each built-in home folder: `requirements` for `requirement`, `tests` for `test-case`, `runs` for `test-run`), item folders `<name>/item.yaml` with requirements and test cases in their home folder as `<home>/<name>.yaml` and `<home>/<name>/item.yaml`, both also in subfolders, test runs in the top-level home folder, other types' home folder inside their parent item only, a top-level item having none, and `meta/<ID>.yaml` with the `yaml` package, keeping comments, formatting and line width when writing back. A folder with no `item.yaml` shall be transparent, hidden folders excepted: items under it belong to the nearest enclosing item, or are top-level if none.
-*Rationale:* Comment-preserving writes keep hand edits intact and review diffs small when tools and engineers edit the same files. Subfolders group requirements and test cases; names sort them. Test cases in the tested item's folder make its version cover its requirements and test cases, so adding or changing a test case outdates the runs against the item. Runs stay outside: inside the tested item, a run would change the version it records. A per-type home folder in `plm.yaml` avoids hard-coding other types' names in the core.
+*Rationale:* Comment-preserving writes keep hand edits and diffs small. Nesting test cases in the tested item's folder makes changing one outdate its runs; runs stay outside so recording one doesn't change the tested item's version. A per-type home folder avoids hard-coding type names in the core.
 
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
 *Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
@@ -14,7 +14,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
 
 **CO-02.1** The core shall validate `item.yaml` with Ajv against its type's JSON Schema (2020-12), and `meta/<ID>.yaml` against `schemas/meta.schema.json` if present; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
-*Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add their own attributes.
+*Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add attributes.
 
 **CO-02.2** The core shall report as errors: items outside their type's home folder (CO-01.1), other items inside them, a `meta/<ID>.yaml` with no item, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late.
@@ -34,16 +34,19 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-03.2** Queries shall combine free text, matching all words by prefix, with filters `type:`, `status:` and `owner:`.
 *Rationale:* Filters answer typical questions, such as all unreleased parts of an owner, faster than text alone. Prefix matching finds items while typing.
 
+**CO-03.3** The core shall list the objects of a named list field across every item whose own keys match given filters (CO-03.2), each as `<source ID> (<title>)` followed by the object's keys in text, with `source` added in JSON.
+*Rationale:* One mechanism covers findings and any future list field without new code.
+
 ## Traceability engine
 
 **TE-01.1** An item's version shall be the SHA-256 hex digest of its folder's Git tree hash followed by the versions of the items it uses, in listed order; a requirement's version, and a link targeting one file of an item (`<ID>/<path>`), shall be its Git blob hash.
-*Rationale:* Git hashes capture all files, including nested items and LFS pointers; adding used items' versions propagates their changes. Content, not path, decides a version, so `git mv` keeps an item's ID, links and confirmations; only the old and new parent folders turn suspect.
+*Rationale:* Git hashes capture all files, including nested items and LFS pointers; adding used items' versions propagates their changes. Content, not path, decides a version, so `git mv` keeps an item's ID, links and confirmations.
 
 **TE-01.2** Hashes of the working tree shall be computed by staging into a temporary Git index, so LFS filters apply and uncommitted and committed states yield identical versions.
 *Rationale:* Engineers need suspect states before committing; identical results avoid spurious differences between local runs and CI.
 
 **TE-02.1** Confirming a link shall write to `confirmed.<target>` in the source's `meta/<ID>.yaml` the target's current `version` and `title`, the confirming Git `user.name` as `by`, the date as `on`, and as `commit` the short hash of HEAD if the target has the confirmed version there; a link without `version` there is unconfirmed.
-*Rationale:* Keeping the version in a file of its own makes confirmations reviewable as ordinary diffs; title, confirmer, date and commit show what was reviewed without looking up hashes. Uncommitted targets have no commit to name.
+*Rationale:* Keeping the version in its own file makes confirmations reviewable as diffs; title, confirmer, date and commit show what was reviewed. Uncommitted targets have no commit to name.
 
 **TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset, and for links of test runs.
 *Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review. Run links are confirmed when recording (CL-03.2).
@@ -74,7 +77,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>/<path>`; `--remove` deletes that link and its target's `confirmed` entry; an unknown link is a usage error), `confirm`, `set`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>/<path>`; `--remove` deletes that link and its target's `confirmed` entry; an unknown link is a usage error), `confirm`, `set`, `suspects [<item>]`, `impact <base>[..<head>]`, `report coverage [<item>] [--by <field>] [--allocation]` and `report entries <field> [<key>:<value>...]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Searching upward works from any subfolder.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
@@ -84,7 +87,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* The ID spares finding the file; lists, numbers and `links` stay with `plm link` and hand edits.
 
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
-*Rationale:* Repository templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files. Creating a missing home folder spares preparing structure by hand for a new type.
+*Rationale:* Repository templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
@@ -105,12 +108,12 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Separating findings from failures lets CI tell rejected changes from broken tooling.
 
 **CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
-*Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up. Reusing `show`'s fields for `search` answers many items in one call, avoiding per-item lookups.
+*Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up. Reusing `show`'s fields for `search` answers many items in one call.
 
 ## VS Code extension
 
 **VS-01.1** The extension shall reuse the core library and run in the extension host without a separate server, bundled by esbuild into one CommonJS file and activated in workspaces containing `plm.yaml`.
-*Rationale:* One core avoids duplicated logic and diverging results between editor and CI. A bundle needs no installed dependencies; other workspaces stay unaffected.
+*Rationale:* One core avoids duplicated logic and diverging results between editor and CI. A bundle needs no installed dependencies.
 
 **VS-01.2** Editing the active item (the innermost item containing the active editor's file) or a product tree item shall open a webview form generated from the type's JSON Schema, with fields for its string, number, enum and string array attributes and for `status` and `owner`. The form shall show schema errors while typing; saving shall write `item.yaml` and `meta/<ID>.yaml` through the core, keeping other attributes and comments.
 *Rationale:* Forms generated from schemas support new and program-specific types without extension code. Flat fields cover the built-in types; nested attributes are edited in YAML.

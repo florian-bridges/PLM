@@ -1,6 +1,6 @@
 // CO-03
 import MiniSearch from 'minisearch';
-import { named, type Named, type Repo } from './repo.ts';
+import { list, named, type Named, type Repo } from './repo.ts';
 
 // CO-03.1
 export function searchIndex(repo: Repo): MiniSearch {
@@ -14,7 +14,15 @@ export function searchIndex(repo: Repo): MiniSearch {
 
 // CO-03.2
 export function search(repo: Repo, query: string): Named[] {
-  const pattern = /\b(type|status|owner):(\S+)/g, filters = [...query.matchAll(pattern)], text = query.replace(pattern, '').trim();
-  const filter = (result: Record<string, unknown>) => filters.every(([, field, value]) => result[field] === value);
+  const pattern = /\b(type|status|owner):(\S+)/g, filters = [...query.matchAll(pattern)], text = query.replace(pattern, '').trim(),
+    filter = (result: Record<string, unknown>) => filters.every(([, field, value]) => result[field] === value);
   return searchIndex(repo).search(text || MiniSearch.wildcard, { prefix: true, combineWith: 'AND', filter }).map((result) => named(repo, result.id));
+}
+
+// CO-03.3
+export function entries(repo: Repo, field: string, filters: string[][]) {
+  return [...repo.entries.values()].flatMap((source) => list<Record<string,string>>(source.item.data[field]).flatMap((data) =>
+    Object.values(data)
+      .filter((refers) => repo.entries.has(refers) && filters.every(([k, val]) => String(data[k]) === val))
+      .map((refers) => ({ source: source.id, refers, ...data }))));
 }

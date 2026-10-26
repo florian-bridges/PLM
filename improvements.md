@@ -328,6 +328,7 @@ Add new entries at the end. Format:
 *Impact:* A hand-kept "repeat on the simulation PC" list; a run on the interim host counts as full evidence.
 *Workaround:* The host is named in the run's text.
 *Proposal:* `plm test record --env <ID>` names the host or bench item; `report coverage --by env`; a run turns stale when its environment item changes, as for the SUT.
+*Decision:* 2026-10-26, product owner: accepted, trimmed. No `--env`, no `--by env`: `--sut` takes one or more IDs (CL-03.1), each a `tests` link, so the host item is a second SUT; the existing outdated-run rule (TE-03.1, TE-06.1) makes the run stale when it changes; `plm report entries links type:tests target:<host ID>` lists its runs. Paid for by deleting the redundant current-SUT set in `coverage` (`src/links.ts`). Branch `wp/afw-test-env`, one stream (`src/cli.ts`, `src/links.ts`, `test/plm.test.ts`), `src/`+`test/` net <= 0 words (4100/4100), `documents/` <= +15 words. Done when: `plm test record T --sut A B ...` links both, changing B outdates the run, tested, build and tests green, budget met.
 
 ## No parameters: a value is copied wherever it is used
 *Found:* 2026-10-25, autonomous-fixed-wing, owner and chief engineer

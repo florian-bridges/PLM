@@ -330,3 +330,10 @@ Add new entries at the end. Format:
 *Impact:* A changed value leaves stale copies that nothing detects, e.g. the simulation flies the old speed; suspects are per item or file, not per value; TBD and provisional state are prose.
 *Workaround:* Hand search at each change; file links; reviewers.
 *Proposal:* Concept request, no code: a short concept for the owner's decision before any requirement. Scope: a parameter is a named value with unit and state (TBD, provisional, final) owned by one item, typically written by an analysis to an output file; requirements, analyses and scripts reference it by name (e.g. `ANA-QF8HRH:v_cruise`); `plm` resolves references, checks stated values against the source, suspects per parameter, lists TBD parameters and their dependents; scripts read parameters from the files. The concept states the data model, two or three examples from this project, and which existing mechanisms it replaces (file-level `derives-from`, "A TBD value and what derives from it cannot be listed") to fit the word budget.
+
+## `plm test record` leaves the new run's owner unset
+*Found:* 2026-10-26, autonomous-fixed-wing, simulation-engineer
+*Observed:* `plm test record TC-F7EBAP --sut SW-ZFVKYF --result pass --log ...` creates `meta/RUN-<ID>.yaml` with `status: draft` and `confirmed:` but no `owner:` field; `plm validate` then fails with `item must have required property 'owner'`. A prior run's `meta/RUN-CP9R11.yaml` has `owner: simulation-engineer`, set by hand.
+*Impact:* `plm validate` fails after every `plm test record` until the owner is added by hand; easy to miss since the command itself exits 0.
+*Workaround:* `plm set RUN-<ID> owner <agent-name>` right after `plm test record`.
+*Proposal:* `plm test record` sets the new run's `owner` itself (e.g. to the test-case's own owner, or the current agent), like `plm new` does for other items.

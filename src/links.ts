@@ -69,10 +69,10 @@ export function link(repo: Repo, source: string, type: string, target: string, r
 }
 
 // CL-03.1–CL-03.2
-export function recordRun(repo: Repo, testCases: string[], sut: string, results: string[], logs: string[]) {
+export function recordRun(repo: Repo, testCases: string[], suts: string[], results: string[], logs: string[]) {
   if (results.length !== testCases.length) throw new UsageError('One result per test');
   const current = currentVersions(repo),
-    links: Link[] = [{ type: 'tests', target: sut }, ...testCases.map((target, i) => ({ type: 'executes', target, result: results[i] }))],
+    links: Link[] = [...suts.map((target) => ({ type: 'tests', target })), ...testCases.map((target, i) => ({ type: 'executes', target, result: results[i] }))],
     confirmed = Object.fromEntries(links.map(({ target }) => [target, confirmation(repo, target, versionAt(repo.root, 'HEAD', target))]));
   // CL-03.3
   const changed = links.find(({ target }) => confirmed[target].version !== current.get(target));
@@ -80,7 +80,7 @@ export function recordRun(repo: Repo, testCases: string[], sut: string, results:
 
   const id = newId(repo, 'test-run'),
     folder = `${repo.settings.folders!['test-run']}/${id}`,
-    item = { id, type: 'test-run', title: `${testCases.join(', ')} on ${sut}`, date: new Date().toISOString(), links };
+    item = { id, type: 'test-run', title: `${testCases.join(', ')} on ${suts.join(', ')}`, date: new Date().toISOString(), links };
   writeYaml(repo.root, { path: `${folder}/item.yaml`, doc: new Document(item) });
   writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: new Document({ status: 'draft', confirmed }) });
   for (const log of logs) copyFileSync(log, join(repo.root, folder, basename(log)));
@@ -119,7 +119,6 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
   const linksOfType = (type: string) => states.filter((state) => state.link.type === type),
     isCurrent = (state: LinkState) => state.state === 'current',
     outdatedRuns = new Set(states.filter((state) => fromRun(repo, state) && !isCurrent(state)).map((state) => state.source)),
-    runsOfCurrentSut = new Set(linksOfType('tests').filter(isCurrent).map((state) => state.source)),
     latestRun = new Map<string, LinkState>(),
     latestCurrentRun = new Map<string, LinkState>(),
     date = (executes: LinkState) => String(entry(repo, executes.source).item.data.date),
@@ -129,7 +128,7 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
     };
   for (const executes of linksOfType('executes')) {
     keepLatest(latestRun, executes);
-    if (!outdatedRuns.has(executes.source) && runsOfCurrentSut.has(executes.source)) keepLatest(latestCurrentRun, executes);
+    if (!outdatedRuns.has(executes.source)) keepLatest(latestCurrentRun, executes);
   }
 
   const inScope = within(repo, root),

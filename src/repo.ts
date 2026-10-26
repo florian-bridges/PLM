@@ -10,7 +10,7 @@ export interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>
 
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 export interface Entry { id: string; path: string; nested: string[]; requirements: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
-export interface Settings { prefixes?: Record<string, string>; informative?: string[]; folders?: Record<string, string>; entries?: Record<string, string> }
+export interface Settings { prefixes?: Record<string, string>; informative?: string[]; folders?: Record<string, string> }
 export interface Repo { root: string; settings: Settings; entries: Map<string, Entry>; duplicates: Entry[] }
 
 export class UsageError extends Error {}

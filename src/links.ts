@@ -80,10 +80,9 @@ export function recordRun(repo: Repo, testCases: string[], sut: string, results:
 
   const id = newId(repo, 'test-run'),
     folder = `${repo.settings.folders!['test-run']}/${id}`,
-    item = { id, type: 'test-run', title: `${testCases.join(', ')} on ${sut}`, date: new Date().toISOString(), links },
-    owner = repo.entries.get(testCases[0])?.meta.data.owner; // CL-03.1
+    item = { id, type: 'test-run', title: `${testCases.join(', ')} on ${sut}`, date: new Date().toISOString(), links };
   writeYaml(repo.root, { path: `${folder}/item.yaml`, doc: new Document(item) });
-  writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: new Document({ status: 'draft', ...(owner && { owner }), confirmed }) });
+  writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: new Document({ status: 'draft', confirmed }) });
   for (const log of logs) copyFileSync(log, join(repo.root, folder, basename(log)));
   return id;
 }

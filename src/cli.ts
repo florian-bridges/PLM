@@ -6,7 +6,7 @@ import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, type LinkState } from './links.ts';
 import { artifacts, entry, loadRepo, named, newItem, Refused, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
-import { entries, parseFilters, search } from './search.ts';
+import { entries, search } from './search.ts';
 import { validate } from './validate.ts';
 import { currentVersions, snapshotAt } from './version.ts';
 
@@ -49,8 +49,8 @@ program.command('validate').description('check').action(() => {
 program.command('show <id>').description('details').action((id: string) => {
   const repo = openRepo(), found = entry(repo, id), versions = currentVersions(repo),
     links = linkStates(repo, versions).filter((state) => state.source === id || state.link.target === id),
-    // CO-01.3, CO-03.3
-    data = { ...record(found), version: versions.get(id), links, artifacts: artifacts(repo, found), entries: entries(repo, []).filter((m) => m.refers === id) };
+    // CO-01.3
+    data = { ...record(found), version: versions.get(id), links, artifacts: artifacts(repo, found) };
   output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
@@ -142,9 +142,8 @@ report.command('coverage [item]').description('coverage')
   });
 
 // CO-03.3, CL-01.1
-report.command('entries [args...]').description('entries').action((args: string[] = []) => {
-  const { filters, text } = parseFilters(args.join(' ')),
-    [repo, , id] = scoped(text), matches = entries(repo, filters, id),
+report.command('entries <field> [filters...]').description('entries').action((field: string, filters: string[] = []) => {
+  const repo = openRepo(), matches = entries(repo, field, filters.map((f) => f.split(':'))),
     lines = matches.map((m) => `${m.source} ${label(named(repo, m.refers))} ${Object.entries(m).slice(2).map((e) => e.join(':')).join(' ')}`);
   output(lines.join('\n'), matches);
   if (matches.length) exitCode = 1;

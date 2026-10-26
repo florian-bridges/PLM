@@ -276,20 +276,20 @@ test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
   expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {}, links: [{ target: 'R' }] }]);
 });
 
-test('CO-03.3, CL-01.1: entries', () => {
+test('CO-03.3, CL-01.1: entries',() => {
   const root = fixture();
-  write(root, {
+  write(root,{
     'plm.yaml': 'entries:\n  findings: state:open\n',
     'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nuses: [L]\nfindings:\n  - item: P\n    state: open\n    severity: major\n  - item: L\n    state: open\n  - item: L\n    state: closed\n',
     'meta/L.yaml': 'owner: ana\n',
   });
-  const repo = loadRepo(root), refers = (e: any[]) => e.map((m) => m.refers);
-  expect(refers(entries(repo, []))).toEqual(['P', 'L']);
-  expect(refers(entries(repo, [['severity', 'major']]))).toEqual(['P']);
-  expect(refers(entries(repo, [['owner', 'ana']]))).toEqual(['L']);
-  expect(entries(repo, [], 'R')).toEqual([]);
-  const run = plm(root, 'report', 'entries');
+  const repo = loadRepo(root),refers = (e: any[]) => e.map((m) => m.refers);
+  expect(refers(entries(repo,[]))).toEqual(['P','L']);
+  expect(refers(entries(repo,[['severity','major']]))).toEqual(['P']);
+  expect(refers(entries(repo,[['owner','ana']]))).toEqual(['L']);
+  expect(entries(repo,[],'R')).toEqual([]);
+  const run = plm(root,'report','entries');
   expect(run.stdout).toContain('refers:P item:P state:open severity:major');
-  expect(run.status + plm(root, 'report', 'entries', 'R').status).toBe(1);
-  expect(json(root, 'show', 'P').entries).toMatchObject([{ source: 'A', refers: 'P' }]);
+  expect(run.status + plm(root,'report','entries','R').status).toBe(1);
+  expect(json(root,'show','P').entries).toMatchObject([{ source: 'A',refers: 'P' }]);
 });

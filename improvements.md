@@ -350,3 +350,10 @@ Add new entries at the end. Format:
 *Done:* 2026-10-26, product owner. Closed without code: `plm set RUN-<ID> owner <name>` after `plm test record`; a project `schemas/meta.schema.json` requiring `owner` makes `plm validate` flag a run left unset.
 *Review round 3:* 2026-10-26, quality, commit 30a942c (`wp/afw-entries`), major only. **Closed.** `test/plm.test.ts` now asserts each of the four exit codes separately instead of summing them; `npm test` 18/18 green. `src/`+`test/` 4100/4100 (`scripts/wordcount.py --max-src 4100`, exit 0). No new majors.
 *Done:* 2026-10-26, product owner. Merged to `integration/afw` (7475904); build and 18/18 tests green; `src/`+`test/` 4100/4100, `documents/` 4959/5000. Projects: `plm report entries findings state:open [severity:<s>] [owner:<name>] [item:<ID>]`; no migration, no `plm.yaml` change.
+
+## A test run turns outdated by a change that leaves the tested build unchanged
+*Found:* 2026-10-26, autonomous-fixed-wing, chief engineer
+*Observed:* Pinning Gazebo package versions in the `SW-ZFVKYF` Simulation container Dockerfile (`wp/sim-flyable-fixes`, `REV-8NK1DG` major 3) outdates `RUN-JKAP5M`, `RUN-G4F38B` (TC-1N1NST) and `RUN-Z6ZRST` (TC-PMZZBJ), although dpkg shows the installed image is identical. A run cannot be re-confirmed against the new version.
+*Impact:* One rerun per test case (about 15 min of agent time each on the Jetson) only to refresh evidence; every container or model text edit repeats it before each milestone review.
+*Workaround:* None yet; the runs are rerun.
+*Proposal:* Let the recorder of a run confirm it against a newer version of its SUT, with a reason, as `plm confirm` does for links.

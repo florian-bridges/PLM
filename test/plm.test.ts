@@ -99,8 +99,10 @@ test('CL-01.1, CL-01.3, CO-01.1, CO-02.1: set', () => {
   expect(validate(loadRepo(root)).some((f) => f.file === 'meta/P.yaml' && f.code === 'schema')).toBe(true);
   plm(root, 'set', 'P', 'owner', 'a b'.repeat(40));
   expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toBe(`# reviewed\nstatus: draft\nowner: ${'a b'.repeat(40)}\n`);
-  expect(plm(root, 'set', 'L', 'material', 'Al').status + plm(root, 'set', 'P', 'links', 'x').status
-    + plm(root, 'set', 'A', 'uses', 'x').status + plm(root, 'set', 'L', 'mass_kg', '2').status).toBe(6);
+  expect(plm(root, 'set', 'L', 'material', 'Al').status).toBe(0);
+  expect(plm(root, 'set', 'P', 'links', 'x').status).toBe(2);
+  expect(plm(root, 'set', 'A', 'uses', 'x').status).toBe(2);
+  expect(plm(root, 'set', 'L', 'mass_kg', '2').status).toBe(2);
   plm(root, 'link', 'P', 'derives-from', 'L');
   plm(root, 'confirm', 'P');
   plm(root, 'link', 'P', 'derives-from', 'L', '--remove');
@@ -271,5 +273,6 @@ test('CO-03.3, CL-01.1: entries', () => {
   write(root, { 'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nfindings:\n  - item: P\n    state: open\n    severity: major\n  - item: L\n    state: open\n' });
   expect(entries(loadRepo(root), 'findings', [['severity', 'major']]).map((m) => m.refers)).toEqual(['P']);
   expect(plm(root, 'report', 'entries', 'findings', 'item:P').stdout).toContain('A P (Spar) item:P state:open severity:major');
-  expect(plm(root, 'report', 'entries', 'findings').status + plm(root, 'report', 'entries', 'findings', 'item:R').status).toBe(1);
+  expect(plm(root, 'report', 'entries', 'findings').status).toBe(1);
+  expect(plm(root, 'report', 'entries', 'findings', 'item:R').status).toBe(0);
 });

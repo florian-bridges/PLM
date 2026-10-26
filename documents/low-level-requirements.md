@@ -34,7 +34,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-03.2** Queries shall combine free text, matching all words by prefix, with filters `type:`, `status:` and `owner:`.
 *Rationale:* Filters answer typical questions, such as all unreleased parts of an owner, faster than text alone. Prefix matching finds items while typing.
 
-**CO-03.3** The core shall treat `plm.yaml`'s configured list fields (`entries: {<field>: <filter>}`, default none) as entries referring to the items whose ID equals one of their string values, match each by its configured filter and given filters (CO-03.2) with a missing key read from the referred item's meta, and list an item's matching entries for `show` and a subtree.
+**CO-03.3** The core shall list the objects of a named list field across every item whose own keys match given filters (CO-03.2), each as `<source ID> (<title>)` followed by the object's keys in text, with `source` added in JSON.
 *Rationale:* One mechanism covers findings and any future list field without new code.
 
 ## Traceability engine
@@ -77,7 +77,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>/<path>`; `--remove` deletes that link and its target's `confirmed` entry; an unknown link is a usage error), `confirm`, `set`, `suspects [<item>]`, `impact <base>[..<head>]`, `report coverage [<item>] [--by <field>] [--allocation]` and `report entries [<item>] [<key>:<value>...]`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>/<path>`; `--remove` deletes that link and its target's `confirmed` entry; an unknown link is a usage error), `confirm`, `set`, `suspects [<item>]`, `impact <base>[..<head>]`, `report coverage [<item>] [--by <field>] [--allocation]` and `report entries <field> [<key>:<value>...]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Searching upward works from any subfolder.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
@@ -92,8 +92,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
 
-**CL-03.1** `plm test record <test-case>... --sut <ID> --result <result>... [--log <file>...]` shall create a test run in `runs/<ID>/` with date, copies of the log files and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`, and give the run's `meta` the first test case's `owner`, if set.
-*Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for. One run per rig session keeps its logs together; results per test case keep one failure from discrediting the others. The run needs an owner like other items.
+**CL-03.1** `plm test record <test-case>... --sut <ID> --result <result>... [--log <file>...]` shall create a test run in `runs/<ID>/` with date, copies of the log files and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.
+*Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for. One run per rig session keeps its logs together; results per test case keep one failure from discrediting the others.
 
 **CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation per TE-02.1 with the versions at `HEAD`, recorded as `commit`.
 *Rationale:* The run must record exactly which version was tested; the commit makes it reproducible.

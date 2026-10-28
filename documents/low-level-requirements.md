@@ -28,18 +28,21 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, `tests` from `test-run` to any type, and `derives-from` from any type to any type.
 *Rationale:* Fixed semantics keep reports comparable.
 
+**CO-02.7** Any item's `item.yaml` may hold a `parameters` list field, entries `{name, value, unit, state}`, `state` from `plm.yaml`'s `parameter_states` (default `[provisional, final]`; missing or `null` value: TBD, not a state). The core shall report as error a non-number `value`, an unlisted `state`, or `stale-value` (vs its `derives-from` target), and as warning `tbd-source` (target TBD).
+*Rationale:* Replaces copies; flags stale or TBD drift.
+
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.
 *Rationale:* One index format serves the CLI, VS Code and the browser without a search server.
 
 **CO-03.2** Queries shall combine free text, matching all words by prefix, with filters `type:`, `status:` and `owner:`.
 *Rationale:* Filters answer typical questions, such as all unreleased parts of an owner, faster than text alone. Prefix matching finds items while typing.
 
-**CO-03.3** The core shall list the objects of a named list field across every item whose own keys match given filters (CO-03.2), each as `<source ID> (<title>)` followed by the object's keys in text, with `source` added in JSON.
+**CO-03.3** The core shall list the objects of a named list field, scoped to an item's subtree if given, matching filters (CO-03.2; empty matches missing, `null` or empty), each as `<source ID> (<title>)` followed by its keys, with `source` added in JSON.
 *Rationale:* One mechanism covers findings and any future list field without new code.
 
 ## Traceability engine
 
-**TE-01.1** An item's version shall be the SHA-256 hex digest of its folder's Git tree hash followed by the versions of the items it uses, in listed order; a requirement's version, and a link targeting one file of an item (`<ID>/<path>`), shall be its Git blob hash.
+**TE-01.1** An item's version shall be the SHA-256 hex digest of its folder's Git tree hash followed by the versions of the items it uses, in listed order; a requirement's version shall be its Git blob hash, and a link to a parameter (`<ID>:<name>`) the hash of that entry.
 *Rationale:* Git hashes capture all files, including nested items and LFS pointers; adding used items' versions propagates their changes. Content, not path, decides a version, so `git mv` keeps an item's ID, links and confirmations.
 
 **TE-01.2** Hashes of the working tree shall be computed by staging into a temporary Git index, so LFS filters apply and uncommitted and committed states yield identical versions.
@@ -51,7 +54,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset, and for links of test runs.
 *Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review. Run links are confirmed when recording (CL-03.2).
 
-**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none; for a requirement target, versions are compared with the fields listed under `informative:` in `plm.yaml` (default `[rationale]`) removed from both, read from Git, and a confirmed blob missing from Git keeps the link suspect. Links from test runs are evidence, not links to review: suspect lists, of the repository or an item subtree, shall omit them, and a run with a suspect link is outdated. A link naming one file (`<ID>/<path>`, TE-01.1) is suspect only when that file's version differs.
+**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none; for a requirement target, versions are compared with the fields listed under `informative:` in `plm.yaml` (default `[rationale]`) removed from both, read from Git, and a confirmed blob missing from Git keeps the link suspect. Links from test runs are evidence, not links to review: suspect lists, of the repository or an item subtree, shall omit them, and a run with a suspect link is outdated. A link naming a parameter (`<ID>:<name>`, TE-01.1) is suspect only when that parameter's version differs.
 *Rationale:* Separating unconfirmed from suspect distinguishes new, unreviewed links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
 
 **TE-03.2** To show what changed, the engine shall return the diff of the target's subtree since the link's `commit` or, if it is missing or unknown, since the latest commit at which the target had the confirmed version.
@@ -77,14 +80,17 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>/<path>`; `--remove` deletes that link and its target's `confirmed` entry; an unknown link is a usage error), `confirm`, `set`, `suspects [<item>]`, `impact <base>[..<head>]`, `report coverage [<item>] [--by <field>] [--allocation]` and `report entries <field> [<key>:<value>...]`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; `--remove` deletes that link and its target's `confirmed` entry; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Searching upward works from any subfolder.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
 *Rationale:* Links are reviewed one by one, or all at once after reviewing an item.
 
-**CL-01.3** `set <id> <field> <value>` shall write `<value>` as a string to `owner` or `status` in `meta/<ID>.yaml`, or to any other field in `item.yaml`, keeping comments and formatting (CO-01.1), refusing a field whose value is not a string.
-*Rationale:* The ID spares finding the file; lists, numbers and `links` stay with `plm link` and hand edits.
+**CL-01.3** `set <id|ref> <field> <value>` shall write `<value>` as a string to `owner` or `status` in `meta/<ID>.yaml`, or to any other field in `item.yaml`, keeping comments and formatting (CO-01.1), refusing a field whose value is not a string; on a parameter reference (`<ID>:<name>`), `value` as a number (TBD if empty) or `state` (entry created if new).
+*Rationale:* The ID spares finding the file; other lists and `links` stay with `plm link` and hand edits.
+
+**CL-01.4** `get <ref> [<key>]` shall print a parameter's `value` or key, nothing else; exit 1 if TBD, usage error if unknown.
+*Rationale:* Scripts read a value, not a copy.
 
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
 *Rationale:* Repository templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.

@@ -124,16 +124,51 @@ test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
   expect(() => confirm(repo, currentVersions(repo), validate(repo), 'P')).toThrow(Refused);
 });
 
-test('TE-01.1, TE-03.1: parameter target', () => {
+test('TE-01.1, TE-03.1, CO-02.7, CO-03.3, CL-01.1, CL-01.3–CL-01.4: parameter', () => {
   write(root, {
-    'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nuses: [L]\nparameters: [{name: span, value: 3, unit: m}]\n',
+    'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nmass_kg: 1\nparameters: [{name: span, value: 3, unit: m}]\n',
     'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks:\n  - type: derives-from\n    target: A:span\n',
+    'wing/requirements/load.yaml': 'id: R\ntype: requirement\ntitle: Load\ntext: Carry 3g.\nfindings: [{item: A, state: open, severity: major}]\n',
+    'meta/A.yaml': '# reviewed\nstatus: draft\n',
   });
   confirm(loadRepo(root), currentVersions(loadRepo(root)), [], 'P');
   expect(parameterOf(loadRepo(root), 'A:span')).toMatchObject({ entry: { id: 'A' }, parameter: { name: 'span', value: 3 } });
-  write(root, { 'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nuses: [L]\nparameters: [{name: span, value: 4, unit: m}]\n' });
+  expect(plm(root, 'list', 'findings', 'severity:major').stdout).toBe('R (Load) item:A state:open severity:major\n');
+  expect(plm(root, 'list', 'findings', 'severity:minor').stdout).toBe('\n');
+  expect(json(root, 'list', 'parameters')).toEqual([{ source: 'A', name: 'span', value: 3, unit: 'm' }]);
+  expect(plm(root, 'list', 'parameters', 'A').stdout).toBe('A (Wing) name:span value:3 unit:m\n');
+  expect(plm(root, 'list', 'parameters', 'R').stdout).toBe('\n');
+
+  plm(root, 'set', 'A', 'owner', 'ana');
+  expect(readFileSync(join(root, 'meta/A.yaml'), 'utf8')).toBe('# reviewed\nstatus: draft\nowner: ana\n');
+  expect(plm(root, 'set', 'A', 'mass_kg', '2').status).toBe(2);
+  expect(plm(root, 'set', 'A', 'title', 'Spar').status).toBe(0);
+  expect(plm(root, 'get', 'A:span').stdout).toBe('3\n');
+  expect(plm(root, 'get', 'A:span', 'unit').stdout).toBe('m\n');
+  const read = () => readFileSync(join(root, 'wing/item.yaml'), 'utf8');
+  plm(root, 'set', 'A:span', 'value', '5');
+  expect(read()).toContain('value: 5');
+  plm(root, 'set', 'A:span', 'value', '');
+  expect(read()).not.toContain('value:');
+  expect(plm(root, 'get', 'A:span').status).toBe(1);
+  expect(plm(root, 'get', 'A:span', 'x').status).toBe(2);
+  expect(plm(root, 'get', 'A:nope').status).toBe(2);
+  plm(root, 'set', 'A:span', 'state', 'final');
+  plm(root, 'set', 'A:chord', 'value', '2');
+  expect(read()).toContain('state: final');
+  expect(read()).toContain('name: chord');
+  expect(plm(root, 'set', 'A:span', 'unit', 'm').status).toBe(2);
+
+  write(root, { 'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nparameters: [{name: span, value: 4, unit: m}]\n' });
   expect(linkStates(loadRepo(root), currentVersions(loadRepo(root)))[0]).toMatchObject({ targetTitle: 'Wing', state: 'suspect' });
-});
+
+  write(root, {
+    'plm.yaml': 'parameter_states: [draft]\n',
+    'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nparameters: [{name: v, value: bad}, {name: s, state: wrong}]\n',
+    'bolt/item.yaml': bolt + 'parameters: [{name: v, value: 2}]\nlinks: [{type: derives-from, target: "A:v"}, {type: derives-from, target: "A:s"}]\n',
+  });
+  expect(validate(loadRepo(root)).map((f) => f.code)).toEqual(expect.arrayContaining(['schema', 'unknown-state', 'unknown-target', 'tbd-source', 'stale-value']));
+}, 15000);
 
 test('CL-02.1–CL-02.2, CO-01.1, CO-02.2: nest', () => {
   root = join(base, 'new');

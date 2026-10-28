@@ -94,6 +94,16 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings'
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
 
+test('CL-01.1,CO-02.1:remove',()=>{
+  write(root,{'schemas/meta.schema.json':'{"required":["owner"]}'});
+  expect(validate(loadRepo(root)).some((f)=>f.file==='meta/P.yaml'&&f.code==='schema')).toBe(true);
+  plm(root,'link','P','derives-from','L');
+  plm(root,'confirm','P');
+  expect(plm(root,'link','P','derives-from','L','--remove').status).toBe(0);
+  expect(linksOf(loadRepo(root).entries.get('P')!).map((l)=>l.target)).toEqual(['R']);
+  expect(loadRepo(root).entries.get('P')!.meta.data.confirmed?.L).toBeUndefined();
+});
+
 test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
   let repo = loadRepo(root);
   expect(linkStates(repo, currentVersions(repo))[0].state).toBe('unconfirmed');

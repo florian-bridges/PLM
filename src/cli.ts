@@ -78,7 +78,7 @@ program.command('get <ref> [key]').description('get').action((ref: string, key?:
 // CO-03.3, CL-01.1
 program.command('list <field> [args...]').description('list').action((field: string, args: string[] = []) => {
   const repo = openRepo(), item = args[0]?.includes(':') ? undefined : args.shift(),
-    matches = list(repo, field, item, args.map((f) => f.split(':'))),
+    matches = list(repo, field, item, args.map((f) => f.split(/:(.*)/))),
     lines = matches.map((m) => `${label(named(repo, m.source))} ${Object.entries(m).slice(1).map((e) => e.join(':')).join(' ')}`);
   output(lines.join('\n'), matches);
 });

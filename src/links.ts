@@ -1,7 +1,7 @@
 import { copyFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, linksOf, list, named, newId, Refused, selection, subtree, targetId, targetPath, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { entry, linksOf, list, named, newId, Refused, selection, subtree, targetId, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, git, versionAt } from './version.ts';
 
@@ -93,8 +93,7 @@ export function changeSince(repo: Repo, link: Link) {
     commit = known ? link.commit : git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean)
       .find((candidate) => versionAt(repo.root, candidate, link.target) === link.version);
   if (!commit) return { diff: '' };
-  const path = link.target.includes('/') && targetPath(repo, link.target),
-    paths = path ? [path] : subtree(repo, link.target).map((id) => entry(repo, id).path);
+  const paths = subtree(repo, targetId(link.target)).map((id) => entry(repo, id).path);
   return { commit, diff: git(repo.root, ['diff', commit, '--', ...paths]) };
 }
 

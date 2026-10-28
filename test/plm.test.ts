@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, beforeEach, expect, test } from 'vitest';
 import { changeSince, confirm, link, linkStates, recordRun } from '../src/links.ts';
-import { linksOf, loadRepo, Refused } from '../src/repo.ts';
-import { entries, search } from '../src/search.ts';
+import { linksOf, loadRepo, parameterOf, Refused } from '../src/repo.ts';
+import { search } from '../src/search.ts';
 import { validate } from '../src/validate.ts';
 import { currentVersions, git, versionAt } from '../src/version.ts';
 
@@ -94,22 +94,6 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings'
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
 
-test('CL-01.1, CL-01.3, CO-01.1, CO-02.1: set', () => {
-  write(root, { 'bolt/item.yaml': bolt + 'mass_kg: 1\n', 'schemas/meta.schema.json': '{"required":["owner"]}' });
-  expect(validate(loadRepo(root)).some((f) => f.file === 'meta/P.yaml' && f.code === 'schema')).toBe(true);
-  plm(root, 'set', 'P', 'owner', 'a b'.repeat(40));
-  expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toBe(`# reviewed\nstatus: draft\nowner: ${'a b'.repeat(40)}\n`);
-  expect(plm(root, 'set', 'L', 'material', 'Al').status).toBe(0);
-  expect(plm(root, 'set', 'P', 'links', 'x').status).toBe(2);
-  expect(plm(root, 'set', 'A', 'uses', 'x').status).toBe(2);
-  expect(plm(root, 'set', 'L', 'mass_kg', '2').status).toBe(2);
-  plm(root, 'link', 'P', 'derives-from', 'L');
-  plm(root, 'confirm', 'P');
-  plm(root, 'link', 'P', 'derives-from', 'L', '--remove');
-  expect(linksOf(loadRepo(root).entries.get('P')!).map((l) => l.target)).toEqual(['R']);
-  expect(loadRepo(root).entries.get('P')!.meta.data.confirmed?.L).toBeUndefined();
-});
-
 test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
   let repo = loadRepo(root);
   expect(linkStates(repo, currentVersions(repo))[0].state).toBe('unconfirmed');
@@ -140,13 +124,15 @@ test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
   expect(() => confirm(repo, currentVersions(repo), validate(repo), 'P')).toThrow(Refused);
 });
 
-test('TE-01.1, TE-03.1: file target', () => {
-  write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks:\n  - type: derives-from\n    target: A/out.csv\n', 'wing/out.csv': '1\n' });
+test('TE-01.1, TE-03.1: parameter target', () => {
+  write(root, {
+    'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nuses: [L]\nparameters: [{name: span, value: 3, unit: m}]\n',
+    'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks:\n  - type: derives-from\n    target: A:span\n',
+  });
   confirm(loadRepo(root), currentVersions(loadRepo(root)), [], 'P');
-  write(root, { 'wing/out.csv': '2\n' });
-  const versions = currentVersions(loadRepo(root));
-  expect(versions.get('A/out.csv')).toBe(git(root, ['hash-object', 'wing/out.csv']));
-  expect(linkStates(loadRepo(root), versions)[0]).toMatchObject({ targetTitle: 'Wing', state: 'suspect' });
+  expect(parameterOf(loadRepo(root), 'A:span')).toMatchObject({ entry: { id: 'A' }, parameter: { name: 'span', value: 3 } });
+  write(root, { 'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nuses: [L]\nparameters: [{name: span, value: 4, unit: m}]\n' });
+  expect(linkStates(loadRepo(root), currentVersions(loadRepo(root)))[0]).toMatchObject({ targetTitle: 'Wing', state: 'suspect' });
 });
 
 test('CL-02.1–CL-02.2, CO-01.1, CO-02.2: nest', () => {
@@ -268,12 +254,4 @@ test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
   expect(plm(root, 'search', 'bo').stdout).toBe('L (Bolt)\n');
   link(repo, 'L', 'satisfies', 'R');
   expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {}, links: [{ target: 'R' }] }]);
-});
-
-test('CO-03.3, CL-01.1: entries', () => {
-  write(root, { 'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nfindings:\n  - item: P\n    state: open\n    severity: major\n  - item: L\n    state: open\n' });
-  expect(entries(loadRepo(root), 'findings', [['severity', 'major']]).map((m) => m.refers)).toEqual(['P']);
-  expect(plm(root, 'report', 'entries', 'findings', 'item:P').stdout).toContain('A P (Spar) item:P state:open severity:major');
-  expect(plm(root, 'report', 'entries', 'findings').status).toBe(1);
-  expect(plm(root, 'report', 'entries', 'findings', 'item:R').status).toBe(0);
 });

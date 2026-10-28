@@ -1,6 +1,6 @@
 # Concept: parameters
 
-Decision input for the owner, not a requirement. Deleted when decided: accepted parts become requirements in `documents/`, the rest is dropped. Kept outside `documents/` because that folder has 34 of 5000 words free.
+Accepted by the owner on 2026-10-28 with all four options below. It is input for the requirements author, who writes it into `documents/` and deletes this file in the same commit. Decision and streams: `improvements.md`, "No parameters: a value is copied wherever it is used".
 
 ## Need
 
@@ -68,7 +68,4 @@ The core needs about 240 words in `src/`+`test/` and 65 in `documents/` that no 
 
 ## Owner decisions
 
-* **Fund it:** raise the `src/`+`test/` limit by about 250 and `documents/` by about 70, or name a feature to remove of that size?
-* **Replace file-target links** by parameter links (one mechanism), or keep both?
-* **Stated-value check** (`stale-value`, +150 words): a number followed by its reference in a text field, `9.68 m/s [ANA-QF8HRH:v_cruise]`, is an error when it differs from the parameter. Include it, or rely on per-parameter suspects and scripts reading the item?
-* **`tbd-source` warning** (+65 words): warn when an item links to a parameter without value while its own text or parameters state a number. Include it, or leave the rule to reviews with `plm list parameters value:`?
+2026-10-28: funded (core plus both options); file-target links `<ID>/<path>` are replaced by `<ID>:<name>`; the stated-value check and the `tbd-source` warning are included.

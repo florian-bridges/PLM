@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, innermostItem, linksOf, targetId, targetPath, usesOf, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, innermostItem, linksOf, list, parameterOf, targetId, targetPath, usesOf, type Parameter, type Repo, type YamlFile } from './repo.ts';
 import { allows, baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
 // CO-02.4
@@ -41,7 +41,9 @@ function schemaFindings(file: YamlFile<unknown>, check: ValidateFunction, data: 
 }
 
 export function validate(repo: Repo) {
-  const ajv = newAjv(), findings: Finding[] = [];
+  const ajv = newAjv(), findings: Finding[] = [],
+    // CO-02.7
+    states = (repo.settings as any).parameter_states ?? ['provisional', 'final'];
   for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
     const { id, item, meta } = entry, type = String(item.data.type), draft = meta.data.status === 'draft',
       validateSchema = schemaFor(ajv, repo.root, type, baseSchema), validateMeta = schemaFor(ajv, repo.root, 'meta'),
@@ -61,16 +63,25 @@ export function validate(repo: Repo) {
       if (!repo.entries.has(used)) findings.push(finding(item, ['uses', index], 'unknown-use', used));
     });
 
+    // CO-02.7
+    list<Parameter>(item.data.parameters).forEach((p, index) => {
+      if (p.state && !states.includes(p.state)) findings.push(finding(item, ['parameters', index, 'state'], 'unknown-state', p.state));
+    });
+
     linksOf(entry).forEach((link, index) => {
-      const path = targetPath(repo, link.target), targetEntry = repo.entries.get(targetId(link.target)),
-        [sourceTypes, targetTypes] = linkRules[link.type] ?? [[], []];
-      if (!path || !existsSync(join(repo.root, path))) {
+      const param = parameterOf(repo, link.target), path = targetPath(repo, link.target),
+        targetEntry = repo.entries.get(targetId(link.target)), [sourceTypes, targetTypes] = linkRules[link.type] ?? [[], []];
+      if (!path || !existsSync(join(repo.root, path)) || (link.target.includes(':') && !param)) {
         findings.push(finding(item, ['links', index, 'target'], 'unknown-target', link.target));
         return;
       }
       if (!allows(sourceTypes, type) || !allows(targetTypes, targetEntry!.item.data.type)) {
         findings.push(finding(item, ['links', index, 'type'], 'link-type', `${type} ${link.type} ${targetEntry!.item.data.type}`));
       }
+      if (!param) return; // CO-02.7
+      if (param.parameter.value == null) findings.push({ ...finding(item, ['links', index, 'target'], 'tbd-source', link.target), severity: 'warning' });
+      else if (link.type === 'derives-from' && list<Parameter>(item.data.parameters).some((p) => p.name === param.parameter.name && p.value != null && p.value !== param.parameter.value))
+        findings.push(finding(item, ['links', index, 'target'], 'stale-value', link.target));
     });
   }
   // CO-02.2

@@ -99,10 +99,11 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings'
 test('CL-01.1,CO-02.1:remove',()=>{
   write(root,{'schemas/meta.schema.json':'{"required":["owner"]}'});
   expect(validate(loadRepo(root)).some((f)=>f.file==='meta/P.yaml'&&f.code==='schema')).toBe(true);
+  expect(plm(root,'link','P','satisfies','R','--remove').status).toBe(0);
   plm(root,'link','P','derives-from','L');
   plm(root,'confirm','P');
   expect(plm(root,'link','P','derives-from','L','--remove').status).toBe(0);
-  expect(linksOf(loadRepo(root).entries.get('P')!).map((l)=>l.target)).toEqual(['R']);
+  expect(linksOf(loadRepo(root).entries.get('P')!)).toEqual([]);
   expect(loadRepo(root).entries.get('P')!.meta.data.confirmed?.L).toBeUndefined();
 });
 

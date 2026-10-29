@@ -64,7 +64,7 @@ export function link(repo: Repo, source: string, type: string, target: string, r
     at = links.findIndex((l) => l.type === type && l.target === target);
   if (!remove) item.doc.setIn(['links', links.length], { type, target });
   else if (at < 0) throw new UsageError(target);
-  else item.doc.deleteIn(['links', at]), meta.doc.deleteIn(['confirmed', target]), writeYaml(repo.root, meta);
+  else item.doc.deleteIn(['links', at]), meta.doc.has('confirmed')&&meta.doc.deleteIn(['confirmed', target]), writeYaml(repo.root, meta);
   writeYaml(repo.root, item);
 }
 

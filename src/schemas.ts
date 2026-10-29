@@ -10,6 +10,8 @@ export const baseSchema = {
     uses: { type: 'array', items: str },
     links: { type: 'array', items: { type: 'object', required: ['type', 'target'], properties: { type: str, target: str, result: { enum: results } }, additionalProperties: false,
       if: { required: ['result'] }, then: { properties: { type: { const: 'executes' } } } } },
+    // CO-02.7
+    parameters: { type: 'array', items: { type: 'object', properties: { name: str, value: { type: ['number', 'null'] }, unit: str, state: str } } },
   },
 };
 

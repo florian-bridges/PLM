@@ -48,8 +48,8 @@ test('VS-04.2, VS-04.3: review page, hover', () => {
     .toBe('**r**\n\nrequirement, draft\n\nsuspect [Review link](command:plm.reviewLink?%5B%22A%22%2C%22R%22%5D)');
 });
 
-test('TE-01.1: review page for a file-target link resolves the item, not the file', () => {
+test('TE-01.1: review page for a parameter-target link resolves the item, not the parameter', () => {
   const repo = fakeRepo({ id: 'A', item: { data: { text: 'a' } } }, { id: 'R', item: { path: 'R', data: { title: 'r', type: 'requirement', text: '<R>' } } });
-  expect(logic.reviewHtml(repo, 'A', { type: 'derives-from', target: 'R/x.py' }, '+x', []))
-    .toMatch(/A.derives-from.R\/x\.py.*<pre>a<.*&#60;R&#62;.*\+x/);
+  expect(logic.reviewHtml(repo, 'A', { type: 'derives-from', target: 'R:x' }, '+x', []))
+    .toMatch(/A.derives-from.R:x.*<pre>a<.*&#60;R&#62;.*\+x/);
 });

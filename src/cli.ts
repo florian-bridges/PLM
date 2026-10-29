@@ -4,9 +4,9 @@ import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, type LinkState } from './links.ts';
-import { artifacts, entry, loadRepo, named, newItem, Refused, UsageError, writeYaml, type Named } from './repo.ts';
+import { artifacts, entry, loadRepo, named, newItem, Refused, targetId, UsageError, writeYaml, type Named } from './repo.ts';
 import { results } from './schemas.ts';
-import { entries, search } from './search.ts';
+import { getParameter, list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
 import { currentVersions, snapshotAt } from './version.ts';
 
@@ -59,12 +59,29 @@ program.command('link <source> <type> <target>').description('add')
   .action((source: string, type: string, target: string, options: any) => link(openRepo(), source, type, target, options.remove));
 
 // CL-01.3
-program.command('set <id> <field> <value>').description('set').action((id: string, field: string, value: string) => {
-  const repo = openRepo(), found = entry(repo, id), file = field === 'owner' || field === 'status' ? found.meta : found.item,
-    current = (file.data as any)[field];
+program.command('set <ref> <field> <value>').description('set').action((ref: string, field: string, value: string) => {
+  const repo = openRepo(), id = targetId(ref);
+  if (id !== ref) return setParameter(repo, id, ref, field, value);
+  const found = entry(repo, id), file = field === 'owner' || field === 'status' ? found.meta : found.item, current = (file.data as any)[field];
   if (current !== undefined && typeof current !== 'string') throw new UsageError(field);
   file.doc.setIn([field], value);
   writeYaml(repo.root, file);
+});
+
+// CL-01.4
+program.command('get <ref> [key]').description('get').action((ref: string, key?: string) => {
+  const val = getParameter(openRepo(), ref, key);
+  if ((key ?? 'value') === 'value' && val == null) return void (exitCode = 1);
+  output(String(val), val);
+});
+
+// CO-03.3, CL-01.1
+program.command('list <field> [args...]').description('list').action((field: string, args: string[] = []) => {
+  const repo=openRepo(),item=args[0]?.includes(':')?undefined:args.shift(),
+    matches = list(repo,field,item,args.map((f)=>f.split(/:(.*)/))),
+    lines = matches.map((m) => `${label(named(repo, m.source))} ${Object.entries(m).slice(1).map((e) => e.join(':')).join(' ')}`);
+  output(lines.join('\n'), matches);
+  exitCode=matches.length&&1;
 });
 
 // CO-03.2
@@ -140,14 +157,6 @@ report.command('coverage [item]').description('coverage')
       ...row.tests.map((test) => ['  ' + label(test.testCase), test.run && label(test.run), test.result, test.outdated && 'outdated'])]);
     output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'), rows);
   });
-
-// CO-03.3, CL-01.1
-report.command('entries <field> [filters...]').description('entries').action((field: string, filters: string[] = []) => {
-  const repo = openRepo(), matches = entries(repo, field, filters.map((f) => f.split(':'))),
-    lines = matches.map((m) => `${m.source} ${label(named(repo, m.refers))} ${Object.entries(m).slice(2).map((e) => e.join(':')).join(' ')}`);
-  output(lines.join('\n'), matches);
-  if (matches.length) exitCode = 1;
-});
 
 try {
   program.parse();

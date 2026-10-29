@@ -78,10 +78,16 @@ export function loadRepo(start: string): Repo {
 }
 
 // TE-01.1
-export const targetId = (target: string) => target.split('/')[0];
-export function targetPath(repo: Repo, target: string) {
-  const id = targetId(target), path = repo.entries.get(id)?.path;
-  return path && `${path}${target.slice(id.length)}`;
+export const targetId = (target: string) => target.split(':')[0];
+export const targetPath = (repo: Repo, target: string) => repo.entries.get(targetId(target))?.path;
+
+// CO-02.7, TE-01.1
+export interface Parameter { name: string; value?: number; unit?: string; state?: string }
+export function parameterOf(repo: Repo, ref: string) {
+  const id = targetId(ref), found = repo.entries.get(id);
+  if (!found || id === ref) return undefined;
+  const parameter = list<Parameter>(found.item.data.parameters).find((p) => p.name === ref.slice(id.length + 1));
+  return parameter && { entry: found, parameter };
 }
 
 export const isRequirementFile = (path: string) => path.endsWith('.yaml');

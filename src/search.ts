@@ -1,6 +1,6 @@
 // CO-03
 import MiniSearch from 'minisearch';
-import { list, named, type Named, type Repo } from './repo.ts';
+import { entry, list as values, named, parameterOf, subtree, UsageError, writeYaml, type Named, type Parameter, type Repo } from './repo.ts';
 
 // CO-03.1
 export function searchIndex(repo: Repo): MiniSearch {
@@ -20,9 +20,31 @@ export function search(repo: Repo, query: string): Named[] {
 }
 
 // CO-03.3
-export function entries(repo: Repo, field: string, filters: string[][]) {
-  return [...repo.entries.values()].flatMap((source) => list<Record<string,string>>(source.item.data[field]).flatMap((data) =>
-    Object.values(data)
-      .filter((refers) => repo.entries.has(refers) && filters.every(([k, val]) => String(data[k]) === val))
-      .map((refers) => ({ source: source.id, refers, ...data }))));
+export function list(repo: Repo, field: string, item: string | undefined, filters: string[][]) {
+  const scope = item && new Set(subtree(repo, entry(repo, item).id)),
+    matches = (v: unknown, want: string) => (want ? String(v) === want : v == null || v === '');
+  return [...repo.entries.values()].filter((source) => !scope || scope.has(source.id))
+    .flatMap((source) => values<Record<string, unknown>>(source.item.data[field])
+      .filter((data) => filters.every(([k, v]) => matches(data[k], v)))
+      .map((data) => ({ source: source.id, ...data })));
+}
+
+// CL-01.3
+export function setParameter(repo: Repo, id: string, ref: string, field: string, value: string) {
+  if (field !== 'value' && field !== 'state') throw new UsageError(field);
+  const found = entry(repo, id), name = ref.slice(id.length + 1),
+    params = values<Record<string, unknown>>(found.item.data.parameters),
+    at = params.findIndex((p) => p.name === name), index = at < 0 ? params.length : at;
+  if (at < 0) found.item.doc.setIn(['parameters', index, 'name'], name);
+  if (field === 'value' && !value) found.item.doc.deleteIn(['parameters', index, 'value']);
+  else found.item.doc.setIn(['parameters', index, field], field === 'value' ? Number(value) : value);
+  writeYaml(repo.root, found.item);
+}
+
+// CL-01.4
+const parameterKeys: (keyof Parameter)[] = ['name', 'value', 'unit', 'state'];
+export function getParameter(repo: Repo, ref: string, key = 'value') {
+  const found = parameterOf(repo, ref);
+  if (!found || !parameterKeys.includes(key as keyof Parameter)) throw new UsageError(ref);
+  return found.parameter[key as keyof Parameter];
 }

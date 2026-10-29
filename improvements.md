@@ -247,6 +247,7 @@ Add new entries at the end. Format:
 *Impact:* `npm test` is red at every acceptance on this machine; a real failure can hide behind the known one.
 *Proposal:* Set `testTimeout` in the Vitest config, or make the test spawn fewer CLI processes.
 *Decision:* 2026-10-29, product owner: accepted, smallest form: `--testTimeout=30000` in the `test` script of `package.json`; no requirement or test change. Stream `wp/afw-remove-unconfirmed`, see "`link --remove` crashes removing a link that was never confirmed".
+*Done:* 2026-10-29, merged into `integration/afw` (d7a5a96).
 
 ## The `run` field has no defined working directory
 *Found:* 2026-10-19, autonomous-fixed-wing, systems-engineer
@@ -391,3 +392,4 @@ Add new entries at the end. Format:
 *Decision:* 2026-10-29, product owner: accepted as proposed (bug fix), bundled with "`npm test` times out on slow machines".
 *Stream:* one, branch `wp/afw-remove-unconfirmed`, worktree `~/projects/uav_plm/plm-wt/remove-unconfirmed`; `src/links.ts`, `test/plm.test.ts`, `package.json`. Documents (requirements author): CL-01.1 reads "its target's `confirmed` entry, if any", at most +2 (4 free). `src/`+`test/` at most +1 net (1 free): pay by cuts. Extension +0. Done when the `CL-01.1,CO-02.1:remove` test also removes a link from a source whose meta has no `confirmed` (exit 0, link gone), and `npm test` passes on the Jetson Orin NX without extra flags.
 *Review:* 2026-10-29, quality, commits 0efc49f/f309163/4a32ac7 (`wp/afw-remove-unconfirmed`). **Pass, no major.** `tsc --noEmit` clean; `npm test` 17/17 green (33.6s, default script, no extra flags). `wordcount.py`: `documents/` 5098/5100 (+2 of 4 free), `src/`+`test/` 4510/4510 (+1 of 1 free, cap exact). The new test assertion removes source `P`'s pre-existing `satisfies R` link whose meta has no `confirmed` key at all, exit 0, matching the done-when. On a scratch copy of autonomous-fixed-wing: stripped `confirmed:` from `meta/TC-F7EBAP.yaml` and ran `link --remove` with the pre-fix build (0efc49f's `links.ts`) — reproduced the reported crash verbatim ("Expected YAML collection at confirmed"); the post-fix build removes the link cleanly (exit 0), and a `confirmed` map present but lacking the removed target's key is also left untouched, no-op as intended. CL-01.1's "if any" matches the code exactly. No traceability, generality or budget issues.
+*Done:* 2026-10-29, product owner: accepted, merged into `integration/afw` (d7a5a96); `npm test` 17/17 green without flags, budget 5098/5100 docs, 4510/4510 src+test.

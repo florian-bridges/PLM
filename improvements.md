@@ -144,6 +144,7 @@ Add new entries at the end. Format:
 *Impact:* Two places claim the status; they can disagree and nothing detects it.
 *Workaround:* Remove the field from `item.yaml` after `plm new`.
 *Proposal:* Write status only where it belongs, and have `validate` reject a duplicate.
+*Decision:* 2026-10-29, product owner: rejected, already solved. On `integration/afw` `plm new` writes `status` to `meta/<ID>.yaml` only (CL-02.1, CO-01.2), and `validate` reports a `status` in `item.yaml` as a schema error (unevaluated property); the project's items hold none.
 
 ## `plm link` reflows the whole item YAML
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by simulation-engineer)
@@ -245,6 +246,7 @@ Add new entries at the end. Format:
 *Observed:* On the Jetson Orin NX, the test "recorded runs verify requirements until the SUT changes" takes about 7.3 s and fails on Vitest's 5 s default, also on `main`; with `--testTimeout=30000` all tests pass.
 *Impact:* `npm test` is red at every acceptance on this machine; a real failure can hide behind the known one.
 *Proposal:* Set `testTimeout` in the Vitest config, or make the test spawn fewer CLI processes.
+*Decision:* 2026-10-29, product owner: accepted, smallest form: `--testTimeout=30000` in the `test` script of `package.json`; no requirement or test change. Stream `wp/afw-remove-unconfirmed`, see "`link --remove` crashes removing a link that was never confirmed".
 
 ## The `run` field has no defined working directory
 *Found:* 2026-10-19, autonomous-fixed-wing, systems-engineer
@@ -386,3 +388,5 @@ Add new entries at the end. Format:
 *Impact:* An unconfirmed link cannot be removed with the tool at all; this project's PDR gate needed it (`TC-PMZZBJ` no longer `verifies REQ-2QFZK4`), hand-edited `item.yaml` instead (one line deleted).
 *Workaround:* Delete the link entry from the source's `item.yaml` by hand when no `confirmed` entry exists.
 *Proposal:* `--remove` only deletes the target's `confirmed` entry if present; absence is a no-op, not an error.
+*Decision:* 2026-10-29, product owner: accepted as proposed (bug fix), bundled with "`npm test` times out on slow machines".
+*Stream:* one, branch `wp/afw-remove-unconfirmed`, worktree `~/projects/uav_plm/plm-wt/remove-unconfirmed`; `src/links.ts`, `test/plm.test.ts`, `package.json`. Documents (requirements author): CL-01.1 reads "its target's `confirmed` entry, if any", at most +2 (4 free). `src/`+`test/` at most +1 net (1 free): pay by cuts. Extension +0. Done when the `CL-01.1,CO-02.1:remove` test also removes a link from a source whose meta has no `confirmed` (exit 0, link gone), and `npm test` passes on the Jetson Orin NX without extra flags.

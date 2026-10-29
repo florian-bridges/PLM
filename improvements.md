@@ -116,6 +116,7 @@ Add new entries at the end. Format:
 *Impact:* Any agent can silently change an item it does not own, and make links to it suspect, just by adding a file to its folder. Convenient for handing over a document, wrong for ownership.
 *Workaround:* Agents are told not to write into folders of items they do not own; the chief engineer routes documents at merge.
 *Proposal:* `plm artifact add|list <id> <path>`, and exclude files not registered as artifacts from the item version.
+*Decision:* 2026-10-29, product owner. Accepted in a smaller form, bundled with "`plm show` lists untracked and ignored files as artifacts". Rejected: `plm artifact add|list` and a registry in `item.yaml`; Git's index already is the registry (`git add` registers, `plm show` lists) and who may commit to a folder is a review or CODEOWNERS rule, not the tool's. Accepted: an item's artifacts (CO-01.3) and its working-tree version (TE-01.2, and untracked files in `impact`, TE-05.1) cover only files Git tracks or has staged, plus the item's own `item.yaml` or requirement file. Untracked and ignored files no longer change a version or appear in `show`; committed versions are unchanged, so no confirmation turns suspect. One stream (`src/repo.ts`, `src/version.ts`, `src/impact.ts`, `test/plm.test.ts`): net ≤ 0 words in `src/`+`test/` (4510 cap stays), paid by listing artifacts with `git ls-files` instead of the directory walk (drops the hidden-file and dangling-file checks) and folding the new assertions into the existing TE-01.2/CO-01.3 tests; `documents/` ≤ +15 (CO-01.3, TE-01.2, architecture.md artifacts line). Project: commit or `git add` files meant as artifacts; leave generated output untracked or ignored. The rule against writing into other owners' folders stays for committed files.
 
 ## `plm new` ignores the working directory for folder-type items
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by simulation-engineer)
@@ -201,6 +202,7 @@ Add new entries at the end. Format:
 *Impact:* The artifact list is machine-dependent — a fresh clone shows a different one — so it cannot be used as the record of what an item contains, and a reviewer cannot tell generated output from a committed artifact.
 *Workaround:* Delete generated output from the item folder before `plm show` or commit, and keep a local `.gitignore`.
 *Proposal:* List only files tracked by git, or mark untracked and ignored files as such.
+*Decision:* 2026-10-29, product owner. Accepted, bundled with "No `plm artifact` command; dropping a file changes another owner's item" (see its decision): only files Git tracks or has staged are artifacts and count in the working-tree version.
 
 ## No gate review pack report
 *Found:* 2026-10-13, autonomous-fixed-wing, systems-engineer

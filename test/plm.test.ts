@@ -67,9 +67,9 @@ test('TE-01.1: mv', () => {
 });
 
 test('TE-01.2, CO-01.3: artifacts', () => {
-  write(root, { 'wing/spar/drawing.txt': 'rev 2', 'wing/spar/cad/model.step': 'version https://git-lfs.github.com/spec/v1\noid sha256:0\nsize 9\n' });
+  write(root, { 'wing/spar/drawing.txt': 'rev 2', 'wing/spar/cad/model.step': 'version https://git-lfs.github.com/spec/v1\noid sha256:0\nsize 9\n', 'wing/requirements/.gitkeep': '' });
   expect(json(root, 'show', 'P').artifacts).toEqual([]);
-  git(root, ['add', 'wing/spar']);
+  git(root, ['add', 'wing/spar', 'wing/requirements/.gitkeep']);
   expect(json(root, 'show', 'P')).toMatchObject({ path: 'wing/spar', artifacts: [{ path: 'wing/spar/cad/model.step', lfs: 'missing' }, { path: 'wing/spar/drawing.txt' }] });
   expect(json(root, 'show', 'A').artifacts).toEqual([]);
   const working = currentVersions(loadRepo(root));

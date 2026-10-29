@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { parse } from 'yaml';
-import { artifacts, git, isRequirementFile, linksOf, list, loadRepo, parameterOf, targetId, targetPath, tracked, usesOf, UsageError, type Parameter, type Repo } from './repo.ts';
+import { git, isRequirementFile, linksOf, list, loadRepo, parameterOf, targetId, targetPath, tracked, usesOf, UsageError, type Parameter, type Repo } from './repo.ts';
 
 // TE-01.1
 export function computeVersions(
@@ -53,9 +53,8 @@ function versionsFromHashes(repo: Repo, hashes: Map<string, string>) {
 
 // TE-01.2
 export function currentVersions(repo: Repo): Map<string, string> {
-  const files = tracked(repo),
-    paths = [...repo.entries.values()].flatMap((e) =>
-      [isRequirementFile(e.path) ? e.path : `${e.path}/item.yaml`, ...artifacts(repo, e, files).map((a) => a.path)]),
+  const own = [...repo.entries.values()].map((e) => (isRequirementFile(e.path) ? e.path : `${e.path}/item.yaml`)),
+    paths = [...new Set([...tracked(repo), ...own])],
     tempFolder = mkdtempSync(join(tmpdir(), 'plm-'));
   try {
     const env = { GIT_INDEX_FILE: join(tempFolder, 'index') };

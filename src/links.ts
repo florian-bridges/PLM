@@ -1,9 +1,9 @@
 import { copyFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, linksOf, list, named, newId, Refused, selection, subtree, targetId, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { entry, git, linksOf, list, named, newId, Refused, selection, subtree, targetId, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
-import { currentVersions, git, versionAt } from './version.ts';
+import { currentVersions, versionAt } from './version.ts';
 
 export interface LinkState { source: string; title: string; link: Link; targetTitle: string; state: 'current' | 'suspect' | 'unconfirmed' }
 

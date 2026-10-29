@@ -10,7 +10,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
 *Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
 
-**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder, except hidden files, `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
+**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder tracked or staged by Git, except `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
 
 **CO-02.1** The core shall validate `item.yaml` with Ajv against its type's JSON Schema (2020-12), and `meta/<ID>.yaml` against `schemas/meta.schema.json` if present; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
@@ -45,7 +45,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-01.1** An item's version shall be the SHA-256 hex digest of its folder's Git tree hash followed by the versions of the items it uses, in listed order; a requirement's version shall be its Git blob hash, and a link to a parameter (`<ID>:<name>`) the hash of that entry.
 *Rationale:* Git hashes capture all files, including nested items and LFS pointers; adding used items' versions propagates their changes. Content, not path, decides a version, so `git mv` keeps an item's ID, links and confirmations.
 
-**TE-01.2** Hashes of the working tree shall be computed by staging into a temporary Git index, so LFS filters apply and uncommitted and committed states yield identical versions.
+**TE-01.2** Hashes of the working tree shall be computed by staging an item's artifacts (CO-01.3) and its `item.yaml` or requirement file into a temporary Git index, so LFS filters apply and uncommitted and committed states yield identical versions.
 *Rationale:* Engineers need suspect states before committing; identical results avoid spurious differences between local runs and CI.
 
 **TE-02.1** Confirming a link shall write to `confirmed.<target>` in the source's `meta/<ID>.yaml` the target's current `version` and `title`, the confirming Git `user.name` as `by`, the date as `on`, and as `commit` the short hash of HEAD if the target has the confirmed version there; a link without `version` there is unconfirmed.

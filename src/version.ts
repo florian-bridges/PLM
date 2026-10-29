@@ -1,16 +1,10 @@
 // TE-01
-import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { parse } from 'yaml';
-import { isRequirementFile, linksOf, list, loadRepo, parameterOf, targetId, targetPath, usesOf, UsageError, type Parameter, type Repo } from './repo.ts';
-
-export function git(root: string, args: string[], env: Record<string, string> = {}): string {
-  const options = { cwd: root, encoding: 'utf8' as const, env: { ...process.env, ...env }, maxBuffer: 1 << 28 };
-  return execFileSync('git', args, options).trim();
-}
+import { artifacts, git, isRequirementFile, linksOf, list, loadRepo, parameterOf, targetId, targetPath, tracked, usesOf, UsageError, type Parameter, type Repo } from './repo.ts';
 
 // TE-01.1
 export function computeVersions(
@@ -59,12 +53,13 @@ function versionsFromHashes(repo: Repo, hashes: Map<string, string>) {
 
 // TE-01.2
 export function currentVersions(repo: Repo): Map<string, string> {
-  const topFolders = [...new Set([...repo.entries.values()].map((entry) => entry.path.split('/')[0]))];
-  if (!topFolders.length) return new Map();
-  const tempFolder = mkdtempSync(join(tmpdir(), 'plm-'));
+  const files = tracked(repo),
+    paths = [...repo.entries.values()].flatMap((e) =>
+      [isRequirementFile(e.path) ? e.path : `${e.path}/item.yaml`, ...artifacts(repo, e, files).map((a) => a.path)]),
+    tempFolder = mkdtempSync(join(tmpdir(), 'plm-'));
   try {
     const env = { GIT_INDEX_FILE: join(tempFolder, 'index') };
-    git(repo.root, ['add', '-A', '--no-warn-embedded-repo', '--', ...topFolders], env);
+    git(repo.root, ['add', '--no-warn-embedded-repo', '--', ...paths], env);
     return versionsFromHashes(repo, objectHashes(repo.root, git(repo.root, ['write-tree'], env)));
   } finally {
     rmSync(tempFolder, { recursive: true, force: true });

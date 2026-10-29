@@ -4,10 +4,10 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, beforeEach, expect, test } from 'vitest';
 import { changeSince, confirm, link, linkStates, recordRun } from '../src/links.ts';
-import { linksOf, loadRepo, parameterOf, Refused } from '../src/repo.ts';
+import { git, linksOf, loadRepo, parameterOf, Refused } from '../src/repo.ts';
 import { search } from '../src/search.ts';
 import { validate } from '../src/validate.ts';
-import { currentVersions, git, versionAt } from '../src/version.ts';
+import { currentVersions, versionAt } from '../src/version.ts';
 
 const base = mkdtempSync(join(tmpdir(), 'plm-test-')),
   write = (root: string, files: Record<string, string>) => {
@@ -68,6 +68,8 @@ test('TE-01.1: mv', () => {
 
 test('TE-01.2, CO-01.3: artifacts', () => {
   write(root, { 'wing/spar/drawing.txt': 'rev 2', 'wing/spar/cad/model.step': 'version https://git-lfs.github.com/spec/v1\noid sha256:0\nsize 9\n' });
+  expect(json(root, 'show', 'P').artifacts).toEqual([]);
+  git(root, ['add', 'wing/spar']);
   expect(json(root, 'show', 'P')).toMatchObject({ path: 'wing/spar', artifacts: [{ path: 'wing/spar/cad/model.step', lfs: 'missing' }, { path: 'wing/spar/drawing.txt' }] });
   expect(json(root, 'show', 'A').artifacts).toEqual([]);
   const working = currentVersions(loadRepo(root));
@@ -280,6 +282,7 @@ test('TE-01.1–TE-01.2: commit', () => {
   write(root, { 'wing/spar/src/main.c': 'int main() {}\n' });
   git(firmware, ['init', '-q']);
   commit(firmware);
+  git(root, ['add', 'wing/spar/src']);
   const before = currentVersions(loadRepo(root)).get('P');
   expect(plm(root, 'show', 'P').stderr).toBe('');
   write(root, { 'wing/spar/src/main.c': 'int main() { return 0; }\n' });

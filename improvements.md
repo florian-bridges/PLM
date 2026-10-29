@@ -375,3 +375,10 @@ Add new entries at the end. Format:
 *Impact:* One rerun per test case (about 15 min of agent time each on the Jetson) only to refresh evidence; every container or model text edit repeats it before each milestone review.
 *Workaround:* None yet; the runs are rerun.
 *Proposal:* Let the recorder of a run confirm it against a newer version of its SUT, with a reason, as `plm confirm` does for links.
+
+## `link --remove` crashes removing a link that was never confirmed
+*Found:* 2026-10-29, autonomous-fixed-wing, simulation-engineer
+*Observed:* `plm link TC-PMZZBJ verifies REQ-2QFZK4 --remove` on a link whose state is `unconfirmed` (no `confirmed:` key at all in `meta/TC-PMZZBJ.yaml`) exits 3: "Expected YAML collection at confirmed. Remaining path: REQ-2QFZK4". `--remove` unconditionally deletes the target's `confirmed` entry (per the 2026-10-21 decision) but does not handle `confirmed` being absent.
+*Impact:* An unconfirmed link cannot be removed with the tool at all; this project's PDR gate needed it (`TC-PMZZBJ` no longer `verifies REQ-2QFZK4`), hand-edited `item.yaml` instead (one line deleted).
+*Workaround:* Delete the link entry from the source's `item.yaml` by hand when no `confirmed` entry exists.
+*Proposal:* `--remove` only deletes the target's `confirmed` entry if present; absence is a no-op, not an error.

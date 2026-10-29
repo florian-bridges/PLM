@@ -80,7 +80,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; `--remove` deletes that link and its target's `confirmed` entry; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Searching upward works from any subfolder.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.

@@ -109,6 +109,7 @@ Add new entries at the end. Format:
 *Observed:* `verification` allows analysis, simulation, test-bench, flight-test and the test-case `method` only the first three. There is no `inspection` or `demonstration`.
 *Impact:* Design-constraint requirements (a named sensor is installed, an interface is published) have to be shoehorned into `analysis`, which hides what the evidence actually is.
 *Proposal:* Add `inspection` and `demonstration` to both enums, or make the method set configurable in `plm.yaml`.
+*Decision:* 2026-10-29, product owner: rejected as tool work, already configurable. The tool has no method list; the enums are the project's own `schemas/<type>.schema.json` (CO-02.1), not `plm.yaml`. Project: add `inspection` and `demonstration` to `verification` in `schemas/requirement.schema.json` and to `method` in `schemas/test-case.schema.json`.
 
 ## No `plm artifact` command; dropping a file changes another owner's item
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by verification-engineer)
@@ -173,6 +174,7 @@ Add new entries at the end. Format:
 *Impact:* The field misdescribes the work; a reader cannot tell a computed result from a regulatory assessment.
 *Workaround:* `method: calculation`, with the counting and table lookups put into the script so the label is not a lie.
 *Proposal:* Add `assessment`, or make the method set configurable in `plm.yaml`.
+*Decision:* 2026-10-29, product owner: rejected as tool work, bundled with "Only three verification methods" (same reason). Project: add `assessment` to `method` in `schemas/analysis.schema.json`, then set it on the FHA and SORA analyses and drop the workaround.
 
 ## No item type for a hazard or a requirement proposal
 *Found:* 2026-10-10, autonomous-fixed-wing, chief engineer (reported by safety-engineer)

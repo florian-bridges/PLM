@@ -1,31 +1,47 @@
-import { copyFileSync } from 'node:fs';
+import { copyFileSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, git, linksOf, list, named, newId, Refused, selection, subtree, targetId, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, selection, subtree, targetId, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
 
 export interface LinkState { source: string; title: string; link: Link; targetTitle: string; state: 'current' | 'suspect' | 'unconfirmed' }
 
 const tryGit = (repo: Repo, args: string[]) => { try { return git(repo.root, args); } catch { return ''; } };
+const tryRead = (path: string) => { try { return readFileSync(path, 'utf8'); } catch { return ''; } };
 
 // TE-03.1
-const strip = (repo: Repo, hash?: string) => {
-  const text = hash && tryGit(repo, ['cat-file', '-p', hash]);
-  if (!text) return undefined;
+const strip = (repo: Repo, text: string) => {
   const doc = parseDocument(text);
   for (const f of repo.settings.informative ?? ['rationale']) doc.delete(f);
   return doc.toString();
 };
 
+// TE-03.1, TE-03.2
+const commitAndPaths = (repo: Repo, link: Link): [string | undefined, string[]] => {
+  const known = link.commit && tryGit(repo, ['rev-parse', '--verify', '-q', `${link.commit}^{commit}`]),
+    candidates = known ? [] : [...tryGit(repo, ['log', '--format=%H', `--find-object=${link.version}`]).split('\n'), ...tryGit(repo, ['rev-list', 'HEAD']).split('\n')].filter(Boolean);
+  return [known ? link.commit : candidates.find((c) => versionAt(repo.root, c, link.target) === link.version),
+    subtree(repo, targetId(link.target)).map((id) => entry(repo, id).path)];
+};
+
 // TE-03.1, CL-05.3
 export function linkStates(repo: Repo, versions: Map<string, string>): LinkState[] {
-  const stateOf = (link: Link): LinkState['state'] => {
-    if (!link.version) return 'unconfirmed';
-    if (link.version === versions.get(link.target)) return 'current';
-    const confirmed = repo.entries.get(link.target)?.item.data.type === 'requirement' && strip(repo, link.version);
-    return !!confirmed && confirmed === strip(repo, versions.get(link.target)) ? 'current' : 'suspect';
-  };
+  const informativeOnly = (link: Link) => {
+      const [commit, paths] = commitAndPaths(repo, link),
+        own = paths.map((p) => isRequirementFile(p) ? p : `${p}/item.yaml`),
+        changed = commit ? tryGit(repo, ['diff', '--name-only', commit, '--', ...paths]).split('\n').filter(Boolean) : [],
+        same = (f: string) => {
+          const b = own.includes(f) && tryGit(repo, ['show', `${commit}:${f}`]);
+          return !!b && strip(repo, b) === strip(repo, tryRead(join(repo.root, f)));
+        };
+      return changed.length > 0 && changed.every(same);
+    },
+    stateOf = (link: Link): LinkState['state'] => {
+      if (!link.version) return 'unconfirmed';
+      if (link.version === versions.get(link.target)) return 'current';
+      return informativeOnly(link) ? 'current' : 'suspect';
+    };
   return [...repo.entries.values()].flatMap((source) => linksOf(source).map((link) => ({
     source: source.id, title: named(repo, source.id).title, link, targetTitle: named(repo, targetId(link.target)).title, state: stateOf(link),
   })));
@@ -89,12 +105,8 @@ export function recordRun(repo: Repo, testCases: string[], suts: string[], resul
 
 // TE-03.2
 export function changeSince(repo: Repo, link: Link) {
-  const known = link.commit && tryGit(repo, ['rev-parse', '--verify', '-q', `${link.commit}^{commit}`]),
-    commit = known ? link.commit : git(repo.root, ['rev-list', 'HEAD']).split('\n').filter(Boolean)
-      .find((candidate) => versionAt(repo.root, candidate, link.target) === link.version);
-  if (!commit) return { diff: '' };
-  const paths = subtree(repo, targetId(link.target)).map((id) => entry(repo, id).path);
-  return { commit, diff: git(repo.root, ['diff', commit, '--', ...paths]) };
+  const [commit, paths] = commitAndPaths(repo, link);
+  return commit ? { commit, diff: git(repo.root, ['diff', commit, '--', ...paths]) } : { diff: '' };
 }
 
 // TE-03.1

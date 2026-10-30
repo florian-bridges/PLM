@@ -3,7 +3,7 @@ import { fromRun, linkStates, type LinkState } from './links.ts';
 import { git, innermostItem, named, type Named } from './repo.ts';
 import { type Snapshot } from './version.ts';
 
-export interface Impact { changed: Named[]; propagated: Named[]; suspects: LinkState[]; runs: Named[] }
+interface Impact { changed: Named[]; propagated: Named[]; suspects: LinkState[]; runs: Named[] }
 
 // TE-05.1
 export function changedFiles(root: string, base: string, head?: string): string[] {

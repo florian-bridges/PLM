@@ -11,18 +11,18 @@ export function git(root: string, args: string[], env: Record<string, string> = 
 }
 
 export interface Link { type: string; target: string; result?: string; title?: string; version?: string; by?: string; on?: string; commit?: string }
-export interface Item { id: string; type: string; title: string; [attribute: string]: unknown }
-export interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>>; status?: string; owner?: string }
+interface Item { id: string; type: string; title: string; [attribute: string]: unknown }
+interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>>; status?: string; owner?: string }
 
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 export interface Entry { id: string; path: string; nested: string[]; requirements: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
-export interface Settings { prefixes?: Record<string, string>; informative?: string[]; folders?: Record<string, string> }
+interface Settings { prefixes?: Record<string, string>; informative?: string[]; folders?: Record<string, string> }
 export interface Repo { root: string; settings: Settings; entries: Map<string, Entry>; duplicates: Entry[] }
 
 export class UsageError extends Error {}
 export class Refused extends Error {}
 
-export function readYaml<T>(root: string, path: string): YamlFile<T> {
+function readYaml<T>(root: string, path: string): YamlFile<T> {
   const file = join(root, path), lines = new LineCounter(), text = existsSync(file) ? readFileSync(file, 'utf8') : '',
     doc = parseDocument(text, { lineCounter: lines });
   return { path, doc, lines, data: (doc.toJS() ?? {}) as T };
@@ -43,7 +43,7 @@ export function findRoot(start: string) {
 }
 
 // CO-01.1, CO-02.2
-export const homeFolders: Record<string, string> = { requirement: 'requirements', 'test-case': 'tests', 'test-run': 'runs' };
+const homeFolders: Record<string, string> = { requirement: 'requirements', 'test-case': 'tests', 'test-run': 'runs' };
 
 export function loadRepo(start: string): Repo {
   const root = findRoot(start),

@@ -91,7 +91,7 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings'
   expect(repo.entries.get('Z')?.path).toBe('wing/misc/panel');
   expect(repo.entries.has('H')).toBe(false);
   const findings = validate(repo);
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', 'schema', 'schema', 'schema', 'schema', 'schema', 'unknown-target']);
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', ...Array(5).fill('schema'), 'unknown-target']);
   expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ file: 'wing/spar/item.yaml', line: 3, col: 9 });
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });

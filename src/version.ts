@@ -7,7 +7,7 @@ import { parse } from 'yaml';
 import { git, isRequirementFile, linksOf, list, loadRepo, parameterOf, targetId, targetPath, tracked, usesOf, UsageError, type Parameter, type Repo } from './repo.ts';
 
 // TE-01.1
-export function computeVersions(
+function computeVersions(
   ids: Iterable<string>,
   hashes: Map<string, string>,
   pathOf: (id: string) => string | undefined,

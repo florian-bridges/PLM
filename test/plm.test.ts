@@ -91,7 +91,7 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings'
   expect(repo.entries.get('Z')?.path).toBe('wing/misc/panel');
   expect(repo.entries.has('H')).toBe(false);
   const findings = validate(repo);
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', 'schema', 'schema', 'schema', 'schema', 'schema', 'unknown-target']);
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', ...Array(5).fill('schema'), 'unknown-target']);
   expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ file: 'wing/spar/item.yaml', line: 3, col: 9 });
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
@@ -112,26 +112,33 @@ test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
   expect(linkStates(repo, currentVersions(repo))[0].state).toBe('unconfirmed');
   confirm(repo, currentVersions(repo), [], 'P');
   expect(readFileSync(join(root, 'meta/P.yaml'), 'utf8')).toContain('# reviewed');
-  const link = () => linkStates(loadRepo(root), new Map())[0].link;
-  expect(git(root, ['hash-object', 'wing/requirements/load.yaml'])).toBe(link().version);
+  const got = () => linkStates(loadRepo(root), new Map())[0].link;
+  expect(git(root, ['hash-object', 'wing/requirements/load.yaml'])).toBe(got().version);
   const head = git(root, ['rev-parse', '--short', 'HEAD']);
-  expect(link()).toMatchObject({ title: 'Load', by: 'Tess', on: new Date().toISOString().slice(0, 10), commit: head });
+  expect(got()).toMatchObject({ title: 'Load', by: 'Tess', on: new Date().toISOString().slice(0, 10), commit: head });
   commit(root);
-
   bump(root);
   repo = loadRepo(root);
   const [state] = linkStates(repo, currentVersions(repo));
   expect(state.state).toBe('suspect');
   expect(changeSince(repo, state.link)).toMatchObject({ commit: head, diff: expect.stringContaining('+text: Carry 4g.') });
   confirm(repo, currentVersions(repo), [], 'P');
-  expect(link()).not.toHaveProperty('commit');
+  expect(got()).not.toHaveProperty('commit');
+  commit(root);
   bump(root, 'rationale: why.\n');
   expect(linkStates(loadRepo(root), currentVersions(repo))[0].state).toBe('current');
   write(root, { 'meta/P.yaml': 'confirmed:\n  R:\n    version: bad\n' });
   expect(linkStates(loadRepo(root), currentVersions(repo))[0].state).toBe('suspect');
+  link(loadRepo(root), 'P', 'derives-from', 'A');
+  confirm(loadRepo(root), currentVersions(loadRepo(root)), [], 'P', 'A');
+  commit(root);
+  write(root, { 'wing/item.yaml': 'id: A\ntype: assembly\ntitle: Wing\nuses: [L]\nrationale: why.\n' });
+  const toA = () => linkStates(loadRepo(root), currentVersions(loadRepo(root)))[1];
+  expect(toA().state).toBe('current');
+  bump(root);
+  expect(toA().state).toBe('suspect');
   git(root, ['config', 'user.name', '']);
   expect(plm(root, 'confirm', 'P').status).toBe(1);
-
   write(root, { 'wing/requirements/load.yaml': 'id: R\ntype: requirement\n' });
   repo = loadRepo(root);
   expect(() => confirm(repo, currentVersions(repo), validate(repo), 'P')).toThrow(Refused);

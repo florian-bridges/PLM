@@ -3,7 +3,7 @@ import MiniSearch from 'minisearch';
 import { entry, list as values, named, parameterOf, subtree, UsageError, writeYaml, type Named, type Parameter, type Repo } from './repo.ts';
 
 // CO-03.1
-export function searchIndex(repo: Repo): MiniSearch {
+function searchIndex(repo: Repo): MiniSearch {
   const index = new MiniSearch({ fields: ['id', 'title', 'text', 'attributes'], storeFields: ['type', 'status', 'owner'] });
   index.addAll([...repo.entries.values()].map(({ id, item, meta }) => {
     const { title, text, ...attributes } = item.data;

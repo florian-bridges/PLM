@@ -420,3 +420,9 @@ Add new entries at the end. Format:
 *Observed:* `git mv`-renaming a requirement's YAML file (title change, same ID: REQ-DB2SXV Single simulation host, was `single-simulation-pc.yaml`) and committing, then `plm suspects` exits 3: `fatal: path '…/single-simulation-host.yaml' exists on disk, but not in '<old commit>'`. The old commit is cited in another item's (TC-RTK4Q2) `confirmed:` entry for this target, at its old path. Same code path as "`plm suspects` prints a git error for a non-requirement target's version": the `git show <commit>:<path>` fallback is not rename-aware, but this time the error is fatal (exit 3, no suspect list at all) instead of a stray stderr line.
 *Impact:* `plm suspects` is unusable after a file rename until every stale `confirmed:` entry pointing at the renamed file is gone. Worked around by not renaming the file (kept `single-simulation-pc.yaml` on disk although the title is now "Single simulation host"): zero cost, but the on-disk filename now mismatches the title.
 *Proposal:* In the `git show`/`rev-list` fallback, resolve the path at each candidate commit (or catch the "not in commit" git error like the unresolved-object one) instead of assuming the current path existed at every historic commit.
+
+## `plm validate` rewrites confirmation hashes in unrelated meta files
+*Found:* 2026-11-03, autonomous-fixed-wing, requirements-reviewer
+*Observed:* Running `plm validate` on `wp/pdr-jetson-host` (cd14282) changed the confirmation-hash fields in 9 meta files of items the run had nothing to do with, without any `plm confirm`. A read-only check wrote to the working copy.
+*Impact:* Silent re-confirmation would hide suspects, against "never confirm to silence a suspect". Agents must check `git status` after every `plm validate` and discard the changes by hand; each brief now says so. No cycle lost yet.
+*Proposal:* `validate` writes nothing. If hashes need migration, do it in an explicit command and report the files.

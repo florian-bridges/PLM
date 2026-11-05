@@ -2,7 +2,7 @@
 
 ## Principles
 
-* **Git is the engine.** The product definition is a Git repository of plain-text files; Git provides versioning, history and configuration management (CR-12, CR-15).
+* **Git is the engine.** The product definition is a Git repository of plain-text files; Git provides versioning and configuration management (CR-12).
 * **Local and remote.** Engineers work locally with VS Code and a CLI; a Git host provides overview, reviews and change requests.
 * **Host-agnostic**, so programs can self-host for export control.
 * **Integrate, don't replace.** CAD, analysis and test tools stay; their outputs become artifacts. Text-based tools (KiCad, WireViz) are preferred because Git can diff them.
@@ -24,7 +24,7 @@ meta/<ID>.yaml           owner, status, confirmations
 * **Composition** (CR-02): folders nest; `uses` lists items reused from elsewhere, e.g. standard parts.
 * **Artifacts** (CR-03) are the item directory's Git-tracked or staged files; binaries use Git LFS with locking. CAD is stored natively plus a STEP export.
 * **Relationships** (CR-06) are typed links in `item.yaml` (`satisfies`, `verifies`, `implements`, …), confirmed in `meta/<ID>.yaml`.
-* **Requirements** are items, stored in the `requirements/` folder of the item they specify, so one link and suspect mechanism covers all disciplines. Certification basis paragraphs are requirement items, enabling compliance tracing.
+* **Requirements** are items, stored in the `requirements/` folder of the item they specify, so one link and suspect mechanism covers all disciplines.
 
 ## Releases
 
@@ -33,7 +33,7 @@ meta/<ID>.yaml           owner, status, confirmations
 
 ## Change and verification
 
-* **Change requests** use the host's issues and merge requests; the host provides permissions and approvals (CR-13, CR-14, CR-17).
+* **Change requests** use the host's issues and merge requests, which also carry reviews and permissions (CR-13, CR-14).
 * **Tests** execute externally (CI, HIL rigs) and report via the CLI; manual results are entered in VS Code.
 
 ## Components

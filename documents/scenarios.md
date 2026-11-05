@@ -1,22 +1,22 @@
 # User Scenarios
 
 **US-1 — Requirements engineer**
-Writes requirement documents from aircraft to equipment level, traced top to bottom. (CR-04, CR-06, CR-07)
+Writes an item's requirements, derives each lower one from its parent, cites the item its value comes from, marks an unknown value TBD, and checks that every requirement is allocated to a lower item.
 
-**US-2 — Structure engineer**
-Breaks the aircraft into assemblies and subassemblies, attaches CAD models, releases changes by merge and searches for items. (CR-02–CR-05, CR-12)
-
-**US-3 — Avionics engineer**
-Defines custom electronics, COTS components with their documentation, and wiring; manages interfaces to the structure. (CR-01, CR-03, CR-04)
-
-**US-4 — Software engineer**
-Develops software for avionics components in separate repositories, traced to requirements. (CR-01, CR-04, CR-06, CR-07)
+**US-2 — Design engineer**
+Breaks the product into nested subsystems, attaches design artifacts to an item, and links each design to the requirements it satisfies.
 
 **US-5 — Verification engineer**
-Defines test cases for systems under test and records executed runs with their artifacts. (CR-04, CR-09, CR-19)
+Defines test cases that verify requirements by a stated method, records test runs with their system under test, test environment, results and logs, and sees coverage per method.
 
-**US-6 — Airworthiness engineer**
-Reviews test coverage, traceability, suspect links and compliance across releases without local tools. (CR-05, CR-09, CR-10, CR-13)
+**US-8 — Analyst**
+Records an analysis or trade study with its script, run command, result and report as artifacts, and publishes a derived value as a parameter other items reference instead of copying it.
 
-**US-7 — Configuration manager**
-Assigns item owners, assesses the impact of change requests, approves and merges changes with a recorded rationale and controls which partners may access which data. (CR-13, CR-14, CR-15, CR-17, CR-18)
+**US-9 — Reviewer**
+Records one review of a scope at a commit with findings on its items, and lists open findings by severity, item or owner.
+
+**US-10 — Item owner after a change**
+Lists the impact of a change, reviews each suspect link against what changed, and confirms only the links that still hold; an editorial field change leaves a link current.
+
+**US-11 — Project lead**
+Assigns each item's owner and status, and prepares a gate or milestone with queries for validity, suspects, verification coverage, allocation and open findings.

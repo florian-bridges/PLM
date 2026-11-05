@@ -1,65 +1,59 @@
 # Requirements
 
+Each requirement cites the scenario (US) it serves.
+
 **CR-01 — Engineering definition**
-The tool shall represent the complete engineering definition of an aircraft: structure, systems, software, electrical, EWIS and requirements.
-*Rationale:* Certification requires a complete, consistent type design. Disciplines kept in separate tools hide the dependencies between them.
+The tool shall represent the complete definition of a product, including its structure, software and requirements. (US-1, US-2)
+*Rationale:* Disciplines kept in separate tools hide the dependencies between them.
 
 **CR-02 — Hierarchical composition**
-Engineering items shall be composable into an arbitrary hierarchical product structure.
-*Rationale:* Aircraft are developed top-down from aircraft to systems to equipment; a fixed number of levels would not fit every product or program.
+Engineering items shall be composable into an arbitrary hierarchical product structure. (US-2)
+*Rationale:* Products are developed top-down from system to equipment; a fixed number of levels would not fit every product or program.
 
 **CR-03 — Engineering artifacts**
-The tool shall collect development artifacts (CAD, software, documents, analyses, test results) and associate them with items.
-*Rationale:* The artifacts are the actual engineering work. Associating them with items lets users find the current CAD, analysis or test result of any item.
+The tool shall collect development artifacts (designs, software, documents, analyses, test results) and associate them with items. (US-2, US-5, US-8)
+*Rationale:* The artifacts are the actual engineering work. Associating them with items lets users find the current design, analysis or test result of any item.
 
 **CR-04 — Authoring**
-The tool shall let users create and edit items, artifacts and relationships.
+The tool shall let users create and edit items, artifacts and relationships. (US-1, US-2)
 *Rationale:* Engineers maintain the definition throughout development.
 
 **CR-05 — Search and navigation**
-The tool shall let users find, browse and view items, artifacts and their relationships.
-*Rationale:* An aircraft comprises thousands of items; without search and navigation, engineers cannot find what to reuse, change or review.
+The tool shall let users find, browse and view items, artifacts and their relationships. (US-10, US-11)
+*Rationale:* A product comprises many items; without search and navigation, users cannot find what to reuse, change or review.
 
 **CR-06 — Traceability**
-The tool shall trace items and artifacts using typed relationships.
-*Rationale:* Development assurance (ARP4754A, DO-178C, DO-254) requires traceability between requirements, design and verification. Typed links state what each relationship means.
+The tool shall trace items and artifacts using typed relationships. (US-1, US-2)
+*Rationale:* Typed links state what each relationship means, so traceability between requirements, design and verification can be shown.
 
 **CR-07 — Versioned traceability**
-Relationships shall reference specific versions of the related items.
+Relationships shall reference specific versions of the related items. (US-10)
 *Rationale:* A link is only valid for the version it was established against. Without versions, changes silently invalidate traceability.
 
 **CR-09 — Verification**
-The tool shall associate verification evidence with the item versions it verifies and identify when later versions are no longer verified.
-*Rationale:* Certification credit depends on evidence for the exact version certified. Changes after a test must be detected to decide on re-verification.
+The tool shall associate verification evidence with the item versions it verifies and identify when later versions are no longer verified. (US-5)
+*Rationale:* Evidence is only valid for the version it was produced against; later changes must be detected to decide on re-verification.
 
 **CR-10 — Reporting**
-The tool shall report traceability, verification coverage and compliance status for the product or any item in it.
-*Rationale:* Program reviews and certification authorities assess status for the aircraft and its systems: what is traced, verified and shown compliant.
+The tool shall report traceability, verification coverage and compliance status for the product or any item in it. (US-11)
+*Rationale:* Reviews assess status for the product and its parts: what is traced, verified and shown compliant.
 
 **CR-12 — Release**
-The tool shall release changes by merging them into a protected branch, track item maturity and retrieve any earlier released definition.
-*Rationale:* Each merge is a reviewed, immutable reference for partners and certification, without freezing items while the rest of the product evolves. Maturity tells users whether an item may be relied upon.
+The tool shall release changes by merging them into a protected branch, track item maturity and retrieve any earlier released definition. (US-11)
+*Rationale:* Each merge is a reviewed, immutable reference for partners, without freezing items while the rest of the product evolves. Maturity tells users whether an item may be relied upon.
 
 **CR-13 — Change management**
-The tool shall support issues and change requests and identify affected items, artifacts, requirements and verification evidence.
-*Rationale:* Uncontrolled change is a main source of configuration errors. Knowing the affected items and evidence lets changes be assessed before approval.
+The tool shall support issues and change requests and identify affected items, artifacts, requirements and verification evidence. (US-10)
+*Rationale:* Uncontrolled change is a main source of configuration errors. Knowing the affected items and evidence lets changes be assessed.
 
-**CR-14 — Review and approval**
-The tool shall require changes to be reviewed and approved before release.
-*Rationale:* Certification and quality standards demand independent review of changes. Approval before release keeps unchecked data from becoming the reference.
-
-**CR-15 — History**
-The tool shall preserve the history of engineering decisions, changes, configurations and artifacts, including who made each change, when and why.
-*Rationale:* Authorities and accident investigations may ask years later why a design decision was taken. Recording who, when and why answers them.
-
-**CR-17 — Access control**
-The tool shall control who can read and change engineering data.
-*Rationale:* Aerospace data is subject to export control (ITAR, EAR) and intellectual property agreements; partners must see only what they are entitled to.
+**CR-14 — Reviews and findings**
+The tool shall record a review and its findings on an item and let users query open findings. (US-9)
+*Rationale:* Findings need to be tracked to closure and routed to the right owner.
 
 **CR-18 — Ownership**
-The tool shall assign each item a responsible owner and notify owners when their items are affected by a change.
-*Rationale:* Suspect links and changes need someone to act on them. Owners make responsibility explicit and allow reviews to be routed.
+The tool shall assign each item a responsible owner and let users list items by owner. (US-11)
+*Rationale:* Suspect links and changes need someone to act on them; owners make responsibility explicit.
 
 **CR-19 — Automation**
-The tool shall provide its functions to scripts and external tools.
-*Rationale:* Test rigs, CI and analysis scripts produce and consume engineering data; automation removes manual transfer and its errors.
+The tool shall provide its functions to scripts and external tools. (US-5, US-8)
+*Rationale:* Automated rigs and analysis scripts produce and consume engineering data; automation removes manual transfer and its errors.

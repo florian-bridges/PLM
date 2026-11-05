@@ -31,8 +31,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.7** Any item's `item.yaml` may hold a `parameters` list field, entries `{name, value, unit, state}`, `state` from `plm.yaml`'s `parameter_states` (default `[provisional, final]`; missing or `null` value: TBD, not a state). The core shall report as error a non-number `value`, an unlisted `state`, or `stale-value` (vs its `derives-from` target), and as warning `tbd-source` (target TBD).
 *Rationale:* Replaces copies; flags stale or TBD drift.
 
-**CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes, serializable to JSON for the static site.
-*Rationale:* One index format serves the CLI, VS Code and the browser without a search server.
+**CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes.
+*Rationale:* One index format serves the CLI and VS Code without a search server.
 
 **CO-03.2** Queries shall combine free text, matching all words by prefix, with filters `type:`, `status:` and `owner:`.
 *Rationale:* Filters answer typical questions, such as all unreleased parts of an owner, faster than text alone. Prefix matching finds items while typing.
@@ -134,7 +134,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Badges show maturity. Used items appear under each item using them, as they count toward its version.
 
 **VS-03.1** A product tree command shall show a read-only webview of an item with a section per item of its subtree (TE-06.2), each item once, numbered and headed by depth (1, 1.1, 1.1.1), each listing the item's requirements with title in bold, ID, status, coverage state and rendered Markdown text; clicking an ID opens its file.
-*Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements from aircraft to equipment level in the product's structure.
+*Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements top to bottom in the product's structure.
 
 **VS-03.3** Each requirement shall list its links and the links to it with their state per TE-03.1 and, if not current, "Review link" (VS-04.3), and each verifying test case its latest run per TE-06.1.
 *Rationale:* Links in both directions per requirement form the traceability matrix in reading order.
@@ -150,43 +150,3 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **VS-06.1** A command shall record a manual test run, picking test cases, system under test, each test case's result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
 *Rationale:* Manual and automated runs must produce identical evidence; one recording function in the core guarantees it.
-
-## CI integration
-
-**CI-01.1** CI shall be provided as a GitHub Action and a GitLab CI component, both running the CLI in a published container image.
-*Rationale:* GitHub and GitLab cover most hosts, and Forgejo Actions largely runs GitHub Actions; a container keeps tool versions identical everywhere.
-
-**CI-01.2** On each merge request CI shall run `plm validate` and `plm suspects` on the merge result and fail on any error, suspect or unconfirmed link.
-*Rationale:* Checking the merge result catches problems that arise only when branches combine.
-
-**CI-01.3** Findings shall appear as merge request annotations: GitHub check annotations or a GitLab Code Quality report.
-*Rationale:* Annotations show findings at the affected lines, where reviewers look.
-
-**CI-02.1** CI shall post the output of `plm impact` as one merge request comment, updated on each push and linking a full report when it exceeds the host's comment size limit.
-*Rationale:* One updated comment avoids noise; large changes still show a summary.
-
-**CI-02.2** CI shall request review from the owners of affected items through the host API, mapping `owner` to host usernames.
-*Rationale:* Owners know their items best and must accept changes affecting them.
-
-**CI-04.1** CI shall build the site on every push and deploy it under `<site>/<branch>/`, removing sites of deleted branches, and under `<site>/<commit>/` for each release, keeping those.
-*Rationale:* Every branch can be reviewed in the browser; release sites preserve released states.
-
-## Static site
-
-**SI-01.1** The site shall be built with Astro from the core library and contain only static files.
-*Rationale:* Static files can be hosted anywhere, including isolated networks, without a server to maintain.
-
-**SI-01.2** Each item shall have a page with attributes, text, artifact downloads, nested and used items, links with their state, and history: the commits touching its files, with date, author, message and merge request.
-*Rationale:* Reviewers need the complete picture of an item, including why it changed.
-
-**SI-02.1** For each top-level item the site shall show a traceability matrix (requirements against satisfying, implementing and verifying items), coverage per TE-06.2, and a compliance matrix (certification basis requirements against evidence).
-*Rationale:* These matrices are the evidence reviewed in certification and program reviews.
-
-**SI-02.2** Each matrix shall be exportable as CSV.
-*Rationale:* Matrices are often attached to certification documents or processed in spreadsheets.
-
-**SI-04.1** CI shall deploy only to targets enforcing host login: GitLab Pages access control, or a reverse proxy with the host's OAuth such as oauth2-proxy.
-*Rationale:* Static sites have no login of their own; the host login reuses existing permissions.
-
-**SI-04.2** CI shall refuse to deploy to a public target unless `plm.yaml` sets `site.public: true`.
-*Rationale:* Publishing export-controlled data must be an explicit decision.

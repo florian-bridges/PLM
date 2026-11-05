@@ -150,4 +150,3 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **VS-06.1** A command shall record a manual test run, picking test cases, system under test, each test case's result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
 *Rationale:* Manual and automated runs must produce identical evidence; one recording function in the core guarantees it.
-*Rationale:* Publishing export-controlled data must be an explicit decision.

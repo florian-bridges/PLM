@@ -190,9 +190,11 @@ test('TE-01.1, TE-03.1, CO-02.7, CO-03.3, CL-01.1, CL-01.3–CL-01.4: parameter'
   expect(validate(loadRepo(root)).map((f) => f.code)).toEqual(expect.arrayContaining(['schema', 'unknown-state', 'unknown-target', 'tbd-source', 'stale-value']));
 }, 15000);
 
-test('CL-02.1–CL-02.2, CO-01.1, CO-02.2: nest', () => {
+test('CL-02.1–CL-02.2, CL-05.2, CO-01.1, CO-02.2: nest', () => {
   root = join(base, 'new');
   write(root, { 'plm.yaml': 'prefixes: {assembly: ASM-, part: PRT-, requirement: REQ-, test-case: TC-}\n' });
+  git(root, ['init', '-q']);
+  expect(plm(root, 'suspects')).toMatchObject({ status: 0, stderr: '' });
   plm(root, 'new', 'assembly', 'Aircraft');
   const dir = join(root, 'aircraft'), part = plm(dir, 'new', 'part', 'Spar').stdout.trim();
   expect(part).toMatch(/^PRT-[0-9A-HJKMNP-TV-Z]{6}$/);
@@ -232,6 +234,10 @@ test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: exit', () => {
   expect(alloc.stdout).not.toContain('Z');
   expect(alloc.status).toBe(1);
   expect(plm(root, 'report', 'coverage', '--allocation', '--by', 'x').status).toBe(2);
+
+  write(root, { '.git/index': 'x' });
+  const broken = plm(root, 'suspects');
+  expect([broken.status, broken.stderr.match(/fatal/g)?.length]).toEqual([3, 1]);
 });
 
 test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {

@@ -5,9 +5,9 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { Document, LineCounter, parseDocument } from 'yaml';
 
-export function git(root: string, args: string[], env: Record<string, string> = {}): string {
-  const options = { cwd: root, encoding: 'utf8' as const, env: { ...process.env, ...env }, maxBuffer: 1 << 28 };
-  return execFileSync('git', args, options).trim();
+// CL-05.2
+export function git(root: string, args: string[], env: Record<string, string> = {}) {
+  return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: 'pipe', env: { ...process.env, ...env }, maxBuffer: 1 << 28 }).trim();
 }
 
 export interface Link { type: string; target: string; result?: string; title?: string; version?: string; by?: string; on?: string; commit?: string }

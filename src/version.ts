@@ -58,7 +58,7 @@ export function currentVersions(repo: Repo) {
     tempFolder = mkdtempSync(join(tmpdir(), 'plm-'));
   try {
     const env = { GIT_INDEX_FILE: join(tempFolder, 'index') };
-    git(repo.root, ['add', '--no-warn-embedded-repo', '--', ...paths], env);
+    git(repo.root, ['add', '--', ...paths], env);
     return versionsFromHashes(repo, objectHashes(repo.root, git(repo.root, ['write-tree'], env)));
   } finally {
     rmSync(tempFolder, { recursive: true, force: true });

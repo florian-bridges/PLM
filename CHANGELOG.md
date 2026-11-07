@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+* `plm --version`; `plm link` refuses a link type that `plm validate` rejects.
+* `plm suspects`: a link to a renamed file is suspect instead of exit 3; no Git output except with exit 3.
+
 ## 0.2.0 (2026-11-07)
 
 First public release, MIT licensed. Installed from the package attached to the GitHub release; a global install from the Git tag fails, because npm builds Git dependencies without their dev dependencies there.

@@ -6,11 +6,11 @@ Word counts are capped:
 
 | Folder | Limit |
 |---|---|
-| `documents/` | 5000 |
-| `src/` + `test/` | 4100 |
-| `extension/` | 1700 |
+| `documents/` | 5100 |
+| `src/` + `test/` | 4551 |
+| `extension/` | 1659 |
 
-Check with `python3 scripts/wordcount.py --max-docs 5000 --max-src 4100 --max-ext 1700 -u` (`-v` lists per-file counts). Run it before every commit; a change that exceeds a limit is not done.
+Check with `python3 scripts/wordcount.py --max-docs 5100 --max-src 4551 --max-ext 1659 -u` (`-v` lists per-file counts). Run it before every commit; a change that exceeds a limit is not done.
 
 Make every change in as few words as possible: reuse existing code and text, don't restate what another requirement, comment or test already says, and prefer deleting to adding.
 

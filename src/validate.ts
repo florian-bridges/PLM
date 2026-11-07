@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, innermostItem, linksOf, usesOf, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, innermostItem, linksOf, list, parameterOf, targetId, targetPath, usesOf, type Parameter, type Repo, type YamlFile } from './repo.ts';
 import { allows, baseSchema, builtinTypes, linkRules } from './schemas.ts';
 
 // CO-02.4
@@ -10,85 +10,96 @@ export interface Finding { file: string; line: number; col: number; severity: 'e
 function finding(file: YamlFile<unknown>, path: (string | number)[], code: string, message: string): Finding {
   let node: unknown;
   for (let depth = path.length; depth > 0 && !node; depth--) node = file.doc.getIn(path.slice(0, depth), true);
-  const offset = (node as { range?: number[] } | undefined)?.range?.[0] ?? 0;
-  const { line, col } = file.lines.linePos(offset);
+  const offset = (node as { range?: number[] } | undefined)?.range?.[0] ?? 0,
+    { line, col } = file.lines.linePos(offset);
   return { file: file.path, line, col, severity: 'error', code, message };
 }
 
 // CO-02.1
-function schemaFor(ajv: Ajv2020, root: string, type: string): ValidateFunction | undefined {
-  const extensionFile = join(root, 'schemas', `${type}.schema.json`);
-  const builtin = Object.hasOwn(builtinTypes, type) ? builtinTypes[type] : undefined;
-  const extension = existsSync(extensionFile) ? JSON.parse(readFileSync(extensionFile, 'utf8')) : undefined;
-  const parts = [builtin, extension].filter(Boolean);
+function schemaFor(ajv: Ajv2020, root: string, name: string, base?: object) {
+  const extensionFile = join(root, 'schemas', `${name}.schema.json`),
+    builtin = Object.hasOwn(builtinTypes, name) ? builtinTypes[name] : undefined,
+    extension = existsSync(extensionFile) ? JSON.parse(readFileSync(extensionFile, 'utf8')) : undefined,
+    parts = [builtin, extension].filter(Boolean);
   if (!parts.length) return undefined;
-  if (!ajv.getSchema(type)) ajv.addSchema({ allOf: [baseSchema, ...parts], unevaluatedProperties: false }, type);
-  return ajv.getSchema(type);
+  if (!ajv.getSchema(name)) ajv.addSchema(base ? { allOf: [base, ...parts], unevaluatedProperties: false } : parts[0], name);
+  return ajv.getSchema(name);
 }
 
 const newAjv = () => new Ajv2020({ allErrors: true, strictTypes: false });
 
-// VS-01.2: the type's validator for the item form.
-export const itemSchema = (root: string, type: string) => schemaFor(newAjv(), root, type);
+// VS-01.2
+export const itemSchema = (root: string, type: string) => schemaFor(newAjv(), root, type, baseSchema);
 
-export function validate(repo: Repo): Finding[] {
-  const ajv = newAjv();
-  const findings: Finding[] = [];
+// CO-02.1, CO-02.4
+function schemaFindings(file: YamlFile<unknown>, check: ValidateFunction, data: unknown, draft: boolean): Finding[] {
+  if (check(data)) return [];
+  return (check.errors ?? []).map((error) => {
+    const path = [...error.instancePath.split('/').slice(1), ...(error.params.unevaluatedProperty ? [error.params.unevaluatedProperty] : [])];
+    return { ...finding(file, path, 'schema', `${path.join('.') || 'item'} ${error.message}`), severity: error.keyword === 'required' && draft ? 'warning' : 'error' };
+  });
+}
+
+export function validate(repo: Repo) {
+  const ajv = newAjv(), findings: Finding[] = [],
+    // CO-02.7
+    states = (repo.settings as any).parameter_states ?? ['provisional', 'final'];
   for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
-    const { id, item } = entry;
-    const type = String(item.data.type);
-    const validateSchema = schemaFor(ajv, repo.root, type);
-    if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', `Unknown item type "${type}"`));
-    else if (!validateSchema(item.data)) {
-      for (const error of validateSchema.errors ?? []) {
-        const unexpected = error.params.unevaluatedProperty;
-        const path = [...error.instancePath.split('/').slice(1), ...(unexpected ? [unexpected] : [])];
-        findings.push(finding(item, path, 'schema', `${path.join('.') || 'item'} ${error.message}`));
-      }
-    }
+    const { id, item, meta } = entry, type = String(item.data.type), draft = meta.data.status === 'draft',
+      validateSchema = schemaFor(ajv, repo.root, type, baseSchema), validateMeta = schemaFor(ajv, repo.root, 'meta'),
+      // CO-02.2
+      folders = dirname(entry.path).split('/'), home = repo.settings.folders![type],
+      misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
+    if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', type));
+    else findings.push(...schemaFindings(item, validateSchema, item.data, draft));
+    // CO-02.1
+    if (validateMeta) findings.push(...schemaFindings(meta, validateMeta, meta.data, false));
 
-    // CO-02.2
-    const folders = dirname(entry.path).split('/');
-    const home = repo.settings.folders![type];
-    const misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
     if (misplaced) findings.push(finding(item, ['type'], 'misplaced', `outside ${home}`));
 
-    if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', `Duplicate id ${id}`));
+    if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', id));
 
     usesOf(entry).forEach((used, index) => {
-      if (!repo.entries.has(used)) findings.push(finding(item, ['uses', index], 'unknown-use', `Unknown used item ${used}`));
+      if (!repo.entries.has(used)) findings.push(finding(item, ['uses', index], 'unknown-use', used));
+    });
+
+    // CO-02.7
+    list<Parameter>(item.data.parameters).forEach((p, index) => {
+      if (p.state && !states.includes(p.state)) findings.push(finding(item, ['parameters', index, 'state'], 'unknown-state', p.state));
     });
 
     linksOf(entry).forEach((link, index) => {
-      const target = repo.entries.get(link.target)?.item.data;
-      if (!target) {
-        findings.push(finding(item, ['links', index, 'target'], 'unknown-target', `Unknown link target ${link.target}`));
+      const param = parameterOf(repo, link.target), path = targetPath(repo, link.target),
+        targetEntry = repo.entries.get(targetId(link.target)), [sourceTypes, targetTypes] = linkRules[link.type] ?? [[], []];
+      if (!path || !existsSync(join(repo.root, path)) || (link.target.includes(':') && !param)) {
+        findings.push(finding(item, ['links', index, 'target'], 'unknown-target', link.target));
         return;
       }
-      const [sourceTypes, targetTypes] = linkRules[link.type] ?? [[], []];
-      if (!allows(sourceTypes, type) || !allows(targetTypes, target.type)) {
-        findings.push(finding(item, ['links', index, 'type'], 'link-type', `${link.type} not allowed from ${type} to ${target.type}`));
+      if (!allows(sourceTypes, type) || !allows(targetTypes, targetEntry!.item.data.type)) {
+        findings.push(finding(item, ['links', index, 'type'], 'link-type', `${type} ${link.type} ${targetEntry!.item.data.type}`));
       }
+      if (!param) return; // CO-02.7
+      if (param.parameter.value == null) findings.push({ ...finding(item, ['links', index, 'target'], 'tbd-source', link.target), severity: 'warning' });
+      else if (link.type === 'derives-from' && list<Parameter>(item.data.parameters).some((p) => p.name === param.parameter.name && p.value != null && p.value !== param.parameter.value))
+        findings.push(finding(item, ['links', index, 'target'], 'stale-value', link.target));
     });
   }
   // CO-02.2
-  const metaFolder = join(repo.root, 'meta');
-  const orphans = existsSync(metaFolder) ? readdirSync(metaFolder).filter((f) => f.endsWith('.yaml') && !repo.entries.has(f.slice(0, -5))) : [];
-  for (const file of orphans) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: `No item: meta/${file}` });
+  const metaFolder = join(repo.root, 'meta'),
+    orphans = existsSync(metaFolder) ? readdirSync(metaFolder).filter((f) => f.endsWith('.yaml') && !repo.entries.has(f.slice(0, -5))) : [];
+  for (const file of orphans) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: file });
 
   return [...findings, ...cycles(repo)];
 }
 
 // CO-02.2
-function cycles(repo: Repo): Finding[] {
-  const state = new Map<string, 'open' | 'done'>();
-  const findings: Finding[] = [];
-  const visit = (id: string) => {
+function cycles(repo: Repo) {
+  const state = new Map<string, 'open' | 'done'>(), findings: Finding[] = [],
+    visit = (id: string) => {
     state.set(id, 'open');
     const entry = repo.entries.get(id)!;
     for (const child of childrenOf(entry)) {
-      const closesCycle = state.get(child) === 'open';
-      if (closesCycle) findings.push(finding(entry.item, ['uses'], 'cycle', `${id} → ${child} closes composition cycle`));
+      if (state.get(child) === 'open') findings.push(finding(entry.item, ['uses'], 'cycle', `${id} → ${child}`));
       else if (!state.has(child) && repo.entries.has(child)) visit(child);
     }
     state.set(id, 'done');

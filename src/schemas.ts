@@ -10,6 +10,8 @@ export const baseSchema = {
     uses: { type: 'array', items: str },
     links: { type: 'array', items: { type: 'object', required: ['type', 'target'], properties: { type: str, target: str, result: { enum: results } }, additionalProperties: false,
       if: { required: ['result'] }, then: { properties: { type: { const: 'executes' } } } } },
+    // CO-02.7
+    parameters: { type: 'array', items: { type: 'object', properties: { name: str, value: { type: ['number', 'null'] }, unit: str, state: str } } },
   },
 };
 
@@ -21,12 +23,13 @@ export const builtinTypes: Record<string, object> = {
   'test-run': { properties: { date: str } },
 };
 
-// CO-02.2, CO-02.6: [source types, target types]; '*' allows any type.
+// CO-02.2, CO-02.6
 export const linkRules: Record<string, [string[], string[]]> = {
   satisfies: [['*'], ['requirement']],
   implements: [['*'], ['requirement']],
   verifies: [['test-case'], ['requirement']],
   executes: [['test-run'], ['test-case']],
   tests: [['test-run'], ['*']],
+  'derives-from': [['*'], ['*']],
 };
 export const allows = (types: string[], candidate: string) => types.includes('*') || types.includes(candidate);

@@ -10,13 +10,13 @@ import { validate } from '../src/validate.ts';
 import { currentVersions, versionAt } from '../src/version.ts';
 
 const base = mkdtempSync(join(tmpdir(), 'plm-test-')),
-  write = (root: string, files: Record<string, string>) => {
+  write = (root, files) => {
     for (const [path, text] of Object.entries(files)) {
       mkdirSync(dirname(join(root, path)), { recursive: true });
       writeFileSync(join(root, path), text);
     }
   },
-  commit = (root: string) => {
+  commit = (root) => {
     git(root, ['add', '-A']);
     git(root, ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'change']);
   },
@@ -36,14 +36,14 @@ const base = mkdtempSync(join(tmpdir(), 'plm-test-')),
     commit(root);
     return root;
   },
-  plm = (root: string, ...args: string[]) => spawnSync(process.execPath, ['src/cli.ts', '-C', root, ...args], { encoding: 'utf8' }),
-  bump = (root: string, extra = '') => write(root, { 'wing/requirements/load.yaml': `id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n${extra}` }),
-  json = (root: string, ...args: string[]) => JSON.parse(plm(root, '--format', 'json', ...args).stdout).data;
+  plm = (root, ...args) => spawnSync(process.execPath, ['src/cli.ts', '-C', root, ...args], { encoding: 'utf8' }),
+  bump = (root, extra = '') => write(root, { 'wing/requirements/load.yaml': `id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n${extra}` }),
+  json = (root, ...args) => JSON.parse(plm(root, '--format', 'json', ...args).stdout).data;
 afterAll(() => rmSync(base, { recursive: true, force: true }));
-let root: string;
+let root;
 beforeEach(() => { root = fixture(); });
 
-test('TE-01.1: mv', () => {
+test('TE-01.1, TE-03.1: mv', () => {
   const before = currentVersions(loadRepo(root));
   write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks: [{type: satisfies, target: R}]\n' });
   const after = currentVersions(loadRepo(root));
@@ -64,6 +64,9 @@ test('TE-01.1: mv', () => {
   expect(now.get('A')).not.toBe(moved.get('A'));
   expect(now.get('L')).not.toBe(moved.get('L'));
   expect(linkStates(repo, now)[0].state).toBe('current');
+  bump(root);
+  git(root, ['mv', 'wing/requirements/load.yaml', 'wing/requirements/carry.yaml']);
+  expect(plm(root, 'suspects').stdout).toBe('suspect P (Spar) satisfies R (Load)\n');
 });
 
 test('TE-01.2, CO-01.3: artifacts', () => {
@@ -101,6 +104,7 @@ test('CL-01.1,CO-02.1:remove',()=>{
   expect(validate(loadRepo(root)).some((f)=>f.file==='meta/P.yaml'&&f.code==='schema')).toBe(true);
   expect(plm(root,'link','P','satisfies','R','--remove').status).toBe(0);
   plm(root,'link','P','derives-from','L');
+  expect(plm(root,'link','P','bogus','R')).toMatchObject({status:2,stderr:'part bogus requirement\n'});
   plm(root,'confirm','P');
   expect(plm(root,'link','P','derives-from','L','--remove').status).toBe(0);
   expect(linksOf(loadRepo(root).entries.get('P')!)).toEqual([]);
@@ -190,9 +194,11 @@ test('TE-01.1, TE-03.1, CO-02.7, CO-03.3, CL-01.1, CL-01.3–CL-01.4: parameter'
   expect(validate(loadRepo(root)).map((f) => f.code)).toEqual(expect.arrayContaining(['schema', 'unknown-state', 'unknown-target', 'tbd-source', 'stale-value']));
 }, 15000);
 
-test('CL-02.1–CL-02.2, CO-01.1, CO-02.2: nest', () => {
+test('CL-02.1–CL-02.2, CL-05.2, CO-01.1, CO-02.2: nest', () => {
   root = join(base, 'new');
   write(root, { 'plm.yaml': 'prefixes: {assembly: ASM-, part: PRT-, requirement: REQ-, test-case: TC-}\n' });
+  git(root, ['init', '-q']);
+  expect(plm(root, 'suspects')).toMatchObject({ status: 0, stderr: '' });
   plm(root, 'new', 'assembly', 'Aircraft');
   const dir = join(root, 'aircraft'), part = plm(dir, 'new', 'part', 'Spar').stdout.trim();
   expect(part).toMatch(/^PRT-[0-9A-HJKMNP-TV-Z]{6}$/);
@@ -215,6 +221,7 @@ test('CL-02.1–CL-02.2, CO-01.1, CO-02.2: nest', () => {
 });
 
 test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: exit', () => {
+  expect(plm(root, '--version').stdout).toBe(`${JSON.parse(readFileSync('package.json', 'utf8')).version}\n`);
   expect(plm(root, 'validate').status).toBe(0);
   const suspects = plm(root, '--format', 'json', 'suspects');
   expect(suspects.status).toBe(1);
@@ -232,11 +239,15 @@ test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: exit', () => {
   expect(alloc.stdout).not.toContain('Z');
   expect(alloc.status).toBe(1);
   expect(plm(root, 'report', 'coverage', '--allocation', '--by', 'x').status).toBe(2);
+
+  write(root, { '.git/index': 'x' });
+  const broken = plm(root, 'suspects');
+  expect([broken.status, broken.stderr.match(/fatal/g)?.length]).toEqual([3, 1]);
 });
 
 test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
   const coverage = () => json(root, 'report', 'coverage', 'A')[0].state,
-    record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'L', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
+    record = (...results) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'L', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
   expect(coverage()).toBe('unverified');
   const wing = currentVersions(loadRepo(root)).get('A');
   expect(json(root, 'report', 'coverage', 'P')).toEqual([]);
@@ -257,7 +268,7 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   expect(loadRepo(root).entries.get(run)?.meta.data.confirmed?.T.commit).toBe(git(root, ['rev-parse', '--short', 'HEAD']));
   expect(plm(root, 'confirm', run).status).toBe(1);
   expect(validate(loadRepo(root))).toEqual([]);
-  const tests = (outdated: boolean) => [['U', 'DropT', 'fail'], ['T', 'LoadT', 'pass']]
+  const tests = (outdated) => [['U', 'DropT', 'fail'], ['T', 'LoadT', 'pass']]
     .map(([id, title, result]) => ({ testCase: { id, title }, run: { id: run, title: 'T, U on L, A' }, result, outdated }));
   expect(json(root, 'report', 'coverage', 'A')[0]).toMatchObject({ state: 'verified', tests: tests(false) });
   write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\n' });
@@ -277,7 +288,7 @@ test('TE-05.1–TE-05.2: impact', () => {
   write(root, { 'meta/X.yaml': `confirmed:\n  A:\n    version: ${currentVersions(loadRepo(root)).get('A')}\n` });
   commit(root);
   bump(root);
-  const impact = (range: string) => json(root, 'impact', range),
+  const impact = (range) => json(root, 'impact', range),
     expected = { changed: [{ id: 'R', title: 'Load' }], propagated: [{ id: 'A', title: 'Wing' }], suspects: [], runs: [{ id: 'X', title: 'Run' }] };
   expect(impact('HEAD')).toMatchObject(expected);
   commit(root);

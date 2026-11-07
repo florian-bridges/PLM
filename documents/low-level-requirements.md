@@ -54,8 +54,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset, and for links of test runs.
 *Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review. Run links are confirmed when recording (CL-03.2).
 
-**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none; it stays current when its TE-03.2 change touches only `item.yaml` or requirement files, equal, after removing the fields under `informative:` in `plm.yaml` (default `[rationale]`), at the confirmed commit and now; no confirmed commit keeps it suspect. Links from test runs are evidence, not links to review: suspect lists, of the repository or an item subtree, shall omit them, and a run with a suspect link is outdated. A link naming a parameter (`<ID>:<name>`, TE-01.1) is suspect only when that parameter's version differs.
-*Rationale:* Separating unconfirmed from suspect distinguishes new, unreviewed links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
+**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none; it stays current when its TE-03.2 change touches only `item.yaml` or requirement files present and equal, after removing the fields under `informative:` in `plm.yaml` (default `[rationale]`), at the confirmed commit and now; no confirmed commit keeps it suspect. Links from test runs are evidence, not links to review: suspect lists shall omit them, and a run with a suspect link is outdated. A link naming a parameter (`<ID>:<name>`, TE-01.1) is suspect only when that parameter's version differs.
+*Rationale:* Separating unconfirmed from suspect distinguishes new links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
 
 **TE-03.2** To show what changed, the engine shall return the diff of the target's subtree since the link's `commit` or, if it is missing or unknown, since the latest commit at which the target had the confirmed version.
 *Rationale:* The user must judge whether the change matters; the diff shows exactly what happened since confirmation. The stored commit avoids searching history, which is needed only for uncommitted confirmations or squashed branches.
@@ -80,8 +80,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`.
-*Rationale:* Searching upward works from any subfolder.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`.
+*Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
 *Rationale:* Links are reviewed one by one, or all at once after reviewing an item.
@@ -110,8 +110,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-05.1** Every command shall accept `--format json`, with the JSON output schema versioned.
 *Rationale:* Versioned JSON lets scripts and CI rely on the output across tool updates.
 
-**CL-05.2** Exit codes shall be 0 for success, 1 for findings, 2 for usage errors and 3 for internal errors.
-*Rationale:* Separating findings from failures lets CI tell rejected changes from broken tooling.
+**CL-05.2** Exit codes shall be 0 for success, 1 for findings, 2 for usage errors and 3 for internal errors; only the exit-3 message includes Git's error output.
+*Rationale:* Separating findings from failures lets CI tell rejected changes from broken tooling; Git's messages on handled failures mislead.
 
 **CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
 *Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up. Reusing `show`'s fields for `search` answers many items in one call.

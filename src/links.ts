@@ -1,7 +1,8 @@
-import { copyFileSync, existsSync, readFileSync } from 'node:fs';
+import { copyFileSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
 import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, selection, subtree, targetId, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { disallowed } from './schemas.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
 
@@ -25,14 +26,16 @@ const commitAndPaths = (repo: Repo, link: Link): [string | undefined, string[]] 
 };
 
 // TE-03.1, CL-05.3
-export function linkStates(repo: Repo, versions: Map<string, string>): LinkState[] {
+export function linkStates(repo: Repo, versions: Map<string, string>) {
   const stateOf = (link: Link): LinkState['state'] => {
     if (!link.version) return 'unconfirmed';
     if (link.version === versions.get(link.target)) return 'current';
     const [commit, paths] = commitAndPaths(repo, link),
       own = paths.map((p) => isRequirementFile(p) ? p : `${p}/item.yaml`),
-      changed = commit ? tryGit(repo, ['diff', '--name-only', commit, '--', ...paths]).split('\n').filter(Boolean) : [];
-    return changed.length && changed.every((f) => own.includes(f) && strip(repo, tryGit(repo, ['show', `${commit}:${f}`])) === strip(repo, existsSync(join(repo.root, f)) ? readFileSync(join(repo.root, f), 'utf8') : '')) ? 'current' : 'suspect';
+      changed = commit ? tryGit(repo, ['diff', '--name-only', commit, '--', ...paths]).split('\n').filter(Boolean) : [],
+      // absent at the commit: changed
+      equal = (f: string) => { try { return strip(repo, git(repo.root, ['show', `${commit}:${f}`])) === strip(repo, readFileSync(join(repo.root, f), 'utf8')); } catch { return false; } };
+    return changed.length && changed.every((f) => own.includes(f) && equal(f)) ? 'current' : 'suspect';
   };
   return [...repo.entries.values()].flatMap((source) => linksOf(source).map((link) => ({
     source: source.id, title: named(repo, source.id).title, link, targetTitle: named(repo, targetId(link.target)).title, state: stateOf(link),
@@ -69,7 +72,9 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
 // CL-01.1
 export function link(repo: Repo, source: string, type: string, target: string, remove?: boolean) {
   const { item, meta } = entry(repo, source), links = list<Link>(item.data.links),
-    at = links.findIndex((l) => l.type === type && l.target === target);
+    at = links.findIndex((l) => l.type === type && l.target === target), found = repo.entries.get(targetId(target)),
+    bad = !remove && found && disallowed(item.data.type, type, found.item.data.type);
+  if (bad) throw new UsageError(bad);
   if (!remove) item.doc.setIn(['links', links.length], { type, target });
   else if (at < 0) throw new UsageError(target);
   else item.doc.deleteIn(['links', at]), meta.doc.has('confirmed')&&meta.doc.deleteIn(['confirmed', target]), writeYaml(repo.root, meta);
@@ -122,17 +127,12 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
   const linksOfType = (type: string) => states.filter((state) => state.link.type === type),
     isCurrent = (state: LinkState) => state.state === 'current',
     outdatedRuns = new Set(states.filter((state) => fromRun(repo, state) && !isCurrent(state)).map((state) => state.source)),
-    latestRun = new Map<string, LinkState>(),
-    latestCurrentRun = new Map<string, LinkState>(),
     date = (executes: LinkState) => String(entry(repo, executes.source).item.data.date),
-    keepLatest = (latest: Map<string, LinkState>, executes: LinkState) => {
-      const previous = latest.get(executes.link.target);
-      if (!previous || date(executes) > date(previous)) latest.set(executes.link.target, executes);
-    };
-  for (const executes of linksOfType('executes')) {
-    keepLatest(latestRun, executes);
-    if (!outdatedRuns.has(executes.source)) keepLatest(latestCurrentRun, executes);
-  }
+    runs = linksOfType('executes').sort((a, b) => date(a).localeCompare(date(b))),
+    // later runs override earlier ones
+    latest = (executed: LinkState[]) => new Map<string, LinkState>(executed.map((executes) => [executes.link.target, executes])),
+    latestRun = latest(runs),
+    latestCurrentRun = latest(runs.filter((executes) => !outdatedRuns.has(executes.source)));
 
   const inScope = within(repo, root),
     requirements = [...repo.entries.values()].filter((candidate) => candidate.item.data.type === 'requirement' && inScope(candidate.id));

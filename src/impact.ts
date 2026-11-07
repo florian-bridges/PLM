@@ -1,17 +1,15 @@
 // TE-05
 import { fromRun, linkStates, type LinkState } from './links.ts';
-import { git, innermostItem, named, type Named } from './repo.ts';
+import { git, innermostItem, named } from './repo.ts';
 import { type Snapshot } from './version.ts';
 
-interface Impact { changed: Named[]; propagated: Named[]; suspects: LinkState[]; runs: Named[] }
-
 // TE-05.1
-export function changedFiles(root: string, base: string, head?: string): string[] {
+export function changedFiles(root: string, base: string, head?: string) {
   return git(root, ['diff', '--name-only', '--relative', base, ...(head ? [head] : [])]).split('\n').filter(Boolean);
 }
 
 // TE-05.1, CL-05.3
-export function impact(base: Snapshot, head: Snapshot, files: string[]): Impact {
+export function impact(base: Snapshot, head: Snapshot, files: string[]) {
   const ownersOfChangedFiles = new Set(files.flatMap((file) => [innermostItem(base.repo, file), innermostItem(head.repo, file)])),
     ids = new Set([...base.repo.entries.keys(), ...head.repo.entries.keys()]),
     changedIds = [...ids].filter((id) => base.versions.get(id) !== head.versions.get(id)),

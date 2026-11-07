@@ -52,13 +52,13 @@ function versionsFromHashes(repo: Repo, hashes: Map<string, string>) {
 }
 
 // TE-01.2
-export function currentVersions(repo: Repo): Map<string, string> {
-  const own = [...repo.entries.values()].map((e) => (isRequirementFile(e.path) ? e.path : `${e.path}/item.yaml`)),
+export function currentVersions(repo: Repo) {
+  const own = [...repo.entries.values()].map((e) => e.item.path),
     paths = [...new Set([...tracked(repo), ...own])],
     tempFolder = mkdtempSync(join(tmpdir(), 'plm-'));
   try {
     const env = { GIT_INDEX_FILE: join(tempFolder, 'index') };
-    git(repo.root, ['add', '--no-warn-embedded-repo', '--', ...paths], env);
+    git(repo.root, ['add', '--', ...paths], env);
     return versionsFromHashes(repo, objectHashes(repo.root, git(repo.root, ['write-tree'], env)));
   } finally {
     rmSync(tempFolder, { recursive: true, force: true });
@@ -87,7 +87,7 @@ export function versionAt(root: string, commit: string, target: string) {
 export interface Snapshot { repo: Repo; versions: Map<string, string> }
 
 // TE-05.1
-export function snapshotAt(root: string, commit: string): Snapshot {
+export function snapshotAt(root: string, commit: string) {
   try {
     git(root, ['rev-parse', '--verify', '--quiet', `${commit}^{commit}`]);
   } catch {

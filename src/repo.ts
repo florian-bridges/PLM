@@ -5,9 +5,9 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { Document, LineCounter, parseDocument } from 'yaml';
 
-export function git(root: string, args: string[], env: Record<string, string> = {}): string {
-  const options = { cwd: root, encoding: 'utf8' as const, env: { ...process.env, ...env }, maxBuffer: 1 << 28 };
-  return execFileSync('git', args, options).trim();
+// CL-05.2
+export function git(root: string, args: string[], env: Record<string, string> = {}) {
+  return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: 'pipe', env: { ...process.env, ...env }, maxBuffer: 1 << 28 }).trim();
 }
 
 export interface Link { type: string; target: string; result?: string; title?: string; version?: string; by?: string; on?: string; commit?: string }
@@ -22,13 +22,13 @@ export interface Repo { root: string; settings: Settings; entries: Map<string, E
 export class UsageError extends Error {}
 export class Refused extends Error {}
 
-function readYaml<T>(root: string, path: string): YamlFile<T> {
+function readYaml<T>(root: string, path: string) {
   const file = join(root, path), lines = new LineCounter(), text = existsSync(file) ? readFileSync(file, 'utf8') : '',
     doc = parseDocument(text, { lineCounter: lines });
   return { path, doc, lines, data: (doc.toJS() ?? {}) as T };
 }
 
-export function writeYaml(root: string, file: Pick<YamlFile<unknown>, 'path' | 'doc'>): void {
+export function writeYaml(root: string, file: Pick<YamlFile<unknown>, 'path' | 'doc'>) {
   const target = join(root, file.path);
   mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, file.doc.toString({ lineWidth: 0 }));
@@ -42,15 +42,13 @@ export function findRoot(start: string) {
   }
 }
 
-// CO-01.1, CO-02.2
-const homeFolders: Record<string, string> = { requirement: 'requirements', 'test-case': 'tests', 'test-run': 'runs' };
-
-export function loadRepo(start: string): Repo {
+export function loadRepo(start: string) {
   const root = findRoot(start),
     repo: Repo = { root, settings: readYaml<Settings>(root, 'plm.yaml').data, entries: new Map(), duplicates: [] };
-  repo.settings.folders = { ...homeFolders, ...repo.settings.folders };
+  // CO-01.1, CO-02.2
+  repo.settings.folders = { requirement: 'requirements', 'test-case': 'tests', 'test-run': 'runs', ...repo.settings.folders };
 
-  const addEntry = (path: string): Entry => {
+  const addEntry = (path: string) => {
       const item = readYaml<Item>(root, isRequirementFile(path) ? path : `${path}/item.yaml`),
         id = String(item.data.id ?? basename(path)),
         added: Entry = { id, path, nested: [], requirements: [], item, meta: readYaml(root, `meta/${id}.yaml`) };
@@ -99,8 +97,8 @@ export function parameterOf(repo: Repo, ref: string) {
 export const isRequirementFile = (path: string) => path.endsWith('.yaml');
 export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
 export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
-export const childrenOf = (entry?: Entry): string[] => [...(entry?.nested ?? []), ...usesOf(entry)];
-export const linksOf = (entry: Entry): Link[] => list<Link>(entry.item.data.links).map((link) => ({ ...entry.meta.data.confirmed?.[link.target], ...link }));
+export const childrenOf = (entry?: Entry) => [...(entry?.nested ?? []), ...usesOf(entry)];
+export const linksOf = (entry: Entry) => list<Link>(entry.item.data.links).map((link) => ({ ...entry.meta.data.confirmed?.[link.target], ...link }));
 
 // TE-05.1, VS-01.2
 export const innermostItem = (repo: Repo, file: string) => [...repo.entries.values()]
@@ -133,7 +131,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
 }
 
 // CO-01.3
-export const tracked = (repo: Repo): string[] => git(repo.root, ['ls-files']).split('\n').filter(Boolean);
+export const tracked = (repo: Repo) => git(repo.root, ['ls-files']).split('\n').filter(Boolean);
 
 export function artifacts(repo: Repo, { path, nested }: Entry, files: string[] = tracked(repo)) {
   if (isRequirementFile(path)) return [];
@@ -148,7 +146,7 @@ export function artifacts(repo: Repo, { path, nested }: Entry, files: string[] =
 
 // CL-05.3
 export interface Named { id: string; title: string }
-export const named = (repo: Repo, id: string): Named => ({ id, title: String(repo.entries.get(id)?.item.data.title ?? '') });
+export const named = (repo: Repo, id: string) => ({ id, title: String(repo.entries.get(id)?.item.data.title ?? '') });
 
 export function entry(repo: Repo, id: string) {
   const found = repo.entries.get(id);
@@ -164,7 +162,7 @@ export function subtree(repo: Repo, id: string, seen = new Set<string>()): strin
 }
 
 // TE-06.2
-export function selection(repo: Repo, root: string): string[] {
+export function selection(repo: Repo, root: string) {
   const items = subtree(repo, root);
   return [...items, ...items.flatMap((id) => entry(repo, id).requirements)];
 }

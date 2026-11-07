@@ -24,7 +24,7 @@ export const builtinTypes: Record<string, object> = {
 };
 
 // CO-02.2, CO-02.6
-export const linkRules: Record<string, [string[], string[]]> = {
+const linkRules: Record<string, [string[], string[]]> = {
   satisfies: [['*'], ['requirement']],
   implements: [['*'], ['requirement']],
   verifies: [['test-case'], ['requirement']],
@@ -32,4 +32,6 @@ export const linkRules: Record<string, [string[], string[]]> = {
   tests: [['test-run'], ['*']],
   'derives-from': [['*'], ['*']],
 };
-export const allows = (types: string[], candidate: string) => types.includes('*') || types.includes(candidate);
+// CO-02.2: message, empty if allowed
+export const disallowed = (source: string, type: string, target: string) =>
+  [source, target].every((t, i) => (linkRules[type]?.[i] ?? []).some((a) => a === '*' || a === t)) ? '' : [source, type, target].join(' ');

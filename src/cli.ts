@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // CL-01.1
+import { createRequire } from 'node:module';
 import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
@@ -11,6 +12,7 @@ import { validate } from './validate.ts';
 import { currentVersions, snapshotAt } from './version.ts';
 
 const program = new Command('plm')
+    .version(createRequire(import.meta.url)('../package.json').version)
     .option('-C, --repo <dir>', '', '.')
     .option('--format <format>', '', 'text')
     .exitOverride(),

@@ -2,6 +2,7 @@ import { copyFileSync, existsSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
 import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, selection, subtree, targetId, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { disallowed } from './schemas.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
 
@@ -69,7 +70,9 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
 // CL-01.1
 export function link(repo: Repo, source: string, type: string, target: string, remove?: boolean) {
   const { item, meta } = entry(repo, source), links = list<Link>(item.data.links),
-    at = links.findIndex((l) => l.type === type && l.target === target);
+    at = links.findIndex((l) => l.type === type && l.target === target), found = repo.entries.get(targetId(target)),
+    bad = !remove && found && disallowed(item.data.type, type, found.item.data.type);
+  if (bad) throw new UsageError(bad);
   if (!remove) item.doc.setIn(['links', links.length], { type, target });
   else if (at < 0) throw new UsageError(target);
   else item.doc.deleteIn(['links', at]), meta.doc.has('confirmed')&&meta.doc.deleteIn(['confirmed', target]), writeYaml(repo.root, meta);

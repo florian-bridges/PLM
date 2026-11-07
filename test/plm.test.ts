@@ -101,6 +101,7 @@ test('CL-01.1,CO-02.1:remove',()=>{
   expect(validate(loadRepo(root)).some((f)=>f.file==='meta/P.yaml'&&f.code==='schema')).toBe(true);
   expect(plm(root,'link','P','satisfies','R','--remove').status).toBe(0);
   plm(root,'link','P','derives-from','L');
+  expect(plm(root,'link','P','bogus','R')).toMatchObject({status:2,stderr:'part bogus requirement\n'});
   plm(root,'confirm','P');
   expect(plm(root,'link','P','derives-from','L','--remove').status).toBe(0);
   expect(linksOf(loadRepo(root).entries.get('P')!)).toEqual([]);
@@ -217,6 +218,7 @@ test('CL-02.1–CL-02.2, CL-05.2, CO-01.1, CO-02.2: nest', () => {
 });
 
 test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: exit', () => {
+  expect(plm(root, '--version').stdout).toBe(`${JSON.parse(readFileSync('package.json', 'utf8')).version}\n`);
   expect(plm(root, 'validate').status).toBe(0);
   const suspects = plm(root, '--format', 'json', 'suspects');
   expect(suspects.status).toBe(1);

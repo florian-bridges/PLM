@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
 import { childrenOf, innermostItem, linksOf, list, parameterOf, targetId, targetPath, usesOf, type Parameter, type Repo, type YamlFile } from './repo.ts';
-import { allows, baseSchema, builtinTypes, linkRules } from './schemas.ts';
+import { baseSchema, builtinTypes, disallowed } from './schemas.ts';
 
 // CO-02.4
 export interface Finding { file: string; line: number; col: number; severity: 'error' | 'warning'; code: string; message: string }
@@ -70,14 +70,13 @@ export function validate(repo: Repo) {
 
     linksOf(entry).forEach((link, index) => {
       const param = parameterOf(repo, link.target), path = targetPath(repo, link.target),
-        targetEntry = repo.entries.get(targetId(link.target)), [sourceTypes, targetTypes] = linkRules[link.type] ?? [[], []];
+        targetEntry = repo.entries.get(targetId(link.target));
       if (!path || !existsSync(join(repo.root, path)) || (link.target.includes(':') && !param)) {
         findings.push(finding(item, ['links', index, 'target'], 'unknown-target', link.target));
         return;
       }
-      if (!allows(sourceTypes, type) || !allows(targetTypes, targetEntry!.item.data.type)) {
-        findings.push(finding(item, ['links', index, 'type'], 'link-type', `${type} ${link.type} ${targetEntry!.item.data.type}`));
-      }
+      const bad = disallowed(type, link.type, targetEntry!.item.data.type);
+      if (bad) findings.push(finding(item, ['links', index, 'type'], 'link-type', bad));
       if (!param) return; // CO-02.7
       if (param.parameter.value == null) findings.push({ ...finding(item, ['links', index, 'target'], 'tbd-source', link.target), severity: 'warning' });
       else if (link.type === 'derives-from' && list<Parameter>(item.data.parameters).some((p) => p.name === param.parameter.name && p.value != null && p.value !== param.parameter.value))

@@ -440,3 +440,14 @@ Add new entries at the end. Format:
 *Review:* 2026-11-05, quality, commit 9b61d9b (`wp/afw-user-stories`). The 7 new stories (US-1, US-2, US-5, US-8–US-11) match the project's real `plm` activity (spot-checked against autonomous-fixed-wing's git log: requirements, analyses, reviews, test runs, suspects/impact/confirm and ownership/status are all well used; no CI or site activity, consistent with the drop). CI-01–04, SI-01–04 and their low-level requirements are gone; `grep -r 'CI-0\|SI-0' src/ test/ extension/` finds nothing, confirming none was implemented or used. CR-15 correctly dropped (its only child, SI-01, is gone); CR-17 dropped; no reference to a dropped CR/US/component ID remains anywhere in `documents/`; every CR cites a US, every component a CR and a US, down through the low-level requirements — no orphan, no reused ID. `grep -niE` check empty. `tsc --noEmit` clean; `npm test` 17/17 green. `src/`+`test/` and `extension/` unchanged (0 diff), as budgeted. `documents/` 4435/5600, each file under its own cap. **Major:** `documents/low-level-requirements.md:153` — deleting SI-04.2 left its rationale ("Publishing export-controlled data must be an explicit decision.") behind, now a dangling line with no heading, directly after VS-06.1's own rationale; delete it. No other findings.
 *Review round 2:* 2026-11-05, quality, commit 98bdbcc (`wp/afw-user-stories`), major only. **Closed.** The dangling rationale line is deleted; no other `SI-04` reference remains in `documents/`; diff against fefb7a6 touches only that one line.
 *Done:* 2026-11-05, product owner. Merged to `integration/afw` (67a397b); documents only, no rebuild; `documents/` 4426 (cap 5600). CI-01–CI-04, SI-01–SI-04 and CR-17 dropped; the owner may restore CI and site (about +650 words). Projects: none; no migration.
+
+## YAML parse errors are not reported
+*Found:* 2026-10-20, PLM README open topics (moved here at release 0.2.0), product owner
+*Observed:* A YAML syntax error, such as a duplicate key in `meta/<ID>.yaml`, gives no `plm validate` finding (exit 0); confirming the item's links fails when writing the file.
+*Impact:* A broken file passes validation and blocks a later `plm confirm`.
+*Proposal:* Report YAML parse errors as findings with file and line.
+
+## VS Code forms edit only flat attributes
+*Found:* 2026-10-20, PLM README open topics (moved here at release 0.2.0), product owner
+*Observed:* Forms edit only string, number, enum and string-list attributes, `status` and `owner`.
+*Impact:* Nested attributes are edited in YAML.

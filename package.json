@@ -1,16 +1,25 @@
 {
   "name": "plm",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.2.0",
+  "description": "Git-based product lifecycle management CLI: hierarchical items, requirements, tests and traceability links that turn suspect on change",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/florian-bridges/PLM.git"
+  },
   "type": "module",
   "bin": {
     "plm": "dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "engines": {
     "node": ">=22.18"
   },
   "scripts": {
     "build": "tsc",
+    "prepare": "npm run build",
     "test": "vitest run --exclude '.claude/**' --testTimeout=30000",
     "plm": "node src/cli.ts",
     "build:ext": "esbuild extension/src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=extension/dist/extension.js",

@@ -200,8 +200,10 @@ test('CL-02.1–CL-02.2, CL-05.2, CO-01.1, CO-02.2: nest', () => {
   git(root, ['init', '-q']);
   expect(plm(root, 'suspects')).toMatchObject({ status: 0, stderr: '' });
   plm(root, 'new', 'assembly', 'Aircraft');
-  const dir = join(root, 'aircraft'), part = plm(dir, 'new', 'part', 'Spar').stdout.trim();
+  const dir = join(root, 'aircraft'), created = plm(dir, 'new', 'part', 'Spar'), part = created.stdout.trim();
   expect(part).toMatch(/^PRT-[0-9A-HJKMNP-TV-Z]{6}$/);
+  expect(created.stderr).toBe('aircraft/spar/item.yaml\n');
+  expect(json(dir, 'new', 'part', 'Strut').path).toBe('aircraft/strut/item.yaml');
   expect(existsSync(join(dir, 'spar/item.yaml'))).toBe(true);
   expect(plm(dir, 'new', 'part', 'Spar').status).toBe(2);
   mkdirSync(join(dir, 'parts'));

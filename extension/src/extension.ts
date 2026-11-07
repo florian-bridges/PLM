@@ -95,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
     const type = await vscode.window.showQuickPick(Object.keys(open().settings.prefixes ?? {}).filter((type) => type !== 'test-run'));
     const title = type && await vscode.window.showInputBox({ prompt: 'Title' });
     if (!title) return;
-    editItem({ id: newItem(open(), type, title, join(root, at?.path ?? '')) });
+    editItem({ id: newItem(open(), type, title, join(root, at?.path ?? '')).id });
     refresh();
   };
 

@@ -127,7 +127,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
   for (const [key, value] of Object.entries({ id, type, title })) item.doc.setIn([key], value);
   writeYaml(repo.root, item);
   writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: parseDocument('status: draft\n') });
-  return id;
+  return { id, path: item.path };
 }
 
 // CO-01.3

@@ -117,8 +117,9 @@ program.command('impact <range>').description('impact').action((range) => {
 
 // CL-02.1
 program.command('new <type> <title>').description('create').action((type, title) => {
-  const id = newItem(openRepo(), type, title, workingFolder());
-  output(id, { id });
+  const created = newItem(openRepo(), type, title, workingFolder());
+  output(created.id, created);
+  if (program.opts().format !== 'json') console.error(created.path);
 });
 
 // CL-03.1

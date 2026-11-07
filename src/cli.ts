@@ -36,9 +36,6 @@ const record = (found: any) => ({ ...found.item.data, path: found.path, meta: fo
 // CL-05.2
 let exitCode = 0;
 
-const exitCodeFor = (error: unknown) =>
-  error instanceof CommanderError ? (error.exitCode && 2) : error instanceof UsageError ? 2 : error instanceof Refused ? 1 : 3;
-
 program.command('validate').description('check').action(() => {
   const findings = validate(openRepo()),
     lines = findings.map((finding) => `${finding.file}:${finding.line}:${finding.col} ${finding.severity} ${finding.code}: ${finding.message}`);
@@ -46,7 +43,7 @@ program.command('validate').description('check').action(() => {
   if (findings.some((finding) => finding.severity === 'error')) exitCode = 1;
 });
 
-program.command('show <id>').description('details').action((id: string) => {
+program.command('show <id>').description('details').action((id) => {
   const repo = openRepo(), found = entry(repo, id), versions = currentVersions(repo),
     links = linkStates(repo, versions).filter((state) => state.source === id || state.link.target === id),
     // CO-01.3
@@ -56,10 +53,10 @@ program.command('show <id>').description('details').action((id: string) => {
 
 program.command('link <source> <type> <target>').description('add')
   .option('--remove')
-  .action((source: string, type: string, target: string, options: any) => link(openRepo(), source, type, target, options.remove));
+  .action((source, type, target, options) => link(openRepo(), source, type, target, options.remove));
 
 // CL-01.3
-program.command('set <ref> <field> <value>').description('set').action((ref: string, field: string, value: string) => {
+program.command('set <ref> <field> <value>').description('set').action((ref, field, value) => {
   const repo = openRepo(), id = targetId(ref);
   if (id !== ref) return setParameter(repo, id, ref, field, value);
   const found = entry(repo, id), file = field === 'owner' || field === 'status' ? found.meta : found.item, current = (file.data as any)[field];
@@ -69,14 +66,14 @@ program.command('set <ref> <field> <value>').description('set').action((ref: str
 });
 
 // CL-01.4
-program.command('get <ref> [key]').description('get').action((ref: string, key?: string) => {
+program.command('get <ref> [key]').description('get').action((ref, key) => {
   const val = getParameter(openRepo(), ref, key);
   if ((key ?? 'value') === 'value' && val == null) return void (exitCode = 1);
   output(String(val), val);
 });
 
 // CO-03.3, CL-01.1
-program.command('list <field> [args...]').description('list').action((field: string, args: string[] = []) => {
+program.command('list <field> [args...]').description('list').action((field, args: string[] = []) => {
   const repo=openRepo(),item=args[0]?.includes(':')?undefined:args.shift(),
     matches = list(repo,field,item,args.map((f)=>f.split(/:(.*)/))),
     lines = matches.map((m) => `${label(named(repo, m.source))} ${Object.entries(m).slice(1).map((e) => e.join(':')).join(' ')}`);
@@ -85,25 +82,25 @@ program.command('list <field> [args...]').description('list').action((field: str
 });
 
 // CO-03.2
-program.command('search <query...>').description('find').action((query: string[]) => {
+program.command('search <query...>').description('find').action((query) => {
   const repo = openRepo(), found = search(repo, query.join(' ')).map((item) => record(entry(repo, item.id)));
   output(found.map(label).join('\n'), found);
 });
 
 // CL-01.2
-program.command('confirm <source> [target]').description('confirm').action((source: string, target?: string) => {
+program.command('confirm <source> [target]').description('confirm').action((source, target) => {
   const repo = openRepo(), links = confirm(repo, currentVersions(repo), validate(repo), source, target);
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 
-program.command('suspects [item]').description('suspects').action((item?: string) => {
+program.command('suspects [item]').description('suspects').action((item) => {
   const states = suspects(...scoped(item));
   output(states.map((state) => `${state.state} ${linkLabel(state)}`).join('\n'), states);
   if (states.length) exitCode = 1;
 });
 
 // TE-05.1
-program.command('impact <range>').description('impact').action((range: string) => {
+program.command('impact <range>').description('impact').action((range) => {
   const repo = openRepo(), [base, head] = range.split('..'),
     headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) },
     result = impact(snapshotAt(repo.root, base), headSnapshot, changedFiles(repo.root, base, head)),
@@ -117,7 +114,7 @@ program.command('impact <range>').description('impact').action((range: string) =
 });
 
 // CL-02.1
-program.command('new <type> <title>').description('create').action((type: string, title: string) => {
+program.command('new <type> <title>').description('create').action((type, title) => {
   const id = newItem(openRepo(), type, title, workingFolder());
   output(id, { id });
 });
@@ -127,7 +124,7 @@ program.command('test').command('record <test-case...>').description('record')
   .requiredOption('--sut <ids...>')
   .addOption(new Option('--result <results...>').choices(results).makeOptionMandatory())
   .option('--log <files...>', '', [])
-  .action((testCases: string[], options: { sut: string[]; result: string[]; log: string[] }) => {
+  .action((testCases, options) => {
     const id = recordRun(openRepo(), testCases, options.sut, options.result, options.log);
     output(id, { id });
   });
@@ -138,7 +135,7 @@ const report = program.command('report');
 report.command('coverage [item]').description('coverage')
   .option('--by <field>')
   .option('--allocation')
-  .action((item?: string, options?: any) => {
+  .action((item, options) => {
     const state = scoped(item), alloc = options?.allocation,
       rows = alloc ? allocation(...state) : coverage(...state);
     if (alloc && options.by) throw new UsageError('--by');
@@ -163,5 +160,5 @@ try {
   process.exitCode = exitCode;
 } catch (error) {
   if (!(error instanceof CommanderError)) console.error((error as Error).message);
-  process.exitCode = exitCodeFor(error);
+  process.exitCode = error instanceof CommanderError ? (error.exitCode && 2) : error instanceof UsageError ? 2 : error instanceof Refused ? 1 : 3;
 }

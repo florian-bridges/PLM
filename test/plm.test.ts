@@ -10,13 +10,13 @@ import { validate } from '../src/validate.ts';
 import { currentVersions, versionAt } from '../src/version.ts';
 
 const base = mkdtempSync(join(tmpdir(), 'plm-test-')),
-  write = (root: string, files: Record<string, string>) => {
+  write = (root, files) => {
     for (const [path, text] of Object.entries(files)) {
       mkdirSync(dirname(join(root, path)), { recursive: true });
       writeFileSync(join(root, path), text);
     }
   },
-  commit = (root: string) => {
+  commit = (root) => {
     git(root, ['add', '-A']);
     git(root, ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'change']);
   },
@@ -36,11 +36,11 @@ const base = mkdtempSync(join(tmpdir(), 'plm-test-')),
     commit(root);
     return root;
   },
-  plm = (root: string, ...args: string[]) => spawnSync(process.execPath, ['src/cli.ts', '-C', root, ...args], { encoding: 'utf8' }),
-  bump = (root: string, extra = '') => write(root, { 'wing/requirements/load.yaml': `id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n${extra}` }),
-  json = (root: string, ...args: string[]) => JSON.parse(plm(root, '--format', 'json', ...args).stdout).data;
+  plm = (root, ...args) => spawnSync(process.execPath, ['src/cli.ts', '-C', root, ...args], { encoding: 'utf8' }),
+  bump = (root, extra = '') => write(root, { 'wing/requirements/load.yaml': `id: R\ntype: requirement\ntitle: Load\ntext: Carry 4g.\n${extra}` }),
+  json = (root, ...args) => JSON.parse(plm(root, '--format', 'json', ...args).stdout).data;
 afterAll(() => rmSync(base, { recursive: true, force: true }));
-let root: string;
+let root;
 beforeEach(() => { root = fixture(); });
 
 test('TE-01.1: mv', () => {
@@ -236,7 +236,7 @@ test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: exit', () => {
 
 test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
   const coverage = () => json(root, 'report', 'coverage', 'A')[0].state,
-    record = (...results: string[]) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'L', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
+    record = (...results) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'L', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
   expect(coverage()).toBe('unverified');
   const wing = currentVersions(loadRepo(root)).get('A');
   expect(json(root, 'report', 'coverage', 'P')).toEqual([]);
@@ -257,7 +257,7 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   expect(loadRepo(root).entries.get(run)?.meta.data.confirmed?.T.commit).toBe(git(root, ['rev-parse', '--short', 'HEAD']));
   expect(plm(root, 'confirm', run).status).toBe(1);
   expect(validate(loadRepo(root))).toEqual([]);
-  const tests = (outdated: boolean) => [['U', 'DropT', 'fail'], ['T', 'LoadT', 'pass']]
+  const tests = (outdated) => [['U', 'DropT', 'fail'], ['T', 'LoadT', 'pass']]
     .map(([id, title, result]) => ({ testCase: { id, title }, run: { id: run, title: 'T, U on L, A' }, result, outdated }));
   expect(json(root, 'report', 'coverage', 'A')[0]).toMatchObject({ state: 'verified', tests: tests(false) });
   write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\n' });
@@ -277,7 +277,7 @@ test('TE-05.1–TE-05.2: impact', () => {
   write(root, { 'meta/X.yaml': `confirmed:\n  A:\n    version: ${currentVersions(loadRepo(root)).get('A')}\n` });
   commit(root);
   bump(root);
-  const impact = (range: string) => json(root, 'impact', range),
+  const impact = (range) => json(root, 'impact', range),
     expected = { changed: [{ id: 'R', title: 'Load' }], propagated: [{ id: 'A', title: 'Wing' }], suspects: [], runs: [{ id: 'X', title: 'Run' }] };
   expect(impact('HEAD')).toMatchObject(expected);
   commit(root);

@@ -25,7 +25,7 @@ const commitAndPaths = (repo: Repo, link: Link): [string | undefined, string[]] 
 };
 
 // TE-03.1, CL-05.3
-export function linkStates(repo: Repo, versions: Map<string, string>): LinkState[] {
+export function linkStates(repo: Repo, versions: Map<string, string>) {
   const stateOf = (link: Link): LinkState['state'] => {
     if (!link.version) return 'unconfirmed';
     if (link.version === versions.get(link.target)) return 'current';
@@ -122,17 +122,12 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
   const linksOfType = (type: string) => states.filter((state) => state.link.type === type),
     isCurrent = (state: LinkState) => state.state === 'current',
     outdatedRuns = new Set(states.filter((state) => fromRun(repo, state) && !isCurrent(state)).map((state) => state.source)),
-    latestRun = new Map<string, LinkState>(),
-    latestCurrentRun = new Map<string, LinkState>(),
     date = (executes: LinkState) => String(entry(repo, executes.source).item.data.date),
-    keepLatest = (latest: Map<string, LinkState>, executes: LinkState) => {
-      const previous = latest.get(executes.link.target);
-      if (!previous || date(executes) > date(previous)) latest.set(executes.link.target, executes);
-    };
-  for (const executes of linksOfType('executes')) {
-    keepLatest(latestRun, executes);
-    if (!outdatedRuns.has(executes.source)) keepLatest(latestCurrentRun, executes);
-  }
+    runs = linksOfType('executes').sort((a, b) => date(a).localeCompare(date(b))),
+    // later runs override earlier ones
+    latest = (executed: LinkState[]) => new Map<string, LinkState>(executed.map((executes) => [executes.link.target, executes])),
+    latestRun = latest(runs),
+    latestCurrentRun = latest(runs.filter((executes) => !outdatedRuns.has(executes.source)));
 
   const inScope = within(repo, root),
     requirements = [...repo.entries.values()].filter((candidate) => candidate.item.data.type === 'requirement' && inScope(candidate.id));

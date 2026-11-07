@@ -2,7 +2,7 @@
 
 ## 0.2.0 (2026-11-07)
 
-First public release, MIT licensed, installable from the Git tag: `npm i -g github:florian-bridges/PLM#v0.2.0`.
+First public release, MIT licensed. Installed from the package attached to the GitHub release; a global install from the Git tag fails, because npm builds Git dependencies without their dev dependencies there.
 
 * Configuration: home folder per item type (`folders:`), fields that leave links current (`informative:`), item parameters (`parameter_states:`), `schemas/meta.schema.json`.
 * Commands: `plm set`, `plm get`, `plm list <field>`, `plm link --remove`, links to one file of an item (`<ID>/<path>`), `plm test record --sut` with several items, `plm report coverage --by <field>` and `--allocation`.

@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, readFileSync } from 'node:fs';
+import { copyFileSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
 import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, selection, subtree, targetId, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
@@ -32,8 +32,10 @@ export function linkStates(repo: Repo, versions: Map<string, string>) {
     if (link.version === versions.get(link.target)) return 'current';
     const [commit, paths] = commitAndPaths(repo, link),
       own = paths.map((p) => isRequirementFile(p) ? p : `${p}/item.yaml`),
-      changed = commit ? tryGit(repo, ['diff', '--name-only', commit, '--', ...paths]).split('\n').filter(Boolean) : [];
-    return changed.length && changed.every((f) => own.includes(f) && strip(repo, tryGit(repo, ['show', `${commit}:${f}`])) === strip(repo, existsSync(join(repo.root, f)) ? readFileSync(join(repo.root, f), 'utf8') : '')) ? 'current' : 'suspect';
+      changed = commit ? tryGit(repo, ['diff', '--name-only', commit, '--', ...paths]).split('\n').filter(Boolean) : [],
+      // absent at the commit: changed
+      equal = (f: string) => { try { return strip(repo, git(repo.root, ['show', `${commit}:${f}`])) === strip(repo, readFileSync(join(repo.root, f), 'utf8')); } catch { return false; } };
+    return changed.length && changed.every((f) => own.includes(f) && equal(f)) ? 'current' : 'suspect';
   };
   return [...repo.entries.values()].flatMap((source) => linksOf(source).map((link) => ({
     source: source.id, title: named(repo, source.id).title, link, targetTitle: named(repo, targetId(link.target)).title, state: stateOf(link),

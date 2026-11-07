@@ -43,7 +43,7 @@ afterAll(() => rmSync(base, { recursive: true, force: true }));
 let root;
 beforeEach(() => { root = fixture(); });
 
-test('TE-01.1: mv', () => {
+test('TE-01.1, TE-03.1: mv', () => {
   const before = currentVersions(loadRepo(root));
   write(root, { 'wing/spar/item.yaml': 'id: P\ntype: part\ntitle: Spar\nlinks: [{type: satisfies, target: R}]\n' });
   const after = currentVersions(loadRepo(root));
@@ -64,6 +64,9 @@ test('TE-01.1: mv', () => {
   expect(now.get('A')).not.toBe(moved.get('A'));
   expect(now.get('L')).not.toBe(moved.get('L'));
   expect(linkStates(repo, now)[0].state).toBe('current');
+  bump(root);
+  git(root, ['mv', 'wing/requirements/load.yaml', 'wing/requirements/carry.yaml']);
+  expect(plm(root, 'suspects').stdout).toBe('suspect P (Spar) satisfies R (Load)\n');
 });
 
 test('TE-01.2, CO-01.3: artifacts', () => {

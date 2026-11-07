@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.1 (2026-11-07)
 
 * `plm --version`; `plm link` refuses a link type that `plm validate` rejects.
 * `plm suspects`: a link to a renamed file is suspect instead of exit 3; no Git output except with exit 3.

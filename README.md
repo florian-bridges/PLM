@@ -7,7 +7,7 @@
 Requires Node.js 22.18 or later and Git. Install the package of a [release](https://github.com/florian-bridges/PLM/releases):
 
 ```sh
-npm install -g https://github.com/florian-bridges/PLM/releases/download/v0.2.0/plm-0.2.0.tgz
+npm install -g https://github.com/florian-bridges/PLM/releases/download/v0.2.1/plm-0.2.1.tgz
 ```
 
 ## Quickstart

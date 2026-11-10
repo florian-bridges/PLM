@@ -127,7 +127,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
 }
 
 // CO-01.3
-export const tracked = (repo: Repo) => git(repo.root, ['ls-files', '-co', '--exclude-standard']).split('\n').filter(Boolean).map((file) => file.replace(/\/$/, ''));
+export const tracked = (repo: Repo) => git(repo.root, ['ls-files', '-co', '--exclude-standard']).split('\n').map((file) => file.replace(/\/$/, '')).filter((file) => file && existsSync(join(repo.root, file)));
 
 export function artifacts(repo: Repo, { path, nested }: Entry) {
   if (isRequirementFile(path)) return [];

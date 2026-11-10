@@ -42,7 +42,8 @@ export function currentVersions(repo: Repo) {
   const tempFolder = mkdtempSync(join(tmpdir(), 'plm-'));
   try {
     const env = { GIT_INDEX_FILE: join(tempFolder, 'index') };
-    git(repo.root, ['add', '--', ...tracked(repo)], env);
+    // exit 1: paths skipped
+    try { git(repo.root, ['add', '--ignore-errors', '--', ...tracked(repo)], env); } catch (error) { if ((error as { status?: number }).status !== 1) throw error; }
     return versionsFromHashes(repo, objectHashes(repo.root, git(repo.root, ['write-tree'], env)));
   } finally {
     rmSync(tempFolder, { recursive: true, force: true });

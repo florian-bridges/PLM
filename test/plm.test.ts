@@ -73,6 +73,8 @@ test('TE-01.2, CO-01.3: artifacts', () => {
   const working = currentVersions(loadRepo(root));
   commit(root);
   expect(versionAt(root, 'HEAD', 'A')).toBe(working.get('A'));
+  rmSync(join(root, 'wing/spar/drawing.txt'));
+  expect(json(root, 'show', 'P').artifacts).toHaveLength(1);
 });
 
 test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings', () => {
@@ -298,6 +300,7 @@ test('TE-01.1–TE-01.2: commit', () => {
   const firmware = join(root, 'wing/spar/src');
   write(root, { 'wing/spar/src/main.c': 'int main() {}\n' });
   git(firmware, ['init', '-q']);
+  expect(json(root, 'show', 'P').version).toBeTruthy();
   commit(firmware);
   git(root, ['add', 'wing/spar/src']);
   const before = currentVersions(loadRepo(root)).get('P');

@@ -55,8 +55,7 @@ test('TE-01.1, TE-03.1: mv', () => {
   commit(root);
   const moved = currentVersions(loadRepo(root));
   git(root, ['mv', 'wing/spar', 'bolt/spar']);
-  const repo = loadRepo(root);
-  const now = currentVersions(repo);
+  const repo = loadRepo(root), now = currentVersions(repo);
   expect(now.get('P')).toBe(moved.get('P'));
   expect(now.get('A')).not.toBe(moved.get('A'));
   expect(now.get('L')).not.toBe(moved.get('L'));
@@ -246,9 +245,9 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
 });
 
 test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
-  const coverage = () => json(root, 'report', 'coverage', 'A')[0].state,
+  const coverage = () => json(root, 'report', 'coverage', 'A')[0],
     record = (...results) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'L', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
-  expect(coverage()).toBe('unverified');
+  expect(coverage().state).toBe('unverified');
   const wing = currentVersions(loadRepo(root)).get('A');
   expect(json(root, 'report', 'coverage', 'P')).toEqual([]);
   write(root, {
@@ -258,7 +257,7 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   });
   expect(currentVersions(loadRepo(root)).get('A')).not.toBe(wing);
   expect(plm(root, 'confirm', 'T').status + plm(root, 'confirm', 'U').status).toBe(0);
-  expect(coverage()).toBe('pending');
+  expect(coverage().state).toBe('pending');
   expect(() => recordRun(loadRepo(root), ['T'], ['A'], ['pass'], [])).toThrow(Refused);
   commit(root);
   expect(record('pass', 'maybe').status + record('pass').status).toBe(4);
@@ -270,9 +269,9 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   expect(validate(loadRepo(root))).toEqual([]);
   const tests = (outdated) => [['U', 'DropT', 'fail'], ['T', 'LoadT', 'pass']]
     .map(([id, title, result]) => ({ testCase: { id, title }, run: { id: run, title: 'T, U on L, A' }, result, outdated }));
-  expect(json(root, 'report', 'coverage', 'A')[0]).toMatchObject({ state: 'verified', tests: tests(false) });
+  expect(coverage()).toMatchObject({ state: 'verified', tests: tests(false) });
   write(root, { 'wing/spar/item.yaml': spar + 'material: x\n' });
-  expect(json(root, 'report', 'coverage', 'A')[0]).toEqual({ requirement: 'R', title: 'Load', state: 'pending', tests: tests(true) });
+  expect(coverage()).toEqual({ requirement: 'R', title: 'Load', state: 'pending', tests: tests(true) });
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
   expect(json(root, 'report', 'coverage', '--by', 'type')[0]).toMatchObject({ total: 1 });
@@ -288,11 +287,10 @@ test('TE-05.1–TE-05.2: impact', () => {
   write(root, { 'meta/X.yaml': `confirmed:\n  A:\n    version: ${currentVersions(loadRepo(root)).get('A')}\n` });
   commit(root);
   setLoad(root);
-  const impact = (range) => json(root, 'impact', range),
-    expected = { changed: [{ id: 'R', title: 'Load' }], propagated: [{ id: 'A', title: 'Wing' }], suspects: [], runs: [{ id: 'X', title: 'Run' }] };
-  expect(impact('HEAD')).toMatchObject(expected);
+  const expected = { changed: [{ id: 'R', title: 'Load' }], propagated: [{ id: 'A', title: 'Wing' }], suspects: [], runs: [{ id: 'X', title: 'Run' }] };
+  expect(json(root, 'impact', 'HEAD')).toMatchObject(expected);
   commit(root);
-  expect(impact('HEAD~1..HEAD')).toMatchObject(expected);
+  expect(json(root, 'impact', 'HEAD~1..HEAD')).toMatchObject(expected);
   expect(plm(root, 'impact', 'nonsense').status).toBe(2);
 });
 

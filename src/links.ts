@@ -1,7 +1,7 @@
 import { copyFileSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, selection, subtree, targetId, tryGit, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import { disallowed } from './schemas.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
@@ -16,11 +16,11 @@ const strip = (repo: Repo, text: string) => {
 };
 
 // TE-03.1, TE-03.2
-const commitAndPaths = (repo: Repo, link: Link): [string | undefined, string[]] => {
+const commitAndPaths = (repo: Repo, link: Link) => {
   const commit = (link.commit && tryGit(repo.root, ['rev-parse', '--verify', '-q', `${link.commit}^{commit}`]) && link.commit)
     || [...tryGit(repo.root, ['log', '--format=%H', `--find-object=${link.version}`]).split('\n'), ...tryGit(repo.root, ['rev-list', 'HEAD']).split('\n')].filter(Boolean)
       .find((c) => versionAt(repo.root, c, link.target) === link.version);
-  return [commit, subtree(repo, targetId(link.target)).map((id) => entry(repo, id).path)];
+  return [commit, subtree(repo, targetId(link.target)).map((id) => entry(repo, id).path)] as const;
 };
 
 // TE-03.1, CL-05.3
@@ -104,9 +104,9 @@ export function changeSince(repo: Repo, link: Link) {
   return commit ? { commit, diff: git(repo.root, ['diff', commit, '--', ...paths]) } : { diff: '' };
 }
 
-// TE-03.1
+// TE-03.1, TE-06.2
 const within = (repo: Repo, root?: string) => {
-  const selected = root && new Set(selection(repo, root));
+  const items = root && subtree(repo, root), selected = items && new Set([...items, ...items.flatMap((id) => entry(repo, id).requirements)]);
   return (id: string) => !selected || selected.has(id);
 };
 

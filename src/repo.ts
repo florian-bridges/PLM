@@ -156,9 +156,3 @@ export function subtree(repo: Repo, id: string, seen = new Set<string>()): strin
   seen.add(id);
   return [id, ...childrenOf(repo.entries.get(id)).flatMap((child) => subtree(repo, child, seen))];
 }
-
-// TE-06.2
-export function selection(repo: Repo, root: string) {
-  const items = subtree(repo, root);
-  return [...items, ...items.flatMap((id) => entry(repo, id).requirements)];
-}

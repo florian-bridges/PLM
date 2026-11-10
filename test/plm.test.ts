@@ -129,8 +129,8 @@ test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
   link(loadRepo(root), 'P', 'derives-from', 'A');
   confirm(loadRepo(root), currentVersions(loadRepo(root)), [], 'P', 'A');
   commit(root);
-  write(root, { 'wing/item.yaml': `${wing}uses: [L]\nrationale: why.\n` });
-  const toA = () => linkStates(loadRepo(root), currentVersions(loadRepo(root)))[1];
+  write(root, { 'wing/item.yaml': `${wing}uses: [L]\nrationale: why.\nlinks: [{type: derives-from, target: L}]\n` });
+  const toA = () => linkStates(loadRepo(root), currentVersions(loadRepo(root))).at(-1)!;
   expect(toA().state).toBe('current');
   setLoad(root);
   expect(toA().state).toBe('suspect');
@@ -166,14 +166,15 @@ test('TE-01.1, TE-03.1, CO-02.7, CO-03.3, CL-01.1, CL-01.3–CL-01.4: parameter'
   expect(read()).toContain('value: 5');
   plm(root, 'set', 'A:span', 'value', '');
   expect(read()).not.toContain('value:');
-  expect(plm(root, 'get', 'A:span').status).toBe(1);
+  expect(plm(root, 'get', 'A:span', 'state')).toMatchObject({ status: 1, stdout: '' });
   expect(plm(root, 'get', 'A:span', 'x').status).toBe(2);
   expect(plm(root, 'get', 'A:nope').status).toBe(2);
   plm(root, 'set', 'A:span', 'state', 'final');
   plm(root, 'set', 'A:chord', 'value', '2');
   expect(read()).toContain('state: final');
   expect(read()).toContain('name: chord');
-  expect(plm(root, 'set', 'A:span', 'unit', 'm').status).toBe(2);
+  plm(root, 'set', 'A:span', 'unit', 'mm');
+  expect(read()).toContain('unit: mm');
 
   write(root, { 'wing/item.yaml': `${wing}parameters: [{name: span, value: 4, unit: m}]\n` });
   expect(linkStates(loadRepo(root), currentVersions(loadRepo(root)))[0]).toMatchObject({ targetTitle: 'Wing', state: 'suspect' });
@@ -215,6 +216,8 @@ test('CL-02.1–CL-02.2, CL-05.2, CO-01.1, CO-02.2: nest', () => {
 
 test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () => {
   expect(plm(root, '--version').stdout).toBe(`${JSON.parse(readFileSync('package.json', 'utf8')).version}\n`);
+  expect(plm(root, 'new', '--help').stdout).toContain('Types: part test-run\n');
+  expect(plm(root, 'link', '--help').stdout).toContain('(* any type):\n* satisfies requirement\n');
   expect(plm(root, 'validate').status).toBe(0);
   write(root, { 'meta/L.yaml': 'status: draft\nstatus: draft\n' });
   expect(plm(root, 'validate')).toMatchObject({ status: 1, stdout: 'meta/L.yaml:2:1 error yaml: DUPLICATE_KEY\n' });
@@ -266,7 +269,7 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   const tests = (outdated) => [['U', 'DropT', 'fail'], ['T', 'LoadT', 'pass']]
     .map(([id, title, result]) => ({ testCase: { id, title }, run: { id: run, title: 'T, U on L, A' }, result, outdated }));
   expect(json(root, 'report', 'coverage', 'A')[0]).toMatchObject({ state: 'verified', tests: tests(false) });
-  write(root, { 'wing/spar/item.yaml': spar });
+  write(root, { 'wing/spar/item.yaml': spar + 'material: x\n' });
   expect(json(root, 'report', 'coverage', 'A')[0]).toEqual({ requirement: 'R', title: 'Load', state: 'pending', tests: tests(true) });
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);

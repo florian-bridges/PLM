@@ -1,6 +1,6 @@
 // CO-03
 import MiniSearch from 'minisearch';
-import { entry, list as values, named, parameterOf, subtree, UsageError, writeYaml, type Entry, type Parameter, type Repo } from './repo.ts';
+import { entry, list as values, named, subtree, UsageError, writeYaml, type Entry, type Repo } from './repo.ts';
 
 // CO-03.2
 export function search(repo: Repo, query: string) {
@@ -30,7 +30,7 @@ export function list(repo: Repo, field: string, item: string | undefined, filter
 
 // CL-01.3
 export function setParameter(repo: Repo, id: string, ref: string, field: string, value: string) {
-  if (field !== 'value' && field !== 'state') throw new UsageError(field);
+  if (!['value', 'unit', 'state'].includes(field)) throw new UsageError(field);
   const found = entry(repo, id), name = ref.slice(id.length + 1),
     params = values<Record<string, unknown>>(found.item.data.parameters),
     at = params.findIndex((p) => p.name === name), index = at < 0 ? params.length : at;
@@ -38,11 +38,4 @@ export function setParameter(repo: Repo, id: string, ref: string, field: string,
   if (field === 'value' && !value) found.item.doc.deleteIn(['parameters', index, 'value']);
   else found.item.doc.setIn(['parameters', index, field], field === 'value' ? Number(value) : value);
   writeYaml(repo.root, found.item);
-}
-
-// CL-01.4
-export function getParameter(repo: Repo, ref: string, key = 'value') {
-  const found = parameterOf(repo, ref);
-  if (!found || !['name', 'value', 'unit', 'state'].includes(key)) throw new UsageError(ref);
-  return found.parameter[key as keyof Parameter];
 }

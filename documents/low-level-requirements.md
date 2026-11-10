@@ -8,7 +8,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Comment-preserving writes keep hand edits and diffs small. Nesting test cases in the tested item's folder makes changing one outdate its runs; runs stay outside so recording one doesn't change the tested item's version. A per-type home folder avoids hard-coding type names in the core.
 
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
-*Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
+*Rationale:* Links show where the item is edited, and adding one changes its version, leaving links to it current (TE-03.1). Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
 
 **CO-01.3** The core shall list as an item's artifacts the paths of files in its folder not ignored by Git, except `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
@@ -54,8 +54,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset, and for links of test runs.
 *Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review. Run links are confirmed when recording (CL-03.2).
 
-**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none; it stays current when its TE-03.2 change touches only `item.yaml` or requirement files present and equal, after removing the fields under `informative:` in `plm.yaml` (default `[rationale]`), at the confirmed commit and now; no confirmed commit keeps it suspect. Links from test runs are evidence, not links to review: suspect lists shall omit them, and a run with a suspect link is outdated. A link naming a parameter (`<ID>:<name>`, TE-01.1) is suspect only when that parameter's version differs.
-*Rationale:* Separating unconfirmed from suspect distinguishes new links from links invalidated by change. Re-confirming a run's links would falsify what was tested.
+**TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none; it stays current when its TE-03.2 change touches only `item.yaml` or requirement files present and equal, after removing the fields under `informative:` in `plm.yaml` (default `[rationale, links]`), at the confirmed commit and now; no confirmed commit keeps it suspect. Links from test runs are evidence, not links to review: suspect lists shall omit them, and a run with a suspect link is outdated. A link naming a parameter (`<ID>:<name>`, TE-01.1) is suspect only when that parameter's version differs.
+*Rationale:* Separating unconfirmed from suspect distinguishes new links from links invalidated by change. Re-confirming a run's links would falsify what was tested. A target's own links don't change what was confirmed.
 
 **TE-03.2** To show what changed, the engine shall return the diff of the target's subtree since the link's `commit` or, if it is missing or unknown, since the latest commit at which the target had the confirmed version.
 *Rationale:* The user must judge whether the change matters; the diff shows exactly what happened since confirmation. The stored commit avoids searching history, which is needed only for uncommitted confirmations or squashed branches.
@@ -80,16 +80,16 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`.
-*Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`. `new --help` shall list the types with a prefix in `plm.yaml` (CL-02.2), `link --help` the link types with their source and target types (CO-02.6).
+*Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made; help spares looking types up.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
 *Rationale:* Links are reviewed one by one, or all at once after reviewing an item.
 
-**CL-01.3** `set <id|ref> <field> <value>` shall write `<value>` as a string to `owner` or `status` in `meta/<ID>.yaml`, or to any other field in `item.yaml`, keeping comments and formatting (CO-01.1), refusing a field whose value is not a string; on a parameter reference (`<ID>:<name>`), `value` as a number (TBD if empty) or `state` (entry created if new).
+**CL-01.3** `set <id|ref> <field> <value>` shall write `<value>` as a string to `owner` or `status` in `meta/<ID>.yaml`, or to any other field in `item.yaml`, keeping comments and formatting (CO-01.1), refusing a field whose value is not a string; on a parameter reference (`<ID>:<name>`), `value` as a number (TBD if empty), `unit` or `state` (entry created if new).
 *Rationale:* The ID spares finding the file; other lists and `links` stay with `plm link` and hand edits.
 
-**CL-01.4** `get <ref> [<key>]` shall print a parameter's `value` or key, nothing else; exit 1 if TBD, usage error if unknown.
+**CL-01.4** `get <ref> [<key>]` shall print a parameter's `value` or key, nothing else; if unset (a TBD `value` included), nothing and exit 1; usage error if unknown.
 *Rationale:* Scripts read a value, not a copy.
 
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.

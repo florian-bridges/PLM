@@ -15,7 +15,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 ## Traceability engine (TE)
 
-**TE-01** The engine shall compute each item's version from its content, including nested items, and the versions of items it uses. (CR-07, CR-09, CR-12; US-2, US-5)
+**TE-01** The engine shall compute each item's version from its content, including nested items, and the versions of items it uses and parameters it cites. (CR-07, CR-09, CR-12; US-2, US-5, US-8)
 *Rationale:* Including nested and used items means a change anywhere below an assembly invalidates evidence on it, as test results on assemblies require.
 
 **TE-02** The engine shall record the target's version when a user confirms a link. (CR-07; US-1, US-10)

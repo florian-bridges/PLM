@@ -315,9 +315,9 @@ test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
   expect(search(repo, 'carry 3')).toEqual([{ id: 'R', title: 'Load' }]);
   expect(search(repo, 'carry spar')).toEqual([]);
   expect(search(repo, 'owner:ana status:draft uses:L')).toEqual([{ id: 'A', title: 'Wing' }]);
-  expect(search(repo, 'text:3g')).toEqual([{ id: 'R', title: 'Load' }]);
+  expect(search(repo, 'text:3G')).toEqual([{ id: 'R', title: 'Load' }]);
   expect(search(repo, 'type:par')).toEqual([]);
-  expect(plm(root, 'search', 'bo').stdout).toBe('L (Bolt)\n');
+  expect(plm(root, 'search', 'L:bo').stdout).toBe('L (Bolt)\n');
   link(repo, 'L', 'satisfies', 'R');
   expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {}, links: [{ target: 'R' }] }]);
 });

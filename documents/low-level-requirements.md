@@ -34,7 +34,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes.
 *Rationale:* One index format serves the CLI and VS Code without a search server.
 
-**CO-03.2** Queries shall combine free text, matching all words by prefix, with filters `<field>:<value>`, matching items whose `<field>`, including `status` and `owner`, contains `<value>` not adjoining a letter, digit, `-` or `_`.
+**CO-03.2** Queries shall combine free text, matching all words by prefix, with filters `<field>:<value>`, matching items whose `<field>`, including `status` and `owner`, contains `<value>`, ignoring case, not adjoining a letter, digit, `-` or `_`; a `<field>` no item has is free text.
 *Rationale:* Filters answer typical questions, such as an owner's unreleased parts or requirements with a TBD, faster than text alone. Prefix matching finds items while typing.
 
 **CO-03.3** The core shall list the objects of a named list field, scoped to an item's subtree if given, whose keys equal all filter values (empty matches missing, `null` or empty), each as `<source ID> (<title>)` followed by its keys, with `source` added in JSON.

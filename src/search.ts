@@ -1,6 +1,6 @@
 // CO-03
 import MiniSearch from 'minisearch';
-import { entry, list as values, named, parameterOf, subtree, UsageError, writeYaml, type Parameter, type Repo } from './repo.ts';
+import { entry, list as values, named, parameterOf, subtree, UsageError, writeYaml, type Entry, type Parameter, type Repo } from './repo.ts';
 
 // CO-03.1
 function searchIndex(repo: Repo) {
@@ -14,9 +14,11 @@ function searchIndex(repo: Repo) {
 
 // CO-03.2
 export function search(repo: Repo, query: string) {
-  const pattern = /(?<!\S)(\w+):(\S+)/g, filters = [...query.matchAll(pattern)], text = query.replace(pattern, '').trim();
-  return searchIndex(repo).search(text || MiniSearch.wildcard, { prefix: true, combineWith: 'AND', filter: ({ id }, { item, meta } = entry(repo, id), fields: Record<string, unknown> = { ...item.data, status: meta.data.status, owner: meta.data.owner }) =>
-    filters.every(([, field, value]) => new RegExp(`(?<![\\w-])${value.replace(/\W/g, '\\$&')}(?![\\w-])`).test(String(fields[field] ?? ''))),
+  const fieldsOf = ({ item, meta }: Entry): Record<string, unknown> => ({ ...item.data, status: meta.data.status, owner: meta.data.owner }),
+    known = new Set([...repo.entries.values()].flatMap((e) => Object.keys(fieldsOf(e)))), filters: string[][] = [],
+    text = query.replace(/(?<!\S)(\w+):(\S+)/g, (term, field, value) => (known.has(field) ? (filters.push([field, value]), '') : term)).trim();
+  return searchIndex(repo).search(text || MiniSearch.wildcard, { prefix: true, combineWith: 'AND', filter: ({ id }) =>
+    filters.every(([field, value]) => new RegExp(`(?<![\\w-])${value.replace(/\W/g, '\\$&')}(?![\\w-])`, 'i').test(String(fieldsOf(entry(repo, id))[field] ?? ''))),
   }).map((result) => named(repo, result.id));
 }
 

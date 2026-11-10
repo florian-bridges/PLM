@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+* `plm show` computes link states only for the item's own links (6 s to 0.3 s in a repository with 222 items).
+* Artifacts and versions cover every file Git does not ignore, tracked or not: a link confirmed before the first commit stays current after it.
+* `plm search`: `<field>:<value>` filters on any field, as a whole word, ignoring case.
+* `plm validate` reports YAML errors such as duplicate keys.
+
 ## 0.2.1 (2026-11-07)
 
 * `plm --version`; `plm link` refuses a link type that `plm validate` rejects.

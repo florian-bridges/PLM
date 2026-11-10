@@ -48,6 +48,8 @@ export function validate(repo: Repo) {
       // CO-02.2
       folders = dirname(entry.path).split('/'), home = repo.settings.folders![type],
       misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
+    // CO-02.2
+    for (const file of [item, meta]) for (const error of file.doc.errors) findings.push({ ...finding(file, [], 'yaml', error.code), ...error.linePos![0] });
     if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', type));
     else findings.push(...schemaFindings(item, validateSchema, draft));
     // CO-02.1

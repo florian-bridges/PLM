@@ -131,13 +131,13 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
 }
 
 // CO-01.3
-export const tracked = (repo: Repo) => git(repo.root, ['ls-files']).split('\n').filter(Boolean);
+export const tracked = (repo: Repo) => git(repo.root, ['ls-files', '-co', '--exclude-standard']).split('\n').filter(Boolean).map((file) => file.replace(/\/$/, ''));
 
 export function artifacts(repo: Repo, { path, nested }: Entry) {
   if (isRequirementFile(path)) return [];
   const skip = Object.values(repo.settings.folders!), prefix = `${path}/`,
     nestedPaths = nested.map((id) => repo.entries.get(id)!.path),
-    isPointer = (file: string) => statSync(join(repo.root, file)).size < 200
+    isPointer = (file: string, stat = statSync(join(repo.root, file))) => stat.isFile() && stat.size < 200
       && readFileSync(join(repo.root, file), 'utf8').startsWith('version https://git-lfs.github.com/spec/v1');
   return tracked(repo).filter((file) => file.startsWith(prefix) && file.slice(prefix.length) !== 'item.yaml'
       && !skip.includes(file.slice(prefix.length).split('/')[0]) && !nestedPaths.some((n) => file.startsWith(`${n}/`)))

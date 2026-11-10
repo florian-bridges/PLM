@@ -53,12 +53,10 @@ function versionsFromHashes(repo: Repo, hashes: Map<string, string>) {
 
 // TE-01.2
 export function currentVersions(repo: Repo) {
-  const own = [...repo.entries.values()].map((e) => e.item.path),
-    paths = [...new Set([...tracked(repo), ...own])],
-    tempFolder = mkdtempSync(join(tmpdir(), 'plm-'));
+  const tempFolder = mkdtempSync(join(tmpdir(), 'plm-'));
   try {
     const env = { GIT_INDEX_FILE: join(tempFolder, 'index') };
-    git(repo.root, ['add', '--', ...paths], env);
+    git(repo.root, ['add', '--', ...tracked(repo)], env);
     return versionsFromHashes(repo, objectHashes(repo.root, git(repo.root, ['write-tree'], env)));
   } finally {
     rmSync(tempFolder, { recursive: true, force: true });

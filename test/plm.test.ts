@@ -69,9 +69,7 @@ test('TE-01.1, TE-03.1: mv', () => {
 });
 
 test('TE-01.2, CO-01.3: artifacts', () => {
-  write(root, { 'wing/spar/drawing.txt': 'rev 2', 'wing/spar/cad/model.step': 'version https://git-lfs.github.com/spec/v1\n', 'wing/requirements/.gitkeep': '' });
-  expect(json(root, 'show', 'P').artifacts).toEqual([]);
-  git(root, ['add', 'wing/spar', 'wing/requirements/.gitkeep']);
+  write(root, { 'wing/spar/drawing.txt': 'rev 2', 'wing/spar/cad/model.step': 'version https://git-lfs.github.com/spec/v1\n', 'wing/requirements/.gitkeep': '', '.gitignore': 'tmp', 'wing/spar/tmp': '' });
   expect(json(root, 'show', 'P')).toMatchObject({ path: 'wing/spar', artifacts: [{ path: 'wing/spar/cad/model.step', lfs: 'missing' }, { path: 'wing/spar/drawing.txt' }] });
   expect(json(root, 'show', 'A').artifacts).toEqual([]);
   const working = currentVersions(loadRepo(root));
@@ -217,9 +215,11 @@ test('CL-02.1–CL-02.2, CL-05.2, CO-01.1, CO-02.2: nest', () => {
   expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 });
 
-test('CL-01.1, CL-05.1–CL-05.3, TE-03.1, TE-06.4: exit', () => {
+test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () => {
   expect(plm(root, '--version').stdout).toBe(`${JSON.parse(readFileSync('package.json', 'utf8')).version}\n`);
   expect(plm(root, 'validate').status).toBe(0);
+  write(root, { 'meta/L.yaml': 'status: draft\nstatus: draft\n' });
+  expect(plm(root, 'validate')).toMatchObject({ status: 1, stdout: 'meta/L.yaml:2:1 error yaml: DUPLICATE_KEY\n' });
   const suspects = plm(root, '--format', 'json', 'suspects');
   expect(suspects.status).toBe(1);
   expect(JSON.parse(suspects.stdout)).toMatchObject({ schema: 4, data: [{ state: 'unconfirmed', source: 'P', title: 'Spar', targetTitle: 'Load' }] });
@@ -314,7 +314,9 @@ test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
   expect(search(repo, 'spa')).toEqual([{ id: 'P', title: 'Spar' }]);
   expect(search(repo, 'carry 3')).toEqual([{ id: 'R', title: 'Load' }]);
   expect(search(repo, 'carry spar')).toEqual([]);
-  expect(search(repo, 'owner:ana status:draft')).toEqual([{ id: 'A', title: 'Wing' }]);
+  expect(search(repo, 'owner:ana status:draft uses:L')).toEqual([{ id: 'A', title: 'Wing' }]);
+  expect(search(repo, 'text:3g')).toEqual([{ id: 'R', title: 'Load' }]);
+  expect(search(repo, 'type:par')).toEqual([]);
   expect(plm(root, 'search', 'bo').stdout).toBe('L (Bolt)\n');
   link(repo, 'L', 'satisfies', 'R');
   expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {}, links: [{ target: 'R' }] }]);

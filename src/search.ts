@@ -4,19 +4,20 @@ import { entry, list as values, named, parameterOf, subtree, UsageError, writeYa
 
 // CO-03.1
 function searchIndex(repo: Repo) {
-  const index = new MiniSearch({ fields: ['id', 'title', 'text', 'attributes'], storeFields: ['type', 'status', 'owner'] });
-  index.addAll([...repo.entries.values()].map(({ id, item, meta }) => {
+  const index = new MiniSearch({ fields: ['id', 'title', 'text', 'attributes'] });
+  index.addAll([...repo.entries.values()].map(({ id, item }) => {
     const { title, text, ...attributes } = item.data;
-    return { id, title, text, attributes: JSON.stringify(attributes), type: item.data.type, status: meta.data.status, owner: meta.data.owner };
+    return { id, title, text, attributes: JSON.stringify(attributes) };
   }));
   return index;
 }
 
 // CO-03.2
 export function search(repo: Repo, query: string) {
-  const pattern = /\b(type|status|owner):(\S+)/g, filters = [...query.matchAll(pattern)], text = query.replace(pattern, '').trim(),
-    filter = (result: Record<string, unknown>) => filters.every(([, field, value]) => result[field] === value);
-  return searchIndex(repo).search(text || MiniSearch.wildcard, { prefix: true, combineWith: 'AND', filter }).map((result) => named(repo, result.id));
+  const pattern = /(?<!\S)(\w+):(\S+)/g, filters = [...query.matchAll(pattern)], text = query.replace(pattern, '').trim();
+  return searchIndex(repo).search(text || MiniSearch.wildcard, { prefix: true, combineWith: 'AND', filter: ({ id }, { item, meta } = entry(repo, id), fields: Record<string, unknown> = { ...item.data, status: meta.data.status, owner: meta.data.owner }) =>
+    filters.every(([, field, value]) => new RegExp(`(?<![\\w-])${value.replace(/\W/g, '\\$&')}(?![\\w-])`).test(String(fields[field] ?? ''))),
+  }).map((result) => named(repo, result.id));
 }
 
 // CO-03.3

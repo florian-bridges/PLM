@@ -47,7 +47,7 @@ program.command('validate').description('check').action(() => {
 
 program.command('show <id>').description('details').action((id) => {
   const repo = openRepo(), found = entry(repo, id), versions = currentVersions(repo),
-    links = linkStates(repo, versions).filter((state) => state.source === id || state.link.target === id),
+    links = linkStates(repo, versions, id),
     // CO-01.3
     data = { ...record(found), version: versions.get(id), links, artifacts: artifacts(repo, found) };
   output(stringify(data, { aliasDuplicateObjects: false }), data);

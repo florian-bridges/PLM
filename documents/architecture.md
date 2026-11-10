@@ -22,7 +22,7 @@ meta/<ID>.yaml           owner, status, confirmations
 
 * **Items** (CR-01) have a stable ID and a type with its own schema (CO-02.5).
 * **Composition** (CR-02): folders nest; `uses` lists items reused from elsewhere, e.g. standard parts.
-* **Artifacts** (CR-03) are the item directory's Git-tracked or staged files; binaries use Git LFS with locking. CAD is stored natively plus a STEP export.
+* **Artifacts** (CR-03) are the item directory's files not ignored by Git; binaries use Git LFS with locking. CAD is stored natively plus a STEP export.
 * **Relationships** (CR-06) are typed links in `item.yaml` (`satisfies`, `verifies`, `implements`, …), confirmed in `meta/<ID>.yaml`.
 * **Requirements** are items, stored in the `requirements/` folder of the item they specify, so one link and suspect mechanism covers all disciplines.
 

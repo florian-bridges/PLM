@@ -24,7 +24,7 @@ const commitAndPaths = (repo: Repo, link: Link): [string | undefined, string[]] 
 };
 
 // TE-03.1, CL-05.3
-export function linkStates(repo: Repo, versions: Map<string, string>) {
+export function linkStates(repo: Repo, versions: Map<string, string>, only?: string) {
   const stateOf = (link: Link): LinkState['state'] => {
     if (!link.version) return 'unconfirmed';
     if (link.version === versions.get(link.target)) return 'current';
@@ -35,7 +35,7 @@ export function linkStates(repo: Repo, versions: Map<string, string>) {
       equal = (f: string) => { try { return strip(repo, git(repo.root, ['show', `${commit}:${f}`])) === strip(repo, readFileSync(join(repo.root, f), 'utf8')); } catch { return false; } };
     return changed.length && changed.every((f) => own.includes(f) && equal(f)) ? 'current' : 'suspect';
   };
-  return [...repo.entries.values()].flatMap((source) => linksOf(source).map((link) => ({
+  return [...repo.entries.values()].flatMap((source) => linksOf(source).filter((link) => !only || source.id === only || link.target === only).map((link) => ({
     source: source.id, title: named(repo, source.id).title, link, targetTitle: named(repo, targetId(link.target)).title, state: stateOf(link),
   })));
 }

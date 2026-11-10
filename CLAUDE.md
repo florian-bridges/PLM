@@ -19,7 +19,7 @@ Make every change in as few words as possible: reuse existing code and text, don
 `documents/` holds a hierarchy:
 
 1. `scenarios.md` (US-n) and `requirements.md` (CR-nn): user scenarios and tool requirements
-2. `components.md` (CO, TE, CL, VS, CI, SI-nn): component requirements, each citing the CR and US it serves
+2. `components.md` (CO, TE, CL, VS-nn): component requirements, each citing the CR and US it serves
 3. `low-level-requirements.md` (XX-nn.m): refines component requirement XX-nn
 
 * Every requirement traces to its parent level; none may exist without one.

@@ -2,22 +2,18 @@
 import MiniSearch from 'minisearch';
 import { entry, list as values, named, parameterOf, subtree, UsageError, writeYaml, type Entry, type Parameter, type Repo } from './repo.ts';
 
-// CO-03.1
-function searchIndex(repo: Repo) {
-  const index = new MiniSearch({ fields: ['id', 'title', 'text', 'attributes'] });
-  index.addAll([...repo.entries.values()].map(({ id, item }) => {
-    const { title, text, ...attributes } = item.data;
-    return { id, title, text, attributes: JSON.stringify(attributes) };
-  }));
-  return index;
-}
-
 // CO-03.2
 export function search(repo: Repo, query: string) {
   const fieldsOf = ({ item, meta }: Entry): Record<string, unknown> => ({ ...item.data, status: meta.data.status, owner: meta.data.owner }),
     known = new Set([...repo.entries.values()].flatMap((e) => Object.keys(fieldsOf(e)))), filters: string[][] = [],
-    text = query.replace(/(?<!\S)(\w+):(\S+)/g, (term, field, value) => (known.has(field) ? (filters.push([field, value]), '') : term)).trim();
-  return searchIndex(repo).search(text || MiniSearch.wildcard, { prefix: true, combineWith: 'AND', filter: ({ id }) =>
+    text = query.replace(/(?<!\S)(\w+):(\S+)/g, (term, field, value) => (known.has(field) ? (filters.push([field, value]), '') : term)).trim(),
+    // CO-03.1
+    index = new MiniSearch({ fields: ['id', 'title', 'text', 'attributes'] });
+  index.addAll([...repo.entries.values()].map(({ id, item }) => {
+    const { title, text, ...attributes } = item.data;
+    return { id, title, text, attributes: JSON.stringify(attributes) };
+  }));
+  return index.search(text || MiniSearch.wildcard, { prefix: true, combineWith: 'AND', filter: ({ id }) =>
     filters.every(([field, value]) => new RegExp(`(?<![\\w-])${value.replace(/\W/g, '\\$&')}(?![\\w-])`, 'i').test(String(fieldsOf(entry(repo, id))[field] ?? ''))),
   }).map((result) => named(repo, result.id));
 }

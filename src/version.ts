@@ -4,51 +4,37 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { parse } from 'yaml';
-import { git, isRequirementFile, linksOf, list, loadRepo, parameterOf, targetId, tracked, tryGit, usesOf, UsageError, type Parameter, type Repo } from './repo.ts';
+import { git, isRequirementFile, linksOf, list, loadRepo, targetId, tracked, tryGit, UsageError, type Parameter, type Repo } from './repo.ts';
 
 // TE-01.1
-function computeVersions(
-  ids: Iterable<string>,
-  hashes: Map<string, string>,
-  pathOf: (id: string) => string | undefined,
-  usesOfId: (id: string) => string[],
-  parameterHash: (id: string, path: string) => string | undefined,
-) {
+const sha = (text: string) => createHash('sha256').update(text).digest('hex');
+
+// TE-01.1, CO-02.7
+function computeVersions(ids: Iterable<string>, hashes: Map<string, string>, pathOf: (id: string) => string | undefined, dataOf: (id: string, path: string) => any) {
   const versions = new Map<string, string>(),
     visit = (id: string, usedBy: string[]) => {
-      const base = targetId(id), path = pathOf(base), isParam = id.includes(':'),
-        hash = path && (isParam ? parameterHash(id, path) : hashes.get(path));
-      if (!hash || versions.has(id)) return versions.get(id) ?? hash;
-    if (usedBy.includes(id)) return undefined;
-    if (isRequirementFile(path) || isParam) versions.set(id, hash);
-    else {
-      const usedVersions = usesOfId(id).map((used) => visit(used, [...usedBy, id])).filter(Boolean);
-      versions.set(id, createHash('sha256').update([hash, ...usedVersions].join('\n')).digest('hex'));
-    }
-    return versions.get(id);
-  };
+      const base = targetId(id), path = pathOf(base), isParam = id !== base,
+        parameter = path && isParam ? list<Parameter>(dataOf(base, path)?.parameters).find((p) => p.name === id.slice(base.length + 1)) : undefined,
+        hash = isParam ? parameter && sha(JSON.stringify(parameter)) : path && hashes.get(path);
+      if (!path || !hash || versions.has(id)) return versions.get(id) ?? hash;
+      if (usedBy.includes(id)) return undefined;
+      if (isRequirementFile(path) || isParam) versions.set(id, hash);
+      else versions.set(id, sha([hash, ...list<string>(dataOf(id, path)?.uses).map((used) => visit(used, [...usedBy, id])).filter(Boolean)].join('\n')));
+      return versions.get(id);
+    };
   for (const id of ids) visit(id, []);
   return versions;
 }
 
-// CO-02.7, TE-01.1
-const hashParameter = (parameter: Parameter) => createHash('sha256').update(JSON.stringify(parameter)).digest('hex');
-
 // TE-01.1
 function objectHashes(root: string, tree: string): Map<string, string> {
-  const rows = git(root, ['ls-tree', '-r', '-t', '-z', tree]).split('\0').filter(Boolean);
-  return new Map(rows.map((row) => {
-    const [info, path] = row.split('\t');
-    return [path, info.split(' ')[2]];
-  }));
+  return new Map([...git(root, ['ls-tree', '-r', '-t', '-z', tree]).matchAll(/ (\w+)\t([^\0]+)/g)].map((row) => [row[2], row[1]]));
 }
 
 // TE-01.1
 function versionsFromHashes(repo: Repo, hashes: Map<string, string>) {
-  const usesOfId = (id: string) => usesOf(repo.entries.get(id)),
-    targets = [...repo.entries.values()].flatMap((e) => linksOf(e).map((l) => l.target)),
-    parameterHash = (id: string) => { const found = parameterOf(repo, id); return found && hashParameter(found.parameter); };
-  return computeVersions([...repo.entries.keys(), ...targets], hashes, (id) => repo.entries.get(id)?.path, usesOfId, parameterHash);
+  const targets = [...repo.entries.values()].flatMap((e) => linksOf(e).map((l) => l.target));
+  return computeVersions([...repo.entries.keys(), ...targets], hashes, (id) => repo.entries.get(id)?.path, (id) => repo.entries.get(id)?.item.data);
 }
 
 // TE-01.2
@@ -70,25 +56,15 @@ export function versionAt(root: string, commit: string, target: string) {
       const path = tryGit(root, ['grep', '-l', `^id: ${wanted}$`, commit, '--', '*.yaml']).split('\n')[0].slice(commit.length + 1);
       return basename(path) === 'item.yaml' ? dirname(path) : path || undefined;
     },
-    usesOfId = (wanted: string) => list<string>(parse(git(root, ['show', `${commit}:${pathOf(wanted)}/item.yaml`]))?.uses),
-    // CO-02.7, TE-01.1
-    parameterHash = (id: string, path: string) => {
-      const file = isRequirementFile(path) ? path : `${path}/item.yaml`,
-        parameter = list<Parameter>(parse(git(root, ['show', `${commit}:${file}`]))?.parameters).find((p) => p.name === id.slice(targetId(id).length + 1));
-      return parameter && hashParameter(parameter);
-    };
-  return computeVersions([target], hashes, pathOf, usesOfId, parameterHash).get(target);
+    dataOf = (_: string, path: string) => parse(git(root, ['show', `${commit}:${isRequirementFile(path) ? path : `${path}/item.yaml`}`]));
+  return computeVersions([target], hashes, pathOf, dataOf).get(target);
 }
 
 export interface Snapshot { repo: Repo; versions: Map<string, string> }
 
 // TE-05.1
 export function snapshotAt(root: string, commit: string) {
-  try {
-    git(root, ['rev-parse', '--verify', '--quiet', `${commit}^{commit}`]);
-  } catch {
-    throw new UsageError(`Unknown commit ${commit}`);
-  }
+  if (!tryGit(root, ['rev-parse', '--verify', '-q', `${commit}^{commit}`])) throw new UsageError(`Unknown commit ${commit}`);
   const prefix = git(root, ['rev-parse', '--show-prefix']), worktree = mkdtempSync(join(tmpdir(), 'plm-'));
   try {
     git(root, ['worktree', 'add', '--detach', '-q', worktree, commit], { GIT_LFS_SKIP_SMUDGE: '1' });

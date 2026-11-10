@@ -22,26 +22,24 @@ const base = mkdtempSync(join(tmpdir(), 'plm-test-')),
   },
   bolt = 'id: L\ntype: part\ntitle: Bolt\n', wing = 'id: A\ntype: assembly\ntitle: Wing\n', spar = 'id: P\ntype: part\ntitle: Spar\n',
   setLoad = (root, extra = '', g = 4) => write(root, { 'wing/requirements/load.yaml': `id: R\ntype: requirement\ntitle: Load\ntext: Carry ${g}g.\n${extra}` }),
-  fixture = () => {
-    const root = mkdtempSync(join(base, 'repo-'));
-    write(root, {
-      'plm.yaml': 'prefixes:\n  part: PRT-\n  test-run: RUN-\n',
-      'wing/item.yaml': `${wing}uses: [L]\n`,
-      'wing/spar/item.yaml': `${spar}links:\n  - type: satisfies\n    target: R\n`,
-      'bolt/item.yaml': bolt,
-      'meta/P.yaml': '# reviewed\nstatus: draft\n',
-    });
-    setLoad(root, '', 3);
-    git(root, ['init', '-q']);
-    git(root, ['config', 'user.name', 'Tess']);
-    commit(root);
-    return root;
-  },
   plm = (root, ...args) => spawnSync(process.execPath, ['src/cli.ts', '-C', root, ...args], { encoding: 'utf8' }),
   json = (root, ...args) => JSON.parse(plm(root, '--format', 'json', ...args).stdout).data;
 afterAll(() => rmSync(base, { recursive: true, force: true }));
 let root;
-beforeEach(() => { root = fixture(); });
+beforeEach(() => {
+  root = mkdtempSync(join(base, 'repo-'));
+  write(root, {
+    'plm.yaml': 'prefixes:\n  part: PRT-\n  test-run: RUN-\n',
+    'wing/item.yaml': `${wing}uses: [L]\n`,
+    'wing/spar/item.yaml': `${spar}links:\n  - type: satisfies\n    target: R\n`,
+    'bolt/item.yaml': bolt,
+    'meta/P.yaml': '# reviewed\nstatus: draft\n',
+  });
+  setLoad(root, '', 3);
+  git(root, ['init', '-q']);
+  git(root, ['config', 'user.name', 'Tess']);
+  commit(root);
+});
 
 test('TE-01.1, TE-03.1: mv', () => {
   const before = currentVersions(loadRepo(root));

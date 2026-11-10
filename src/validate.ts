@@ -31,7 +31,7 @@ export const itemSchema = (root: string, type: string) => schemaFor(newAjv(), ro
 
 // CO-02.1, CO-02.4
 function schemaFindings(file: YamlFile<unknown>, check: ValidateFunction, draft: boolean): Finding[] {
-  if (check(file.data)) return [];
+  check(file.data);
   return (check.errors ?? []).map((error) => {
     const path = [...error.instancePath.split('/').slice(1), ...(error.params.unevaluatedProperty ? [error.params.unevaluatedProperty] : [])];
     return { ...finding(file, path, 'schema', `${path.join('.') || 'item'} ${error.message}`), severity: error.keyword === 'required' && draft ? 'warning' : 'error' };

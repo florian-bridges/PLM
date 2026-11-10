@@ -1,14 +1,12 @@
 import { copyFileSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, selection, subtree, targetId, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, selection, subtree, targetId, tryGit, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import { disallowed } from './schemas.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
 
 export interface LinkState { source: string; title: string; link: Link; targetTitle: string; state: 'current' | 'suspect' | 'unconfirmed' }
-
-const tryGit = (repo: Repo, args: string[]) => { try { return git(repo.root, args); } catch { return ''; } };
 
 // TE-03.1
 const strip = (repo: Repo, text: string) => {
@@ -19,8 +17,8 @@ const strip = (repo: Repo, text: string) => {
 
 // TE-03.1, TE-03.2
 const commitAndPaths = (repo: Repo, link: Link): [string | undefined, string[]] => {
-  const commit = (link.commit && tryGit(repo, ['rev-parse', '--verify', '-q', `${link.commit}^{commit}`]) && link.commit)
-    || [...tryGit(repo, ['log', '--format=%H', `--find-object=${link.version}`]).split('\n'), ...tryGit(repo, ['rev-list', 'HEAD']).split('\n')].filter(Boolean)
+  const commit = (link.commit && tryGit(repo.root, ['rev-parse', '--verify', '-q', `${link.commit}^{commit}`]) && link.commit)
+    || [...tryGit(repo.root, ['log', '--format=%H', `--find-object=${link.version}`]).split('\n'), ...tryGit(repo.root, ['rev-list', 'HEAD']).split('\n')].filter(Boolean)
       .find((c) => versionAt(repo.root, c, link.target) === link.version);
   return [commit, subtree(repo, targetId(link.target)).map((id) => entry(repo, id).path)];
 };
@@ -32,7 +30,7 @@ export function linkStates(repo: Repo, versions: Map<string, string>) {
     if (link.version === versions.get(link.target)) return 'current';
     const [commit, paths] = commitAndPaths(repo, link),
       own = paths.map((p) => isRequirementFile(p) ? p : `${p}/item.yaml`),
-      changed = commit ? tryGit(repo, ['diff', '--name-only', commit, '--', ...paths]).split('\n').filter(Boolean) : [],
+      changed = commit ? tryGit(repo.root, ['diff', '--name-only', commit, '--', ...paths]).split('\n').filter(Boolean) : [],
       // absent at the commit: changed
       equal = (f: string) => { try { return strip(repo, git(repo.root, ['show', `${commit}:${f}`])) === strip(repo, readFileSync(join(repo.root, f), 'utf8')); } catch { return false; } };
     return changed.length && changed.every((f) => own.includes(f) && equal(f)) ? 'current' : 'suspect';
@@ -47,9 +45,9 @@ export const fromRun = (repo: Repo, state: LinkState) => repo.entries.get(state.
 
 // TE-02.1–TE-02.2
 function confirmation(repo: Repo, target: string, version: string | undefined) {
-  const by = tryGit(repo, ['config', 'user.name']);
+  const by = tryGit(repo.root, ['config', 'user.name']);
   if (!by) throw new Refused('Set git user.name');
-  const hash = tryGit(repo, ['rev-parse', '--verify', '-q', '--short', 'HEAD']),
+  const hash = tryGit(repo.root, ['rev-parse', '--verify', '-q', '--short', 'HEAD']),
     exact = hash && versionAt(repo.root, 'HEAD', target) === version;
   return { title: named(repo, targetId(target)).title, version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }) };
 }

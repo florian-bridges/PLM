@@ -9,6 +9,7 @@ import { Document, LineCounter, parseDocument } from 'yaml';
 export function git(root: string, args: string[], env: Record<string, string> = {}) {
   return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: 'pipe', env: { ...process.env, ...env }, maxBuffer: 1 << 28 }).trim();
 }
+export const tryGit = (root: string, args: string[]) => { try { return git(root, args); } catch { return ''; } };
 
 export interface Link { type: string; target: string; result?: string; title?: string; version?: string; by?: string; on?: string; commit?: string }
 interface Item { id: string; type: string; title: string; [attribute: string]: unknown }
@@ -83,7 +84,6 @@ export function loadRepo(start: string) {
 
 // TE-01.1
 export const targetId = (target: string) => target.split(':')[0];
-export const targetPath = (repo: Repo, target: string) => repo.entries.get(targetId(target))?.path;
 
 // CO-02.7, TE-01.1
 export interface Parameter { name: string; value?: number; unit?: string; state?: string }
@@ -133,13 +133,13 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
 // CO-01.3
 export const tracked = (repo: Repo) => git(repo.root, ['ls-files']).split('\n').filter(Boolean);
 
-export function artifacts(repo: Repo, { path, nested }: Entry, files: string[] = tracked(repo)) {
+export function artifacts(repo: Repo, { path, nested }: Entry) {
   if (isRequirementFile(path)) return [];
   const skip = Object.values(repo.settings.folders!), prefix = `${path}/`,
     nestedPaths = nested.map((id) => repo.entries.get(id)!.path),
     isPointer = (file: string) => statSync(join(repo.root, file)).size < 200
       && readFileSync(join(repo.root, file), 'utf8').startsWith('version https://git-lfs.github.com/spec/v1');
-  return files.filter((file) => file.startsWith(prefix) && file.slice(prefix.length) !== 'item.yaml'
+  return tracked(repo).filter((file) => file.startsWith(prefix) && file.slice(prefix.length) !== 'item.yaml'
       && !skip.includes(file.slice(prefix.length).split('/')[0]) && !nestedPaths.some((n) => file.startsWith(`${n}/`)))
     .sort().map((file) => (isPointer(file) ? { path: file, lfs: 'missing' } : { path: file }));
 }

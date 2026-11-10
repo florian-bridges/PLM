@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { parse } from 'yaml';
-import { git, isRequirementFile, linksOf, list, loadRepo, parameterOf, targetId, targetPath, tracked, usesOf, UsageError, type Parameter, type Repo } from './repo.ts';
+import { git, isRequirementFile, linksOf, list, loadRepo, parameterOf, targetId, tracked, tryGit, usesOf, UsageError, type Parameter, type Repo } from './repo.ts';
 
 // TE-01.1
 function computeVersions(
@@ -48,7 +48,7 @@ function versionsFromHashes(repo: Repo, hashes: Map<string, string>) {
   const usesOfId = (id: string) => usesOf(repo.entries.get(id)),
     targets = [...repo.entries.values()].flatMap((e) => linksOf(e).map((l) => l.target)),
     parameterHash = (id: string) => { const found = parameterOf(repo, id); return found && hashParameter(found.parameter); };
-  return computeVersions([...repo.entries.keys(), ...targets], hashes, (id) => targetPath(repo, id), usesOfId, parameterHash);
+  return computeVersions([...repo.entries.keys(), ...targets], hashes, (id) => repo.entries.get(id)?.path, usesOfId, parameterHash);
 }
 
 // TE-01.2
@@ -69,9 +69,7 @@ export function currentVersions(repo: Repo) {
 export function versionAt(root: string, commit: string, target: string) {
   const hashes = objectHashes(root, commit),
     pathOf = (wanted: string) => {
-      let files = '';
-      try { files = git(root, ['grep', '-l', `^id: ${wanted}$`, commit, '--', '*.yaml']); } catch { /* */ }
-      const path = files.split('\n')[0].slice(commit.length + 1);
+      const path = tryGit(root, ['grep', '-l', `^id: ${wanted}$`, commit, '--', '*.yaml']).split('\n')[0].slice(commit.length + 1);
       return basename(path) === 'item.yaml' ? dirname(path) : path || undefined;
     },
     usesOfId = (wanted: string) => list<string>(parse(git(root, ['show', `${commit}:${pathOf(wanted)}/item.yaml`]))?.uses),

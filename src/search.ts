@@ -42,9 +42,8 @@ export function setParameter(repo: Repo, id: string, ref: string, field: string,
 }
 
 // CL-01.4
-const parameterKeys: (keyof Parameter)[] = ['name', 'value', 'unit', 'state'];
 export function getParameter(repo: Repo, ref: string, key = 'value') {
   const found = parameterOf(repo, ref);
-  if (!found || !parameterKeys.includes(key as keyof Parameter)) throw new UsageError(ref);
+  if (!found || !['name', 'value', 'unit', 'state'].includes(key)) throw new UsageError(ref);
   return found.parameter[key as keyof Parameter];
 }

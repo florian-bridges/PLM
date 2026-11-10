@@ -132,10 +132,8 @@ program.command('test').command('record <test-case...>').description('record')
     output(id, { id });
   });
 
-const report = program.command('report');
-
 // TE-06.2, TE-06.4
-report.command('coverage [item]').description('coverage')
+program.command('report').command('coverage [item]').description('coverage')
   .option('--by <field>')
   .option('--allocation')
   .action((item, options) => {
@@ -153,7 +151,7 @@ report.command('coverage [item]').description('coverage')
       });
       return output(Object.values(groups).map((g) => Object.entries(g).flat().slice(1).join(' ')).join('\n'), Object.values(groups));
     }
-    const lines = rows.flatMap((row) => [[row.state, label({ id: row.requirement, title: row.title })],
+    const lines = rows.flatMap((row) => [[row.state, label(named(state[0], row.requirement))],
       ...row.tests.map((test) => ['  ' + label(test.testCase), test.run && label(test.run), test.result, test.outdated && 'outdated'])]);
     output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'), rows);
   });

@@ -1,6 +1,6 @@
 {
   "name": "plm",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Git-based product lifecycle management CLI: hierarchical items, requirements, tests and traceability links that turn suspect on change",
   "license": "MIT",
   "repository": {

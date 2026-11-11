@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-11-11)
 
+* `plm new` prints the new item's path on stderr and in JSON output.
 * `plm show` computes link states only for the item's own links (6 s to 0.3 s in a repository with 222 items).
 * Artifacts and versions cover every file Git does not ignore, tracked or not: a link confirmed before the first commit stays current after it.
 * `plm search`: `<field>:<value>` filters on any field, as a whole word, ignoring case.

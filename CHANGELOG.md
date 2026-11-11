@@ -6,6 +6,10 @@
 * Artifacts and versions cover every file Git does not ignore, tracked or not: a link confirmed before the first commit stays current after it.
 * `plm search`: `<field>:<value>` filters on any field, as a whole word, ignoring case.
 * `plm validate` reports YAML errors such as duplicate keys.
+* `informative:` defaults to `[rationale, links]`: adding or removing a link on an item leaves the links that target it current.
+* `plm set <ID>:<name> unit <text>`; `plm get` prints nothing and exits 1 for an unset key.
+* `plm new --help` lists the configured types, `plm link --help` the allowed links; every command has a one-line description.
+* A deleted, unstaged file or a nested Git repository without commits no longer makes commands exit 3.
 
 ## 0.2.1 (2026-11-07)
 

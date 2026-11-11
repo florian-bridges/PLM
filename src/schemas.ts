@@ -24,7 +24,7 @@ export const builtinTypes: Record<string, object> = {
 };
 
 // CO-02.2, CO-02.6
-const linkRules: Record<string, [string[], string[]]> = {
+export const linkRules: Record<string, [string[], string[]]> = {
   satisfies: [['*'], ['requirement']],
   implements: [['*'], ['requirement']],
   verifies: [['test-case'], ['requirement']],

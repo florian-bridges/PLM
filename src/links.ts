@@ -11,7 +11,7 @@ export interface LinkState { source: string; title: string; link: Link; targetTi
 // TE-03.1
 const strip = (repo: Repo, text: string) => {
   const doc = parseDocument(text);
-  for (const f of repo.settings.informative ?? ['rationale']) doc.delete(f);
+  for (const f of repo.settings.informative ?? ['rationale', 'links']) doc.delete(f);
   return doc.toString();
 };
 
@@ -126,7 +126,7 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
     isCurrent = (state: LinkState) => state.state === 'current',
     outdatedRuns = new Set(states.filter((state) => fromRun(repo, state) && !isCurrent(state)).map((state) => state.source)),
     date = (executes: LinkState) => String(entry(repo, executes.source).item.data.date),
-    runs = linksOfType('executes').sort((a, b) => date(a).localeCompare(date(b))),
+    runs = linksOfType('executes').sort((a, b) => date(a) < date(b) ? -1 : +(date(a) > date(b))),
     // later runs override earlier ones
     latest = (executed: LinkState[]) => new Map<string, LinkState>(executed.map((executes) => [executes.link.target, executes])),
     latestRun = latest(runs),

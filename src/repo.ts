@@ -57,18 +57,14 @@ export function loadRepo(start: string) {
       else repo.entries.set(id, added);
       return added;
     },
-    addRequirements = (folder: string, parent: Entry) => {
-      for (const child of readdirSync(join(root, folder), { withFileTypes: true })) {
-        const path = `${folder}/${child.name}`;
-        if (child.isDirectory()) addRequirements(path, parent);
-        else if (isRequirementFile(path)) parent.requirements.push(addEntry(path).id);
-      }
-    },
-    walk = (folder: string, parent?: Entry) => {
+    walk = (folder: string, parent?: Entry, requirements?: boolean) => {
     for (const child of readdirSync(join(root, folder), { withFileTypes: true })) {
-      if (!child.isDirectory() || child.name.startsWith('.')) continue;
       const path = folder ? `${folder}/${child.name}` : child.name;
-      if (parent && child.name === repo.settings.folders!.requirement) addRequirements(path, parent);
+      if (requirements) {
+        if (child.isDirectory()) walk(path, parent, true);
+        else if (isRequirementFile(path)) parent!.requirements.push(addEntry(path).id);
+      } else if (!child.isDirectory() || child.name.startsWith('.')) continue;
+      else if (parent && child.name === repo.settings.folders!.requirement) walk(path, parent, true);
       else if (parent ? child.name === repo.settings.folders!['test-case'] : !folder && child.name === repo.settings.folders!['test-run']) walk(path);
       else if (existsSync(join(root, path, 'item.yaml'))) {
         const nested = addEntry(path);
@@ -131,7 +127,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
 }
 
 // CO-01.3
-export const tracked = (repo: Repo) => git(repo.root, ['ls-files', '-co', '--exclude-standard']).split('\n').filter(Boolean).map((file) => file.replace(/\/$/, ''));
+export const tracked = (repo: Repo) => git(repo.root, ['ls-files', '-co', '--exclude-standard']).split('\n').map((file) => file.replace(/\/$/, '')).filter((file) => file && existsSync(join(repo.root, file)));
 
 export function artifacts(repo: Repo, { path, nested }: Entry) {
   if (isRequirementFile(path)) return [];

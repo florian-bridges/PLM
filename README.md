@@ -34,7 +34,7 @@ plm suspects; plm show $PRT                      # suspect until confirmed again
 ```yaml
 prefixes: {assembly: ASM-, part: PRT-, requirement: REQ-, test-case: TC-, test-run: RUN-, analysis: ANA-}
 folders: {analysis: analyses}   # home folder per type; defaults: requirements, tests, runs
-informative: [rationale]        # fields whose change leaves links current
+informative: [rationale, links] # fields whose change leaves links current
 parameter_states: [provisional, final]
 ```
 

@@ -1,18 +1,16 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, innermostItem, linksOf, list, parameterOf, targetId, targetPath, usesOf, type Parameter, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, innermostItem, linksOf, list, parameterOf, targetId, usesOf, type Parameter, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, disallowed } from './schemas.ts';
 
 // CO-02.4
 export interface Finding { file: string; line: number; col: number; severity: 'error' | 'warning'; code: string; message: string }
 
 function finding(file: YamlFile<unknown>, path: (string | number)[], code: string, message: string): Finding {
-  let node: unknown;
+  let node: any;
   for (let depth = path.length; depth > 0 && !node; depth--) node = file.doc.getIn(path.slice(0, depth), true);
-  const offset = (node as { range?: number[] } | undefined)?.range?.[0] ?? 0,
-    { line, col } = file.lines.linePos(offset);
-  return { file: file.path, line, col, severity: 'error', code, message };
+  return { file: file.path, ...file.lines.linePos(node?.range?.[0] ?? 0), severity: 'error', code, message };
 }
 
 // CO-02.1
@@ -32,8 +30,8 @@ const newAjv = () => new Ajv2020({ allErrors: true, strictTypes: false });
 export const itemSchema = (root: string, type: string) => schemaFor(newAjv(), root, type, baseSchema);
 
 // CO-02.1, CO-02.4
-function schemaFindings(file: YamlFile<unknown>, check: ValidateFunction, data: unknown, draft: boolean): Finding[] {
-  if (check(data)) return [];
+function schemaFindings(file: YamlFile<unknown>, check: ValidateFunction, draft: boolean): Finding[] {
+  if (check(file.data)) return [];
   return (check.errors ?? []).map((error) => {
     const path = [...error.instancePath.split('/').slice(1), ...(error.params.unevaluatedProperty ? [error.params.unevaluatedProperty] : [])];
     return { ...finding(file, path, 'schema', `${path.join('.') || 'item'} ${error.message}`), severity: error.keyword === 'required' && draft ? 'warning' : 'error' };
@@ -50,10 +48,12 @@ export function validate(repo: Repo) {
       // CO-02.2
       folders = dirname(entry.path).split('/'), home = repo.settings.folders![type],
       misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
+    // CO-02.2
+    for (const file of [item, meta]) for (const error of file.doc.errors) findings.push({ ...finding(file, [], 'yaml', error.code), ...error.linePos![0] });
     if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', type));
-    else findings.push(...schemaFindings(item, validateSchema, item.data, draft));
+    else findings.push(...schemaFindings(item, validateSchema, draft));
     // CO-02.1
-    if (validateMeta) findings.push(...schemaFindings(meta, validateMeta, meta.data, false));
+    if (validateMeta) findings.push(...schemaFindings(meta, validateMeta, false));
 
     if (misplaced) findings.push(finding(item, ['type'], 'misplaced', `outside ${home}`));
 
@@ -69,18 +69,15 @@ export function validate(repo: Repo) {
     });
 
     linksOf(entry).forEach((link, index) => {
-      const param = parameterOf(repo, link.target), path = targetPath(repo, link.target),
-        targetEntry = repo.entries.get(targetId(link.target));
-      if (!path || !existsSync(join(repo.root, path)) || (link.target.includes(':') && !param)) {
-        findings.push(finding(item, ['links', index, 'target'], 'unknown-target', link.target));
-        return;
-      }
-      const bad = disallowed(type, link.type, targetEntry!.item.data.type);
+      const param = parameterOf(repo, link.target), targetEntry = repo.entries.get(targetId(link.target)),
+        atTarget = (code: string) => finding(item, ['links', index, 'target'], code, link.target);
+      if (!targetEntry || (link.target.includes(':') && !param)) return void findings.push(atTarget('unknown-target'));
+      const bad = disallowed(type, link.type, targetEntry.item.data.type);
       if (bad) findings.push(finding(item, ['links', index, 'type'], 'link-type', bad));
       if (!param) return; // CO-02.7
-      if (param.parameter.value == null) findings.push({ ...finding(item, ['links', index, 'target'], 'tbd-source', link.target), severity: 'warning' });
+      if (param.parameter.value == null) findings.push({ ...atTarget('tbd-source'), severity: 'warning' });
       else if (link.type === 'derives-from' && list<Parameter>(item.data.parameters).some((p) => p.name === param.parameter.name && p.value != null && p.value !== param.parameter.value))
-        findings.push(finding(item, ['links', index, 'target'], 'stale-value', link.target));
+        findings.push(atTarget('stale-value'));
     });
   }
   // CO-02.2

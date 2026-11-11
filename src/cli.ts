@@ -47,7 +47,7 @@ program.command('validate').description('check').action(() => {
 
 program.command('show <id>').description('details').action((id) => {
   const repo = openRepo(), found = entry(repo, id), versions = currentVersions(repo),
-    links = linkStates(repo, versions).filter((state) => state.source === id || state.link.target === id),
+    links = linkStates(repo, versions, id),
     // CO-01.3
     data = { ...record(found), version: versions.get(id), links, artifacts: artifacts(repo, found) };
   output(stringify(data, { aliasDuplicateObjects: false }), data);
@@ -117,8 +117,9 @@ program.command('impact <range>').description('impact').action((range) => {
 
 // CL-02.1
 program.command('new <type> <title>').description('create').action((type, title) => {
-  const id = newItem(openRepo(), type, title, workingFolder());
-  output(id, { id });
+  const created = newItem(openRepo(), type, title, workingFolder());
+  output(created.id, created);
+  if (program.opts().format !== 'json') console.error(created.path);
 });
 
 // CL-03.1
@@ -131,10 +132,8 @@ program.command('test').command('record <test-case...>').description('record')
     output(id, { id });
   });
 
-const report = program.command('report');
-
 // TE-06.2, TE-06.4
-report.command('coverage [item]').description('coverage')
+program.command('report').command('coverage [item]').description('coverage')
   .option('--by <field>')
   .option('--allocation')
   .action((item, options) => {
@@ -152,7 +151,7 @@ report.command('coverage [item]').description('coverage')
       });
       return output(Object.values(groups).map((g) => Object.entries(g).flat().slice(1).join(' ')).join('\n'), Object.values(groups));
     }
-    const lines = rows.flatMap((row) => [[row.state, label({ id: row.requirement, title: row.title })],
+    const lines = rows.flatMap((row) => [[row.state, label(named(state[0], row.requirement))],
       ...row.tests.map((test) => ['  ' + label(test.testCase), test.run && label(test.run), test.result, test.outdated && 'outdated'])]);
     output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'), rows);
   });

@@ -10,13 +10,13 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
 *Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
 
-**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder tracked or staged by Git, except `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
+**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder not ignored by Git, except `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
 
 **CO-02.1** The core shall validate `item.yaml` with Ajv against its type's JSON Schema (2020-12), and `meta/<ID>.yaml` against `schemas/meta.schema.json` if present; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
 *Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add attributes.
 
-**CO-02.2** The core shall report as errors: items outside their type's home folder (CO-01.1), other items inside them, a `meta/<ID>.yaml` with no item, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
+**CO-02.2** The core shall report as errors: YAML syntax errors in item, requirement and meta files, items outside their type's home folder (CO-01.1), other items inside them, a `meta/<ID>.yaml` with no item, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late.
 
 **CO-02.4** Each finding shall carry file, line, column, severity and a stable code, with severity `warning` for a missing required attribute (schema `required`) of a `draft` item, otherwise `error`.
@@ -34,10 +34,10 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes.
 *Rationale:* One index format serves the CLI and VS Code without a search server.
 
-**CO-03.2** Queries shall combine free text, matching all words by prefix, with filters `type:`, `status:` and `owner:`.
-*Rationale:* Filters answer typical questions, such as all unreleased parts of an owner, faster than text alone. Prefix matching finds items while typing.
+**CO-03.2** Queries shall combine free text, matching all words by prefix, with filters `<field>:<value>`, matching items whose `<field>`, including `status` and `owner`, contains `<value>`, ignoring case, not adjoining a letter, digit, `-` or `_`; a `<field>` no item has is free text.
+*Rationale:* Filters answer typical questions, such as an owner's unreleased parts or requirements with a TBD, faster than text alone. Prefix matching finds items while typing.
 
-**CO-03.3** The core shall list the objects of a named list field, scoped to an item's subtree if given, matching filters (CO-03.2; empty matches missing, `null` or empty), each as `<source ID> (<title>)` followed by its keys, with `source` added in JSON.
+**CO-03.3** The core shall list the objects of a named list field, scoped to an item's subtree if given, whose keys equal all filter values (empty matches missing, `null` or empty), each as `<source ID> (<title>)` followed by its keys, with `source` added in JSON.
 *Rationale:* One mechanism covers findings and any future list field without new code.
 
 ## Traceability engine
@@ -92,7 +92,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.4** `get <ref> [<key>]` shall print a parameter's `value` or key, nothing else; exit 1 if TBD, usage error if unknown.
 *Rationale:* Scripts read a value, not a copy.
 
-**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
+**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
 *Rationale:* Repository templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.

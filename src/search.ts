@@ -1,22 +1,25 @@
 // CO-03
 import MiniSearch from 'minisearch';
-import { entry, list as values, named, parameterOf, subtree, UsageError, writeYaml, type Parameter, type Repo } from './repo.ts';
+import { entry, list as values, named, parameterOf, subtree, UsageError, writeYaml, type Entry, type Parameter, type Repo } from './repo.ts';
 
 // CO-03.1
 function searchIndex(repo: Repo) {
-  const index = new MiniSearch({ fields: ['id', 'title', 'text', 'attributes'], storeFields: ['type', 'status', 'owner'] });
-  index.addAll([...repo.entries.values()].map(({ id, item, meta }) => {
+  const index = new MiniSearch({ fields: ['id', 'title', 'text', 'attributes'] });
+  index.addAll([...repo.entries.values()].map(({ id, item }) => {
     const { title, text, ...attributes } = item.data;
-    return { id, title, text, attributes: JSON.stringify(attributes), type: item.data.type, status: meta.data.status, owner: meta.data.owner };
+    return { id, title, text, attributes: JSON.stringify(attributes) };
   }));
   return index;
 }
 
 // CO-03.2
 export function search(repo: Repo, query: string) {
-  const pattern = /\b(type|status|owner):(\S+)/g, filters = [...query.matchAll(pattern)], text = query.replace(pattern, '').trim(),
-    filter = (result: Record<string, unknown>) => filters.every(([, field, value]) => result[field] === value);
-  return searchIndex(repo).search(text || MiniSearch.wildcard, { prefix: true, combineWith: 'AND', filter }).map((result) => named(repo, result.id));
+  const fieldsOf = ({ item, meta }: Entry): Record<string, unknown> => ({ ...item.data, status: meta.data.status, owner: meta.data.owner }),
+    known = new Set([...repo.entries.values()].flatMap((e) => Object.keys(fieldsOf(e)))), filters: string[][] = [],
+    text = query.replace(/(?<!\S)(\w+):(\S+)/g, (term, field, value) => (known.has(field) ? (filters.push([field, value]), '') : term)).trim();
+  return searchIndex(repo).search(text || MiniSearch.wildcard, { prefix: true, combineWith: 'AND', filter: ({ id }) =>
+    filters.every(([field, value]) => new RegExp(`(?<![\\w-])${value.replace(/\W/g, '\\$&')}(?![\\w-])`, 'i').test(String(fieldsOf(entry(repo, id))[field] ?? ''))),
+  }).map((result) => named(repo, result.id));
 }
 
 // CO-03.3
@@ -42,9 +45,8 @@ export function setParameter(repo: Repo, id: string, ref: string, field: string,
 }
 
 // CL-01.4
-const parameterKeys: (keyof Parameter)[] = ['name', 'value', 'unit', 'state'];
 export function getParameter(repo: Repo, ref: string, key = 'value') {
   const found = parameterOf(repo, ref);
-  if (!found || !parameterKeys.includes(key as keyof Parameter)) throw new UsageError(ref);
+  if (!found || !['name', 'value', 'unit', 'state'].includes(key)) throw new UsageError(ref);
   return found.parameter[key as keyof Parameter];
 }

@@ -1,5 +1,5 @@
 // TE-05
-import { fromRun, linkStates, type LinkState } from './links.ts';
+import { fromRun, linkStates } from './links.ts';
 import { git, innermostItem, named } from './repo.ts';
 import { type Snapshot } from './version.ts';
 
@@ -14,8 +14,7 @@ export function impact(base: Snapshot, head: Snapshot, files: string[]) {
     ids = new Set([...base.repo.entries.keys(), ...head.repo.entries.keys()]),
     changedIds = [...ids].filter((id) => base.versions.get(id) !== head.versions.get(id)),
     // TE-05.2
-    becameSuspect = (state: LinkState) => state.state === 'suspect' && state.link.version === base.versions.get(state.link.target),
-    becameSuspects = linkStates(head.repo, head.versions).filter(becameSuspect),
+    becameSuspects = linkStates(head.repo, head.versions).filter((state) => state.state === 'suspect' && state.link.version === base.versions.get(state.link.target)),
     name = (id: string) => named(head.repo.entries.has(id) ? head.repo : base.repo, id);
   return {
     changed: changedIds.filter((id) => ownersOfChangedFiles.has(id)).map(name),

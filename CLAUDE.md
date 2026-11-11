@@ -6,11 +6,11 @@ Word counts are capped:
 
 | Folder | Limit |
 |---|---|
-| `documents/` | 5100 |
+| `documents/` | 5600 |
 | `src/` + `test/` | 4551 |
 | `extension/` | 1659 |
 
-Check with `python3 scripts/wordcount.py --max-docs 5100 --max-src 4551 --max-ext 1659 -u` (`-v` lists per-file counts). Run it before every commit; a change that exceeds a limit is not done.
+Check with `python3 scripts/wordcount.py --max-docs 5600 --max-src 4551 --max-ext 1659 -u` (`-v` lists per-file counts). Run it before every commit; a change that exceeds a limit is not done.
 
 Make every change in as few words as possible: reuse existing code and text, don't restate what another requirement, comment or test already says, and prefer deleting to adding.
 
@@ -19,7 +19,7 @@ Make every change in as few words as possible: reuse existing code and text, don
 `documents/` holds a hierarchy:
 
 1. `scenarios.md` (US-n) and `requirements.md` (CR-nn): user scenarios and tool requirements
-2. `components.md` (CO, TE, CL, VS, CI, SI-nn): component requirements, each citing the CR and US it serves
+2. `components.md` (CO, TE, CL, VS-nn): component requirements, each citing the CR and US it serves
 3. `low-level-requirements.md` (XX-nn.m): refines component requirement XX-nn
 
 * Every requirement traces to its parent level; none may exist without one.

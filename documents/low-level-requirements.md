@@ -13,8 +13,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.3** The core shall list as an item's artifacts the paths of files in its folder not ignored by Git, except `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
 
-**CO-02.1** The core shall validate `item.yaml` with Ajv against its type's JSON Schema (2020-12), and `meta/<ID>.yaml` against `schemas/meta.schema.json` if present; built-in schemas may be extended by `schemas/<type>.schema.json` in the repository.
-*Rationale:* JSON Schema is understood by editors, Ajv and form generators; repository extensions let programs add attributes.
+**CO-02.1** The core shall validate `item.yaml` with Ajv against its type's JSON Schema (2020-12, CO-02.8), and `meta/<ID>.yaml` against `types/meta.yaml` if present.
+*Rationale:* JSON Schema is understood by editors, Ajv and form generators.
 
 **CO-02.2** The core shall report as errors: YAML syntax errors in item, requirement and meta files, items outside their type's home folder (CO-01.1), other items inside them, a `meta/<ID>.yaml` with no item, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late.
@@ -23,13 +23,16 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Positions let editors and CI point to the problem; stable codes allow filtering and suppression; a draft is expected to be incomplete.
 
 **CO-02.5** Built-in types shall be `requirement`, `part`, `assembly`, `test-case` and `test-run`.
-*Rationale:* Others come by schema.
+*Rationale:* Others come by CO-02.8.
 
 **CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, `tests` from `test-run` to any type, and `derives-from` from any type to any type.
 *Rationale:* Fixed semantics keep reports comparable.
 
 **CO-02.7** Any item's `item.yaml` may hold a `parameters` list field, entries `{name, value, unit, state}`, `state` from `plm.yaml`'s `parameter_states` (default `[provisional, final]`; missing or `null` value: TBD, not a state). The core shall report as error a non-number `value`, an unlisted `state`, or `stale-value` (vs its `derives-from` target), and as warning `tbd-source` (target TBD). An item's `text` may cite a parameter as `{<ID>:<name>}` or, of the same item, `{<name>}`: the former shall be a `derives-from` link to it even if not listed under `links`, the latter an error if the item has no such parameter.
 *Rationale:* Replaces copies, also in text; flags stale or TBD drift.
+
+**CO-02.8** A type shall be built in (CO-02.5) or defined by `types/<type>.yaml` with optional `template`, `fields` (JSON Schema properties) and `required`; a file named after a built-in type extends it, and `types/meta.yaml` instead gives the fields of `meta/<ID>.yaml`. The core shall report as error an item of any other type (`unknown-type`) and a type file with any other key (`type-file`).
+*Rationale:* One YAML file per type lets programs add types and attributes without mixing JSON and YAML.
 
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes.
 *Rationale:* One index format serves the CLI and VS Code without a search server.
@@ -92,8 +95,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.4** `get <ref> [<key>]` shall print a parameter's `value` or key, nothing else; if unset or TBD, nothing and exit 1; usage error if unknown.
 *Rationale:* Scripts read a value, not a copy.
 
-**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's template, built-in or in `templates/<type>.yaml`, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
-*Rationale:* Repository templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
+**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8), in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
+*Rationale:* Templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
 
 **CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.

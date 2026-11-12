@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, innermostItem, linksOf, list, parameterOf, targetId, usesOf, type Parameter, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, citations, innermostItem, linksOf, list, parameterOf, targetId, usesOf, type Parameter, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, disallowed } from './schemas.ts';
 
 // CO-02.4
@@ -67,10 +67,11 @@ export function validate(repo: Repo) {
     list<Parameter>(item.data.parameters).forEach((p, index) => {
       if (p.state && !states.includes(p.state)) findings.push(finding(item, ['parameters', index, 'state'], 'unknown-state', p.state));
     });
+    for (const name of citations(item.data, true)) if (!parameterOf(repo, `${id}:${name}`)) findings.push(finding(item, ['text'], 'unknown-parameter', name));
 
     linksOf(entry).forEach((link, index) => {
       const param = parameterOf(repo, link.target), targetEntry = repo.entries.get(targetId(link.target)),
-        atTarget = (code: string) => finding(item, ['links', index, 'target'], code, link.target);
+        atTarget = (code: string) => finding(item, item.doc.hasIn(['links', index]) ? ['links', index, 'target'] : ['text'], code, link.target);
       if (!targetEntry || (link.target.includes(':') && !param)) return void findings.push(atTarget('unknown-target'));
       const bad = disallowed(type, link.type, targetEntry.item.data.type);
       if (bad) findings.push(finding(item, ['links', index, 'type'], 'link-type', bad));

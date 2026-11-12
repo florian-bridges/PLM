@@ -5,7 +5,7 @@ import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, type LinkState } from './links.ts';
-import { artifacts, entry, loadRepo, named, newItem, parameterOf, Refused, targetId, UsageError, writeYaml, type Named, type Parameter } from './repo.ts';
+import { artifacts, entry, expanded, loadRepo, named, newItem, parameterOf, Refused, targetId, UsageError, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
 import { linkRules, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
@@ -31,7 +31,7 @@ function output(text: string, data: unknown) {
 }
 
 // CL-05.3
-const record = (found: any) => ({ ...found.item.data, path: found.path, meta: found.meta.data }),
+const record = (repo: Repo, found: Entry) => ({ ...found.item.data, text: expanded(repo, found), path: found.path, meta: found.meta.data }),
   label = ({ id, title }: Named) => (title ? `${id} (${title})` : id),
   linkLabel = (state: LinkState) => `${label({ id: state.source, title: state.title })} ${state.link.type} ${label({ id: state.link.target, title: state.targetTitle })}`;
 
@@ -48,7 +48,7 @@ program.command('validate').description('check the repository').action(() => {
 program.command('show <id>').description('show an item').action((id) => {
   const repo = openRepo(), found = entry(repo, id), versions = currentVersions(repo),
     // CO-01.3
-    data = { ...record(found), version: versions.get(id), links: linkStates(repo, versions, id), artifacts: artifacts(repo, found) };
+    data = { ...record(repo, found), version: versions.get(id), links: linkStates(repo, versions, id), artifacts: artifacts(repo, found) };
   output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
@@ -87,7 +87,7 @@ program.command('list <field> [args...]').description('list entries of a field')
 
 // CO-03.2
 program.command('search <query...>').description('find items').action((query) => {
-  const repo = openRepo(), found = search(repo, query.join(' ')).map((item) => record(entry(repo, item.id)));
+  const repo = openRepo(), found = search(repo, query.join(' ')).map((item) => record(repo, entry(repo, item.id)));
   output(found.map(label).join('\n'), found);
 });
 

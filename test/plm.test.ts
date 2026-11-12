@@ -188,6 +188,21 @@ test('TE-01.1, TE-03.1, CO-02.7, CO-03.3, CL-01.1, CL-01.3–CL-01.4: parameter'
   expect(validate(loadRepo(root)).map((f) => f.code)).toEqual(expect.arrayContaining(['schema', 'unknown-state', 'unknown-target', 'tbd-source', 'stale-value']));
 });
 
+test('CO-02.7, TE-01.1, CL-05.3: citation', () => {
+  const span = (value) => write(root, { 'wing/item.yaml': `${wing}parameters: [{name: span, value: ${value}, unit: m}, {name: chord}]\n` });
+  span(0);
+  setLoad(root, '', '{A:span} {A:chord} ');
+  plm(root, 'confirm', 'R');
+  plm(root, 'confirm', 'P');
+  commit(root);
+  expect(versionAt(root, 'HEAD', 'R')).toBe(currentVersions(loadRepo(root)).get('R'));
+  expect(plm(root, 'suspects').stdout + plm(root, 'show', 'R').stdout).toMatch(/^\nid: R\n.*\n.*\ntext: Carry 0 m TBD g\./);
+  span(4);
+  expect(plm(root, 'suspects').stdout).toBe('suspect R (Load) derives-from A:span (Wing)\nsuspect P (Spar) satisfies R (Load)\n');
+  setLoad(root, '', '{A:nope} {nope} ');
+  expect(validate(loadRepo(root))).toMatchObject([{ code: 'unknown-parameter', line: 4 }, { code: 'unknown-target', line: 4 }]);
+});
+
 test('CL-02.1–CL-02.2, CL-05.2, CO-01.1, CO-02.2: nest', () => {
   root = join(base, 'new');
   write(root, { 'plm.yaml': 'prefixes: {assembly: ASM-, part: PRT-, requirement: REQ-, test-case: TC-}\n' });

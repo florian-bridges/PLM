@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { parse } from 'yaml';
-import { git, isRequirementFile, linksOf, list, loadRepo, targetId, tracked, tryGit, UsageError, type Parameter, type Repo } from './repo.ts';
+import { citations, git, isRequirementFile, linksOf, list, loadRepo, targetId, tracked, tryGit, UsageError, type Parameter, type Repo } from './repo.ts';
 
 // TE-01.1
 const sha = (text: string) => createHash('sha256').update(text).digest('hex');
@@ -18,8 +18,9 @@ function computeVersions(ids: Iterable<string>, hashes: Map<string, string>, pat
         hash = isParam ? parameter && sha(JSON.stringify(parameter)) : path && hashes.get(path);
       if (!path || !hash || versions.has(id)) return versions.get(id) ?? hash;
       if (usedBy.includes(id)) return undefined;
-      if (isRequirementFile(path) || isParam) versions.set(id, hash);
-      else versions.set(id, sha([hash, ...list<string>(dataOf(id, path)?.uses).map((used) => visit(used, [...usedBy, id])).filter(Boolean)].join('\n')));
+      const data = isParam ? {} : dataOf(id, path), bare = isRequirementFile(path),
+        parts = [...(bare ? [] : list<string>(data?.uses)), ...citations(data).filter((ref) => targetId(ref) !== id)].map((used) => visit(used, [...usedBy, id])).filter(Boolean);
+      versions.set(id, isParam || (bare && !parts.length) ? hash : sha([hash, ...parts].join('\n')));
       return versions.get(id);
     };
   for (const id of ids) visit(id, []);

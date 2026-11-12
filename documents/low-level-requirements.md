@@ -28,8 +28,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, `tests` from `test-run` to any type, and `derives-from` from any type to any type.
 *Rationale:* Fixed semantics keep reports comparable.
 
-**CO-02.7** Any item's `item.yaml` may hold a `parameters` list field, entries `{name, value, unit, state}`, `state` from `plm.yaml`'s `parameter_states` (default `[provisional, final]`; missing or `null` value: TBD, not a state). The core shall report as error a non-number `value`, an unlisted `state`, or `stale-value` (vs its `derives-from` target), and as warning `tbd-source` (target TBD).
-*Rationale:* Replaces copies; flags stale or TBD drift.
+**CO-02.7** Any item's `item.yaml` may hold a `parameters` list field, entries `{name, value, unit, state}`, `state` from `plm.yaml`'s `parameter_states` (default `[provisional, final]`; missing or `null` value: TBD, not a state). The core shall report as error a non-number `value`, an unlisted `state`, or `stale-value` (vs its `derives-from` target), and as warning `tbd-source` (target TBD). An item's `text` may cite a parameter as `{<ID>:<name>}` or, of the same item, `{<name>}`: the former shall be a `derives-from` link to it even if not listed under `links`, the latter an error if the item has no such parameter.
+*Rationale:* Replaces copies, also in text; flags stale or TBD drift.
 
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes.
 *Rationale:* One index format serves the CLI and VS Code without a search server.
@@ -42,8 +42,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## Traceability engine
 
-**TE-01.1** An item's version shall be the SHA-256 hex digest of its folder's Git tree hash followed by the versions of the items it uses, in listed order; a requirement's version shall be its Git blob hash, and a link to a parameter (`<ID>:<name>`) the hash of that entry.
-*Rationale:* Git hashes capture all files, including nested items and LFS pointers; adding used items' versions propagates their changes. Content, not path, decides a version, so `git mv` keeps an item's ID, links and confirmations.
+**TE-01.1** An item's version shall be the SHA-256 hex digest of its folder's Git tree hash followed by the versions of the items it uses, in listed order, then of the other items' parameters its `text` cites (CO-02.7), each once, in text order; a requirement's version shall be its Git blob hash, digested likewise only if it cites any, and a link to a parameter (`<ID>:<name>`) the hash of that entry.
+*Rationale:* Git hashes capture all files, including nested items and LFS pointers; adding used items' and cited parameters' versions propagates their changes. Content, not path, decides a version, so `git mv` keeps an item's ID, links and confirmations.
 
 **TE-01.2** Hashes of the working tree shall be computed by staging an item's artifacts (CO-01.3) and its `item.yaml` or requirement file into a temporary Git index, skipping paths Git cannot stage, so LFS filters apply and uncommitted and committed states yield identical versions.
 *Rationale:* Engineers need suspect states before committing; identical results avoid spurious differences between local runs and CI.
@@ -113,7 +113,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-05.2** Exit codes shall be 0 for success, 1 for findings, 2 for usage errors and 3 for internal errors; only the exit-3 message includes Git's error output.
 *Rationale:* Separating findings from failures lets CI tell rejected changes from broken tooling; Git's messages on handled failures mislead.
 
-**CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
+**CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`. `show` and JSON `search` shall give `text` with each citation (CO-02.7) replaced by the parameter's value and unit, or `TBD`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
 *Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up. Reusing `show`'s fields for `search` answers many items in one call.
 
 ## VS Code extension

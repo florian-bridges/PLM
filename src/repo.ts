@@ -94,7 +94,21 @@ export const isRequirementFile = (path: string) => path.endsWith('.yaml');
 export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
 export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
 export const childrenOf = (entry?: Entry) => [...(entry?.nested ?? []), ...usesOf(entry)];
-export const linksOf = (entry: Entry) => list<Link>(entry.item.data.links).map((link) => ({ ...entry.meta.data.confirmed?.[link.target], ...link }));
+
+// CO-02.7
+const cited = /\{([^{}\s]+)\}/g;
+export const citations = (data: any, local = false) => [...new Set([...String(data?.text ?? '').matchAll(cited)].map((match) => match[1]))].filter((ref) => ref.includes(':') !== local);
+export const linksOf = ({ item, meta }: Entry) => {
+  const listed = list<Link>(item.data.links);
+  return [...listed, ...citations(item.data).filter((target) => !listed.some((link) => link.target === target)).map((target) => ({ type: 'derives-from', target }))]
+    .map((link) => ({ ...meta.data.confirmed?.[link.target], ...link }));
+};
+
+// CL-05.3
+export const expanded = (repo: Repo, { id, item: { data: { text } } }: Entry) => (typeof text !== 'string' ? text : text.replace(cited, (all, ref) => {
+  const found = parameterOf(repo, ref.includes(':') ? ref : `${id}:${ref}`)?.parameter;
+  return !found ? all : found.value == null ? 'TBD' : `${found.value} ${found.unit ?? ''}`.trim();
+}));
 
 // TE-05.1, VS-01.2
 export const innermostItem = (repo: Repo, file: string) => [...repo.entries.values()]
@@ -155,10 +169,4 @@ export function subtree(repo: Repo, id: string, seen = new Set<string>()): strin
   if (seen.has(id) || !repo.entries.has(id)) return [];
   seen.add(id);
   return [id, ...childrenOf(repo.entries.get(id)).flatMap((child) => subtree(repo, child, seen))];
-}
-
-// TE-06.2
-export function selection(repo: Repo, root: string) {
-  const items = subtree(repo, root);
-  return [...items, ...items.flatMap((id) => entry(repo, id).requirements)];
 }

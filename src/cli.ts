@@ -5,7 +5,7 @@ import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, type LinkState } from './links.ts';
-import { artifacts, entry, loadRepo, named, newItem, parameterOf, Refused, targetId, UsageError, writeYaml, type Named, type Parameter } from './repo.ts';
+import { artifacts, entry, expanded, loadRepo, named, newItem, parameterOf, Refused, targetId, UsageError, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
 import { linkRules, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
@@ -31,7 +31,7 @@ function output(text: string, data: unknown) {
 }
 
 // CL-05.3
-const record = (found: any) => ({ ...found.item.data, path: found.path, meta: found.meta.data }),
+const record = (repo: Repo, found: Entry) => ({ ...found.item.data, text: expanded(repo, found), path: found.path, meta: found.meta.data }),
   label = ({ id, title }: Named) => (title ? `${id} (${title})` : id),
   linkLabel = (state: LinkState) => `${label({ id: state.source, title: state.title })} ${state.link.type} ${label({ id: state.link.target, title: state.targetTitle })}`;
 
@@ -42,14 +42,13 @@ program.command('validate').description('check the repository').action(() => {
   const findings = validate(openRepo()),
     lines = findings.map((finding) => `${finding.file}:${finding.line}:${finding.col} ${finding.severity} ${finding.code}: ${finding.message}`);
   output(lines.join('\n'), findings);
-  if (findings.some((finding) => finding.severity === 'error')) exitCode = 1;
+  exitCode = +findings.some((finding) => finding.severity === 'error');
 });
 
 program.command('show <id>').description('show an item').action((id) => {
   const repo = openRepo(), found = entry(repo, id), versions = currentVersions(repo),
-    links = linkStates(repo, versions, id),
     // CO-01.3
-    data = { ...record(found), version: versions.get(id), links, artifacts: artifacts(repo, found) };
+    data = { ...record(repo, found), version: versions.get(id), links: linkStates(repo, versions, id), artifacts: artifacts(repo, found) };
   output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
@@ -88,7 +87,7 @@ program.command('list <field> [args...]').description('list entries of a field')
 
 // CO-03.2
 program.command('search <query...>').description('find items').action((query) => {
-  const repo = openRepo(), found = search(repo, query.join(' ')).map((item) => record(entry(repo, item.id)));
+  const repo = openRepo(), found = search(repo, query.join(' ')).map((item) => record(repo, entry(repo, item.id)));
   output(found.map(label).join('\n'), found);
 });
 
@@ -101,7 +100,7 @@ program.command('confirm <source> [target]').description('confirm links').action
 program.command('suspects [item]').description('list suspect links').action((item) => {
   const states = suspects(...scoped(item));
   output(states.map((state) => `${state.state} ${linkLabel(state)}`).join('\n'), states);
-  if (states.length) exitCode = 1;
+  exitCode = states.length && 1;
 });
 
 // TE-05.1
@@ -145,7 +144,7 @@ program.command('report').command('coverage [item]').description('report verific
     const state = scoped(item), alloc = options?.allocation,
       rows = alloc ? allocation(...state) : coverage(...state);
     if (alloc && options.by) throw new UsageError('--by');
-    if (rows.some((row) => row.state !== (alloc ? 'allocated' : 'verified'))) exitCode = 1;
+    exitCode = +rows.some((row) => row.state !== (alloc ? 'allocated' : 'verified'));
     if (options?.by) {
       // TE-06.3
       const groups: Record<string, any> = {};
@@ -165,6 +164,9 @@ try {
   program.parse();
   process.exitCode = exitCode;
 } catch (error) {
-  if (!(error instanceof CommanderError)) console.error((error as Error).message);
-  process.exitCode = error instanceof CommanderError ? (error.exitCode && 2) : error instanceof UsageError ? 2 : error instanceof Refused ? 1 : 3;
+  if (error instanceof CommanderError) process.exitCode = error.exitCode && 2;
+  else {
+    console.error((error as Error).message);
+    process.exitCode = error instanceof UsageError ? 2 : error instanceof Refused ? 1 : 3;
+  }
 }

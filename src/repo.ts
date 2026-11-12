@@ -23,7 +23,7 @@ export interface Repo { root: string; settings: Settings; entries: Map<string, E
 export class UsageError extends Error {}
 export class Refused extends Error {}
 
-function readYaml<T>(root: string, path: string) {
+export function readYaml<T>(root: string, path: string) {
   const file = join(root, path), lines = new LineCounter(), text = existsSync(file) ? readFileSync(file, 'utf8') : '',
     doc = parseDocument(text, { lineCounter: lines });
   return { path, doc, lines, data: (doc.toJS() ?? {}) as T };
@@ -131,8 +131,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
     typeHome = parent && repo.settings.folders![type] && `${parent.path}/${repo.settings.folders![type]}`,
     inGroup = !!parent && (!typeHome || cwd === typeHome || cwd.startsWith(`${typeHome}/`)),
     path = [inGroup ? cwd : typeHome || parent?.path, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id].filter(Boolean).join('/'),
-    item = readYaml(repo.root, `templates/${type}.yaml`);
-  item.path = type === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`;
+    item = { path: type === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`, doc: new Document(readYaml(repo.root, `types/${type}.yaml`).doc.get('template', true)) };
   if (existsSync(join(repo.root, item.path))) throw new UsageError(`${item.path} exists`);
   for (const [key, value] of Object.entries({ id, type, title })) item.doc.setIn([key], value);
   writeYaml(repo.root, item);

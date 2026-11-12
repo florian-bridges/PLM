@@ -38,7 +38,29 @@ informative: [rationale, links] # fields whose change leaves links current
 parameter_states: [provisional, final]
 ```
 
-Built-in types are `requirement`, `assembly`, `part`, `test-case` and `test-run`. An item holds only the fields its type's JSON Schema declares. A project type, such as `analysis` above, needs an ID prefix and a schema in `schemas/<type>.schema.json`; the same file for a built-in type extends it, e.g. `schemas/requirement.schema.json` with `{"properties": {"rationale": {"type": "string"}}}`. `schemas/meta.schema.json` validates `meta/<ID>.yaml`.
+Built-in types are `requirement`, `assembly`, `part`, `test-case` and `test-run`. An item holds only the fields its type declares. A project type, such as `analysis` above, needs an ID prefix and a file `types/<type>.yaml`; all its keys are optional:
+
+```yaml
+# types/analysis.yaml
+template:            # what `plm new analysis "<title>"` writes besides id, type, title
+  method: simulation
+fields:              # JSON Schema properties, written in YAML
+  method: {enum: [simulation, test, review]}
+  tool: {type: string}
+required: [method]
+```
+
+A file named after a built-in type extends it, e.g. `types/requirement.yaml` with `fields: {rationale: {type: string}}`. `types/meta.yaml` gives the fields of `meta/<ID>.yaml`. `plm validate` reports any other key in a type file as error `type-file`.
+
+`schemas/` and `templates/` are no longer read; convert them by hand:
+
+| Before | After |
+|---|---|
+| `schemas/<type>.schema.json` `properties` / `required` | `fields` / `required` in `types/<type>.yaml` |
+| `templates/<type>.yaml` | `template:` in `types/<type>.yaml` |
+| `schemas/meta.schema.json` | `types/meta.yaml` |
+
+A schema that uses keywords other than `properties` and `required` cannot be carried over.
 
 ## Documentation
 

@@ -11,6 +11,7 @@
 
 ```
 plm.yaml                 repository settings
+types/<type>.yaml        a type's fields and template
 <title>/item.yaml        top-level item: attributes, used items, links
 <title>/requirements/    the item's requirements, one file each, in subfolders
 <title>/tests/           the item's test cases

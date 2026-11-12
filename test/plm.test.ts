@@ -95,8 +95,8 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings'
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
 
-test('CL-01.1,CO-02.1:remove',()=>{
-  write(root,{'schemas/meta.schema.json':'{"required":["owner"]}'});
+test('CL-01.1,CO-02.1,CO-02.8:remove',()=>{
+  write(root,{'types/meta.yaml':'required: [owner]'});
   expect(validate(loadRepo(root)).some((f)=>f.file==='meta/P.yaml'&&f.code==='schema')).toBe(true);
   expect(plm(root,'link','P','satisfies','R','--remove').status).toBe(0);
   plm(root,'link','P','derives-from','L');
@@ -105,6 +105,23 @@ test('CL-01.1,CO-02.1:remove',()=>{
   expect(plm(root,'link','P','derives-from','L','--remove').status).toBe(0);
   expect(linksOf(loadRepo(root).entries.get('P')!)).toEqual([]);
   expect(loadRepo(root).entries.get('P')!.meta.data.confirmed?.L).toBeUndefined();
+});
+
+test('CO-02.1, CO-02.8, CL-02.1: types', () => {
+  write(root, {
+    'plm.yaml': 'prefixes:\n  analysis: ANA-\n',
+    'types/analysis.yaml': 'colour: red\ntemplate:\n  method: review\nfields:\n  method: {enum: [review]}\nrequired: [tool]\n',
+    'types/part.yaml': 'fields:\n  finish: {type: string}\n',
+    'types/meta.yaml': 'fields:\n  owner: {type: string}\n',
+    'bolt/item.yaml': `${bolt}finish: zinc\n`,
+    'bracket/item.yaml': 'id: B\ntype: bracket\ntitle: Bracket\n',
+    'wing/item.yaml': 'id: A\ntype: meta\ntitle: Wing\n',
+  });
+  const { path } = json(root, 'new', 'analysis', 'Loads');
+  expect(readFileSync(join(root, path), 'utf8')).toContain('method: review\nid: ANA-');
+  expect(validate(loadRepo(root)).map((f) => `${f.file} ${f.code} ${f.severity}`).sort()).toEqual([
+    'bracket/item.yaml unknown-type error', `${path} schema warning`, 'types/analysis.yaml type-file error', 'wing/item.yaml unknown-type error',
+  ]);
 });
 
 test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {

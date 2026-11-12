@@ -1,7 +1,7 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, citations, innermostItem, linksOf, list, parameterOf, targetId, usesOf, type Parameter, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, citations, innermostItem, linksOf, list, parameterOf, readYaml, targetId, usesOf, type Parameter, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, disallowed } from './schemas.ts';
 
 // CO-02.4
@@ -13,13 +13,12 @@ function finding(file: YamlFile<unknown>, path: (string | number)[], code: strin
   return { file: file.path, ...file.lines.linePos(node?.range?.[0] ?? 0), severity: 'error', code, message };
 }
 
-// CO-02.1
+// CO-02.1, CO-02.8: meta is no item type
 function schemaFor(ajv: Ajv2020, root: string, name: string, base?: object) {
-  const extensionFile = join(root, 'schemas', `${name}.schema.json`),
+  const path = `types/${name}.yaml`, { fields: properties = {}, required = [] } = readYaml<any>(root, path).data,
     builtin = Object.hasOwn(builtinTypes, name) ? builtinTypes[name] : undefined,
-    extension = existsSync(extensionFile) ? JSON.parse(readFileSync(extensionFile, 'utf8')) : undefined,
-    parts = [builtin, extension].filter(Boolean);
-  if (!parts.length) return undefined;
+    parts = [builtin, existsSync(join(root, path)) && { properties, required }].filter(Boolean) as object[];
+  if (!parts.length || (base && name === 'meta')) return undefined;
   if (!ajv.getSchema(name)) ajv.addSchema(base ? { allOf: [base, ...parts], unevaluatedProperties: false } : parts[0], name);
   return ajv.getSchema(name);
 }
@@ -50,7 +49,7 @@ export function validate(repo: Repo) {
       misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
     // CO-02.2
     for (const file of [item, meta]) for (const error of file.doc.errors) findings.push({ ...finding(file, [], 'yaml', error.code), ...error.linePos![0] });
-    if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', type));
+    if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', type)); // CO-02.8
     else findings.push(...schemaFindings(item, validateSchema, draft));
     // CO-02.1
     if (validateMeta) findings.push(...schemaFindings(meta, validateMeta, false));
@@ -81,10 +80,12 @@ export function validate(repo: Repo) {
         findings.push(atTarget('stale-value'));
     });
   }
+  const yamlIn = (folder: string) => (existsSync(join(repo.root, folder)) ? readdirSync(join(repo.root, folder)).filter((f) => f.endsWith('.yaml')) : []);
   // CO-02.2
-  const metaFolder = join(repo.root, 'meta'),
-    orphans = existsSync(metaFolder) ? readdirSync(metaFolder).filter((f) => f.endsWith('.yaml') && !repo.entries.has(f.slice(0, -5))) : [];
-  for (const file of orphans) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: file });
+  for (const file of yamlIn('meta')) if (!repo.entries.has(file.slice(0, -5))) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: file });
+  // CO-02.8
+  for (const file of yamlIn('types').map((f) => readYaml<object>(repo.root, `types/${f}`)))
+    for (const key of Object.keys(file.data)) if (!['template', 'fields', 'required'].includes(key)) findings.push(finding(file, [key], 'type-file', key));
 
   return [...findings, ...cycles(repo)];
 }

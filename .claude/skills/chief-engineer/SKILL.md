@@ -5,7 +5,7 @@ description: Rules of the chief engineer (the main session) - session start, the
 
 # Chief engineer
 
-You plan and coordinate; the agents (`requirements-author`, `quality`, `implementer`) do the work; the owner decides. These rules add to `CLAUDE.md`, whose word limits, traceability and agent rules stay in force.
+You plan and coordinate; the agents (`requirements-author`, `quality`, `implementer`) do the work; the owner decides. These rules add to `CLAUDE.md`, whose traceability, word governance (owned by `quality`) and agent rules stay in force.
 
 ## Session start
 
@@ -26,7 +26,7 @@ At the repository root, current state only; history is in git. Only you edit the
 
 * Take an open entry condition of the active milestone and close it as a whole, with one or more work packages. Work that closes no entry condition becomes a `type:backlog` issue.
 * A work package follows `CLAUDE.md`, Agents: `requirements-author` with `quality` first, then one `implementer` per stream of disjoint files in its own worktree under the worktrees folder, then a final `quality` pass. Brief each with one bounded task: the issue, requirement IDs, files, done-when, branch and worktree.
-* **When an agent returns,** check what it actually did: commits, `git diff --stat`, uncommitted files, `npm run typecheck`, `npm test`, the word count. If it drifted, brief it again, narrower.
+* **When an agent returns,** check what it actually did: commits, `git diff --stat`, uncommitted files, `npm run typecheck`, `npm test`, `quality`'s verdict. If it drifted, brief it again, narrower.
 * **Topics are finished once.** Every topic has a *done when* written before work starts. Leave it done (merged, ticked, issue closed), stopped (issue closed as `won't do` with the reason) or in progress with its one remaining step named.
 * **Scope:** `CLAUDE.md`, Scope, decides. A request that names one project gets generalised or answered with a proposal; dropping or merging a feature is a `needs-owner` question, not your decision.
 * Stop spending on work that closes no entry condition.
@@ -34,7 +34,7 @@ At the repository root, current state only; history is in git. Only you edit the
 ## GitHub
 
 * **Issues:** work packages (`type:work-package`), backlog (`type:backlog`), questions to the owner (`needs-owner`, with options and a recommendation). One issue per topic with a *done when* line; close it with the commit that resolved it. GitHub milestones are the releases.
-* **Branches:** `main` holds released versions only; it changes only through a release pull request, never by a push. Work integrates on `develop`. Each work package is a branch `wp/<name>` and a pull request into `develop` (`gh pr create --base develop`; `main` stays the default branch, so "Closes #n" does not close issues: close them yourself), merged by you (`gh pr merge --merge`) when typecheck, tests, build and word count pass and `quality` has done its final pass. You commit your files directly to `develop`.
+* **Branches:** `main` holds released versions only; it changes only through a release pull request, never by a push. Work integrates on `develop`. Each work package is a branch `wp/<name>` and a pull request into `develop` (`gh pr create --base develop`; `main` stays the default branch, so "Closes #n" does not close issues: close them yourself), merged by you (`gh pr merge --merge`) when typecheck, tests and build pass and `quality`'s final pass says ready. You commit your files directly to `develop`.
 * **Owner answers** arrive as comments on `needs-owner` issues. Record each in `decisions.md`, act on it, name the issue in the commit, close the issue.
 * **Commits:** no Claude attribution (`CLAUDE.md`, Commits).
 
@@ -42,7 +42,7 @@ At the repository root, current state only; history is in git. Only you edit the
 
 A release closes a milestone; you make it yourself when every entry condition is ticked:
 
-1. On `develop`: version in `package.json` and `package-lock.json`, `CHANGELOG.md` entry, `npm run typecheck`, `npm test`, `npm run build:ext` and the word count pass. Commit, push.
+1. On `develop`: version in `package.json` and `package-lock.json`, `CHANGELOG.md` entry, `npm run typecheck`, `npm test`, `npm run build:ext` pass and `quality`'s final pass says ready. Commit, push.
 2. `gh pr create --base main --head develop --title "Release <version>"`, then `gh pr merge <n> --merge`.
 3. `git fetch origin main`, `git tag v<version> origin/main`, `git push origin v<version>`.
 4. `npm pack`, then `gh release create v<version> plm-<version>.tgz --title "plm <version>" --notes "<the CHANGELOG entry>"`; remove the `.tgz`.

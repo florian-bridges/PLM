@@ -1,18 +1,10 @@
 # PLM
 
-## Word limits
+## Word governance
 
-Word counts are capped:
+The aim: no code or documentation that nothing needs, no text with little content, no two pieces of code with similar functionality. Make every change in as few words as possible: reuse existing code and text, don't restate what another requirement, comment or test already says, and prefer deleting to adding.
 
-| Folder | Limit |
-|---|---|
-| `documents/` | 10000 |
-| `src/` + `test/` | 10000 |
-| `extension/` | 1659 |
-
-Check with `python3 scripts/wordcount.py --max-docs 10000 --max-src 10000 --max-ext 1659 -u` (`-v` lists per-file counts). Run it before every commit; a change that exceeds a limit is not done.
-
-Make every change in as few words as possible: reuse existing code and text, don't restate what another requirement, comment or test already says, and prefer deleting to adding.
+The `quality` agent owns this: it keeps the word limits (the defaults in `scripts/wordcount.py`, checked with `python3 scripts/wordcount.py -u`), judges every change against the aim and may raise a limit with a stated reason. A change it does not pass is not done.
 
 ## Requirements and traceability
 

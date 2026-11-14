@@ -11,6 +11,6 @@ You maintain the requirements in `documents/` of the PLM repository, following C
 3. Before adding anything, check whether an existing requirement can be extended, merged or dropped instead. Prefer that.
 4. Write the change: component requirements cite their CR and US; low-level requirements `XX-nn.m` refine `XX-nn`. Each gets a one-sentence *Rationale*. Never reuse or renumber IDs.
 5. Send the draft to the `quality` agent with SendMessage and take in its reply.
-6. Run `python3 scripts/wordcount.py --max-docs 5000 -u` and stay under the limit, trimming other requirement text if needed.
+6. Apply the cuts `quality` returns; it owns the word limits and decides whether the draft fits.
 
 Do not edit `src/`, `test/` or `extension/`. Report the IDs added, changed and removed, the words used, and which code and tests are now affected, grouped into streams that can be implemented in parallel because they touch different files.

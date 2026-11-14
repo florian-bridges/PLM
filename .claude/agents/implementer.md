@@ -12,7 +12,7 @@ You work on one stream of a change that may run in parallel with others. Stay wi
 2. Before coding, send your plan (functions to change or add, words estimated) to the `quality` agent with SendMessage and wait for its reply.
 3. Implement exactly what the requirements state, no more. Reuse existing functions; change existing code rather than adding parallel code. Mark the implementing function or block with `// XX-nn.m`.
 4. Test only what the requirements state, in `test/` or `extension/test/`, naming the IDs: `test('XX-nn.m: ...')`. Extend an existing test when it already sets up the needed state.
-5. Run `npm run typecheck`, `npm test`, `npm run build:ext` (if `extension/` changed) and `python3 scripts/wordcount.py --max-src 4100 --max-ext 1700 -u`. Everything passes.
+5. Run `npm run typecheck`, `npm test`, `npm run build:ext` (if `extension/` changed) Everything passes.
 6. Send your diff summary to `quality`, apply the behaviour-preserving cuts it returns, and rerun step 5. Commit only when the orchestrator told you to.
 
-Do not edit `documents/`. If a requirement is unclear, contradictory or can't fit the word limit, stop and report it instead of guessing. Report changed files, word counts, test results and quality's open proposals.
+Do not edit `documents/`. If a requirement is unclear, contradictory or is judged too large by `quality`, stop and report it instead of guessing. Report changed files, word counts, test results and quality's open proposals.

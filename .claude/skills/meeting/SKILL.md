@@ -10,7 +10,7 @@ The chief engineer chairs and presents; agents answer detail questions on reques
 ## Kinds
 
 * **Kickoff:** milestones, their entry conditions and budgets; standing directions.
-* **Release:** what the release contains against its entry conditions, open findings, the release pull request; verdict go or rework; the next milestone and its budget.
+* **Release:** what the release contained against its entry conditions, open findings; the next milestone, its entry conditions and budget.
 * **Decision:** one or more `needs-owner` questions that block the remaining work.
 * **Re-plan:** a milestone over budget or stalled; new scope or budget, or stop.
 * **Status:** where the work stands, no decision needed.
@@ -33,7 +33,7 @@ The chief engineer chairs and presents; agents answer detail questions on reques
 
 1. Decisions into `decisions.md`; actions become issues with a *done when* line.
 2. Append the minutes to the meeting file: decisions, actions with issue numbers, nothing else.
-3. By kind: **release go:** the owner merges the release pull request, then tag `v<version>` and `gh release create v<version>` with the `npm pack` file, close the GitHub milestone. **Re-plan:** the new budget and scope into `timeline.md`.
+3. By kind: **release** and **re-plan:** the next milestone, its entry conditions and budget, or the new scope and budget, into `timeline.md`.
 4. Close the meeting issue and the answered `needs-owner` issues; update `timeline.md` and `handover.md`; commit, push.
 5. Ask the owner whether to start the shift.
 

@@ -34,13 +34,20 @@ At the repository root, current state only; history is in git. Only you edit the
 ## GitHub
 
 * **Issues:** work packages (`type:work-package`), backlog (`type:backlog`), questions to the owner (`needs-owner`, with options and a recommendation). One issue per topic with a *done when* line; close it with the commit that resolved it. GitHub milestones are the releases.
-* **Branches:** `main` holds released versions only and belongs to the owner. Work integrates on `develop`. Each work package is a branch `wp/<name>` and a pull request into `develop` (`gh pr create --base develop`; `main` stays the default branch, so "Closes #n" does not close issues: close them yourself), merged by you (`gh pr merge --merge`) when typecheck, tests, build and word count pass and `quality` has done its final pass. You commit your files directly to `develop`.
+* **Branches:** `main` holds released versions only; it changes only through a release pull request, never by a push. Work integrates on `develop`. Each work package is a branch `wp/<name>` and a pull request into `develop` (`gh pr create --base develop`; `main` stays the default branch, so "Closes #n" does not close issues: close them yourself), merged by you (`gh pr merge --merge`) when typecheck, tests, build and word count pass and `quality` has done its final pass. You commit your files directly to `develop`.
 * **Owner answers** arrive as comments on `needs-owner` issues. Record each in `decisions.md`, act on it, name the issue in the commit, close the issue.
 * **Commits:** no Claude attribution (`CLAUDE.md`, Commits).
 
 ## Releases
 
-A release closes a milestone. When its entry conditions are ticked: version in `package.json`, `CHANGELOG.md` entry, everything passing on `develop`; then open a pull request `develop` → `main` titled `Release <version>` and prepare the release meeting (skill `meeting`). The owner merges; the tag `v<version>` and the GitHub release with the `npm pack` file follow the merge (owner or control room).
+A release closes a milestone; you make it yourself when every entry condition is ticked:
+
+1. On `develop`: version in `package.json` and `package-lock.json`, `CHANGELOG.md` entry, `npm run typecheck`, `npm test`, `npm run build:ext` and the word count pass. Commit, push.
+2. `gh pr create --base main --head develop --title "Release <version>"`, then `gh pr merge <n> --merge`.
+3. `git fetch origin main`, `git tag v<version> origin/main`, `git push origin v<version>`.
+4. `npm pack`, then `gh release create v<version> plm-<version>.tgz --title "plm <version>" --notes "<the CHANGELOG entry>"`; remove the `.tgz`.
+5. Close the GitHub milestone; mark the milestone `done (v<version>)` in `timeline.md`.
+6. The next milestone and its budget are the owner's: if `timeline.md` names none, prepare a release meeting (skill `meeting`) on what was released and what comes next.
 
 ## Owner meetings
 

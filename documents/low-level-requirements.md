@@ -4,8 +4,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## Core library
 
-**CO-01.1** The core shall read `plm.yaml` (repository settings, including `folders: {<type>: <folder>}` overriding or extending each built-in home folder: `requirements` for `requirement`, `tests` for `test-case`, `runs` for `test-run`), item folders `<name>/item.yaml` with requirements and test cases in their home folder as `<home>/<name>.yaml` and `<home>/<name>/item.yaml`, both also in subfolders, test runs in the top-level home folder, other types' home folder inside their parent item only, a top-level item having none, and `meta/<ID>.yaml` with the `yaml` package, keeping comments, formatting and line width when writing back. A folder with no `item.yaml` shall be transparent, hidden folders excepted: items under it belong to the nearest enclosing item, or are top-level if none.
-*Rationale:* Comment-preserving writes keep hand edits and diffs small. Nesting test cases in the tested item's folder makes changing one outdate its runs; runs stay outside so recording one doesn't change the tested item's version. A per-type home folder avoids hard-coding type names in the core.
+**CO-01.1** The core shall read `plm.yaml` (repository settings), requirements as `<name>.yaml` and other items as `<name>/item.yaml`, in their type's home folder (CO-02.8), if it has one, or its subfolders; a home folder sits in the parent item, test runs' at the root, and a top-level item has none; and `meta/<ID>.yaml`, all with the `yaml` package, keeping comments, formatting and line width when writing back. A folder with no `item.yaml` shall be transparent, hidden folders excepted: items under it belong to the nearest enclosing item, or are top-level if none.
+*Rationale:* Comment-preserving writes keep hand edits and diffs small. Nesting test cases in the tested item's folder makes changing one outdate its runs; runs stay outside so recording one doesn't change the tested item's version.
 
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
 *Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
@@ -22,8 +22,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.4** Each finding shall carry file, line, column, severity and a stable code, with severity `warning` for a missing required attribute (schema `required`) of a `draft` item, otherwise `error`.
 *Rationale:* Positions let editors and CI point to the problem; stable codes allow filtering and suppression; a draft is expected to be incomplete.
 
-**CO-02.5** Built-in types shall be `requirement`, `part`, `assembly`, `test-case` and `test-run`.
-*Rationale:* Others come by CO-02.8.
+**CO-02.5** Built-in types shall be, with ID prefix and home folder: `requirement` `REQ-` `requirements`, `test-case` `TC-` `tests`, `test-run` `RUN-` `runs`, `part` `PRT-` and `assembly` `ASM-`.
+*Rationale:* Others come by CO-02.8; defaults let a new repository work without type files.
 
 **CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, `tests` from `test-run` to any type, and `derives-from` from any type to any type.
 *Rationale:* Fixed semantics keep reports comparable.
@@ -31,8 +31,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.7** Any item's `item.yaml` may hold a `parameters` list field, entries `{name, value, unit, state}`, `state` from `plm.yaml`'s `parameter_states` (default `[provisional, final]`; missing or `null` value: TBD, not a state). The core shall report as error a non-number `value`, an unlisted `state`, or `stale-value` (vs its `derives-from` target), and as warning `tbd-source` (target TBD). An item's `text` may cite a parameter as `{<ID>:<name>}` or, of the same item, `{<name>}`: the former shall be a `derives-from` link to it even if not listed under `links`, the latter an error if the item has no such parameter.
 *Rationale:* Replaces copies, also in text; flags stale or TBD drift.
 
-**CO-02.8** A type shall be built in (CO-02.5) or defined by `types/<type>.yaml` with optional `template`, `fields` (JSON Schema properties) and `required`; a file named after a built-in type extends it, and `types/meta.yaml` instead gives the fields of `meta/<ID>.yaml`. The core shall report as error an item of any other type (`unknown-type`) and a type file with any other key (`type-file`).
-*Rationale:* One YAML file per type lets programs add types and attributes without mixing JSON and YAML.
+**CO-02.8** A type shall be built in (CO-02.5) or defined by `types/<type>.yaml` with optional `prefix`, `folder` (home folder), `template`, `fields` (JSON Schema properties) and `required`; a file named after a built-in type extends or overrides it, and `types/meta.yaml` instead gives the fields of `meta/<ID>.yaml`. The core shall report as error an item of any other type (`unknown-type`) and a type file with any other key (`type-file`).
+*Rationale:* One YAML file per type defines it in one place and lets programs add types and attributes without mixing JSON and YAML.
 
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes.
 *Rationale:* One index format serves the CLI and VS Code without a search server.
@@ -83,7 +83,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`. `new --help` shall list the types with a prefix in `plm.yaml` (CL-02.2), `link --help` the links CO-02.6 allows; each command shall have a one-line description.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`. `new --help` shall list all types (CO-02.8), `link --help` the links CO-02.6 allows; each command shall have a one-line description.
 *Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made; help spares looking types up.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
@@ -98,10 +98,10 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8), in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
 *Rationale:* Templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
 
-**CL-02.2** New IDs shall be a type prefix from `plm.yaml` plus six random Crockford Base32 characters.
+**CL-02.2** New IDs shall be the type's prefix (CO-02.8) plus six random Crockford Base32 characters; a type without one is a usage error.
 *Rationale:* Sequential numbers collide when branches create items in parallel; Crockford Base32 avoids ambiguous characters.
 
-**CL-03.1** `plm test record <test-case>... --sut <ID>... --result <result>... [--log <file>...]` shall create a test run in `runs/<ID>/` with date, copies of the log files, a `tests` link to each `--sut` ID and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.
+**CL-03.1** `plm test record <test-case>... --sut <ID>... --result <result>... [--log <file>...]` shall create a test run in the test-run home folder (CO-02.8) as `<ID>/` with date, copies of the log files, a `tests` link to each `--sut` ID and per test case an `executes` link with its result, in order: `pass`, `fail` or `inconclusive`.
 *Rationale:* Rigs report without human interaction; logs are the evidence auditors ask for. One run per rig session keeps its logs together; results per test case keep one failure from discrediting the others.
 
 **CL-03.2** The run's `executes` and `tests` links shall be confirmed at creation per TE-02.1 with the versions at `HEAD`, recorded as `commit`.

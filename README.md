@@ -14,7 +14,7 @@ npm install -g https://github.com/florian-bridges/PLM/releases/download/v0.3.0/p
 
 ```sh
 git init product && cd product
-printf 'prefixes: {assembly: ASM-, requirement: REQ-, part: PRT-}\n' > plm.yaml
+touch plm.yaml
 SYS=$(plm new assembly "Drone") && cd drone      # plm new prints the new ID
 REQ=$(plm new requirement "Takeoff mass")        # drone/requirements/takeoff-mass.yaml
 plm set $REQ text "The drone shall have a takeoff mass of at most 2 kg."
@@ -32,16 +32,16 @@ plm suspects; plm show $PRT                      # suspect until confirmed again
 `plm.yaml` marks the repository root:
 
 ```yaml
-prefixes: {assembly: ASM-, part: PRT-, requirement: REQ-, test-case: TC-, test-run: RUN-, analysis: ANA-}
-folders: {analysis: analyses}   # home folder per type; defaults: requirements, tests, runs
 informative: [rationale, links] # fields whose change leaves links current
 parameter_states: [provisional, final]
 ```
 
-Built-in types are `requirement`, `assembly`, `part`, `test-case` and `test-run`. An item holds only the fields its type declares. A project type, such as `analysis` above, needs an ID prefix and a file `types/<type>.yaml`; all its keys are optional:
+Built-in types, with ID prefix and home folder, are `requirement` (`REQ-`, `requirements`), `test-case` (`TC-`, `tests`), `test-run` (`RUN-`, `runs`), `assembly` (`ASM-`) and `part` (`PRT-`). An item holds only the fields its type declares. A project type is defined by a file `types/<type>.yaml`; all its keys are optional, but `plm new` needs a `prefix`:
 
 ```yaml
 # types/analysis.yaml
+prefix: ANA-
+folder: analyses     # home folder inside the parent item
 template:            # what `plm new analysis "<title>"` writes besides id, type, title
   method: simulation
 fields:              # JSON Schema properties, written in YAML
@@ -50,15 +50,17 @@ fields:              # JSON Schema properties, written in YAML
 required: [method]
 ```
 
-A file named after a built-in type extends it, e.g. `types/requirement.yaml` with `fields: {rationale: {type: string}}`. `types/meta.yaml` gives the fields of `meta/<ID>.yaml`. `plm validate` reports any other key in a type file as error `type-file`.
+A file named after a built-in type extends or overrides it, e.g. `types/requirement.yaml` with `fields: {rationale: {type: string}}`. `types/meta.yaml` gives the fields of `meta/<ID>.yaml`. `plm validate` reports any other key in a type file as error `type-file`.
 
-`schemas/` and `templates/` are no longer read; convert them by hand:
+`schemas/`, `templates/` and `plm.yaml`'s `prefixes` and `folders` are no longer read; convert them by hand:
 
 | Before | After |
 |---|---|
 | `schemas/<type>.schema.json` `properties` / `required` | `fields` / `required` in `types/<type>.yaml` |
 | `templates/<type>.yaml` | `template:` in `types/<type>.yaml` |
 | `schemas/meta.schema.json` | `types/meta.yaml` |
+| `prefixes: {analysis: ANA-}` in `plm.yaml` | `prefix: ANA-` in `types/analysis.yaml` |
+| `folders: {analysis: analyses}` in `plm.yaml` | `folder: analyses` in `types/analysis.yaml` |
 
 A schema that uses keywords other than `properties` and `required` cannot be carried over.
 

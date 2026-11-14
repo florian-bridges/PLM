@@ -36,7 +36,8 @@ Already on `develop` and unreleased, shipping with 0.4: #26–#28 type files (br
 
 ### Active topics
 
-* #36 `feat/new-block-style`, #35 `feat/enum-values`, #64 `feat/product-data-only`: feature-dev running.
+* #36 `feat/new-block-style`, #35 `feat/enum-values`, #64 `feat/product-data-only`: feature-dev relaunched; next step: check each branch, `reviewer`, merge.
+* Feature review #54, #20, #33, #9: draft in `meetings/2026-11-14-feature-review-links-agents.md`; next step: add `reviewer`'s findings, open the meeting issue.
 
 ### Coming owner meetings
 

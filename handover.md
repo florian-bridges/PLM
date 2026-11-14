@@ -9,6 +9,9 @@ Latest release: 0.3.0 (2026-11-11). Milestones and entry conditions: `timeline.m
 * Next milestone 0.4, budget 3 windows: seven entry conditions in `timeline.md` (#64, #54, #36, #35, #33, #9, #20). Roadmap 0.4–0.9 set by the owner on 2026-11-14 (backlog cleanup from the control room); each milestone is a GitHub milestone.
 * Unreleased on `develop`, shipping with 0.4: #26–#28 type files (breaking; the CHANGELOG needs the conversion tables) and #19 parameter citations in `text`.
 
+* #36, #35, #64: feature-dev runs were cut twice by the turn ending; worktrees may hold uncommitted work. Next: finish each branch, `reviewer`, merge.
+* Feature review draft for #54, #20, #33, #9 in `meetings/`: needs `reviewer`'s findings, then the meeting issue.
+
 ## Open pull requests and blockers
 
 * None. #39 (feature review meeting before a big feature) was merged by the owner on 2026-11-14: big features in 0.4 go through it.

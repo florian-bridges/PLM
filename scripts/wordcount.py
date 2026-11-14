@@ -68,7 +68,7 @@ def main():
     parser.add_argument("--src-dir", default="src")
     parser.add_argument("--test-dir", default="test")
     parser.add_argument("--ext-dir", default="extension")
-    # The limits are kept by the quality agent (.claude/agents/quality.md, Word governance).
+    # The limits are kept by the reviewer agent (.claude/agents/reviewer.md).
     parser.add_argument("--max-docs", type=int, default=4801, help="word limit for the documents directory")
     parser.add_argument("--max-src", type=int, default=4978, help="word limit for the source and test directories")
     parser.add_argument("--max-ext", type=int, default=1635, help="word limit for the extension directory")

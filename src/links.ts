@@ -90,7 +90,7 @@ export function recordRun(repo: Repo, testCases: string[], suts: string[], resul
   if (changed) throw new Refused(`${changed.target} differs from HEAD`);
 
   const id = newId(repo, 'test-run'),
-    folder = `${repo.settings.folders!['test-run']}/${id}`,
+    folder = `${repo.types['test-run'].folder}/${id}`,
     item = { id, type: 'test-run', title: `${testCases.join(', ')} on ${suts.join(', ')}`, date: new Date().toISOString(), links };
   writeYaml(repo.root, { path: `${folder}/item.yaml`, doc: new Document(item) });
   writeYaml(repo.root, { path: `meta/${id}.yaml`, doc: new Document({ status: 'draft', confirmed }) });

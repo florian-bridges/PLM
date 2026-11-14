@@ -15,12 +15,14 @@ export const baseSchema = {
   },
 };
 
-export const builtinTypes: Record<string, object> = {
-  requirement: {},
-  part: { properties: { part_number: str, material: str, mass_kg: { type: 'number' } } },
-  assembly: { properties: { part_number: str } },
-  'test-case': { properties: { procedure: str } },
-  'test-run': { properties: { date: str } },
+// CO-02.5, CO-02.8
+export interface TypeDef { prefix?: string; folder?: string; fields?: Record<string, object>; required?: string[] }
+export const builtinTypes: Record<string, TypeDef> = {
+  requirement: { prefix: 'REQ-', folder: 'requirements' },
+  'test-case': { prefix: 'TC-', folder: 'tests', fields: { procedure: str } },
+  'test-run': { prefix: 'RUN-', folder: 'runs', fields: { date: str } },
+  part: { prefix: 'PRT-', fields: { part_number: str, material: str, mass_kg: { type: 'number' } } },
+  assembly: { prefix: 'ASM-', fields: { part_number: str } },
 };
 
 // CO-02.2, CO-02.6

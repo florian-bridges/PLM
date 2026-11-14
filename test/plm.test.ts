@@ -29,7 +29,7 @@ let root;
 beforeEach(() => {
   root = mkdtempSync(join(base, 'repo-'));
   write(root, {
-    'plm.yaml': 'prefixes:\n  part: PRT-\n  test-run: RUN-\n',
+    'plm.yaml': '',
     'wing/item.yaml': `${wing}uses: [L]\n`,
     'wing/spar/item.yaml': `${spar}links:\n  - type: satisfies\n    target: R\n`,
     'bolt/item.yaml': bolt,
@@ -107,20 +107,22 @@ test('CL-01.1,CO-02.1,CO-02.8:remove',()=>{
   expect(loadRepo(root).entries.get('P')!.meta.data.confirmed?.L).toBeUndefined();
 });
 
-test('CO-02.1, CO-02.8, CL-02.1: types', () => {
+test('CO-01.1, CO-02.1, CO-02.8, CL-02.1–CL-02.2: types', () => {
   write(root, {
-    'plm.yaml': 'prefixes:\n  analysis: ANA-\n',
-    'types/analysis.yaml': 'colour: red\ntemplate:\n  method: review\nfields:\n  method: {enum: [review]}\nrequired: [tool]\n',
+    'types/study.yaml': 'folder: studies\n',
+    'types/analysis.yaml': 'colour: red\nprefix: ANA-\nfolder: analyses\ntemplate:\n  method: review\nfields:\n  method: {enum: [review]}\nrequired: [tool]\n',
     'types/part.yaml': 'fields:\n  finish: {type: string}\n',
     'types/meta.yaml': 'fields:\n  owner: {type: string}\n',
     'bolt/item.yaml': `${bolt}finish: zinc\n`,
     'bracket/item.yaml': 'id: B\ntype: bracket\ntitle: Bracket\n',
     'wing/item.yaml': 'id: A\ntype: meta\ntitle: Wing\n',
   });
-  const { path } = json(root, 'new', 'analysis', 'Loads');
+  const { path } = json(`${root}/wing`, 'new', 'analysis', 'Loads');
+  expect(path).toBe('wing/analyses/loads/item.yaml');
+  expect(plm(root, 'new', 'study', 'X').status).toBe(2);
   expect(readFileSync(join(root, path), 'utf8')).toContain('method: review\nid: ANA-');
   expect(validate(loadRepo(root)).map((f) => `${f.file} ${f.code} ${f.severity}`).sort()).toEqual([
-    'bracket/item.yaml unknown-type error', `${path} schema warning`, 'types/analysis.yaml type-file error', 'wing/item.yaml unknown-type error',
+    'bracket/item.yaml unknown-type error', 'types/analysis.yaml type-file error', `${path} schema warning`, 'wing/item.yaml unknown-type error',
   ]);
 });
 
@@ -220,9 +222,9 @@ test('CO-02.7, TE-01.1, CL-05.3: citation', () => {
   expect(validate(loadRepo(root))).toMatchObject([{ code: 'unknown-parameter', line: 4 }, { code: 'unknown-target', line: 4 }]);
 });
 
-test('CL-02.1–CL-02.2, CL-05.2, CO-01.1, CO-02.2: nest', () => {
+test('CL-02.1–CL-02.2, CL-05.2, CO-01.1, CO-02.2, CO-02.5: nest', () => {
   root = join(base, 'new');
-  write(root, { 'plm.yaml': 'prefixes: {assembly: ASM-, part: PRT-, requirement: REQ-, test-case: TC-}\n' });
+  write(root, { 'plm.yaml': '' });
   git(root, ['init', '-q']);
   expect(plm(root, 'suspects')).toMatchObject({ status: 0, stderr: '' });
   plm(root, 'new', 'assembly', 'Aircraft');
@@ -243,13 +245,13 @@ test('CL-02.1–CL-02.2, CL-05.2, CO-01.1, CO-02.2: nest', () => {
   expect(plm(root, 'new', 'test-case', 'Load').status).toBe(2);
   expect(validate(loadRepo(root))).toEqual([]);
 
-  writeFileSync(join(root, 'plm.yaml'), 'folders:\n  part: parts\n');
+  write(root, { 'types/part.yaml': 'folder: parts\n' });
   expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 });
 
 test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () => {
   expect(plm(root, '--version').stdout).toBe(`${JSON.parse(readFileSync('package.json', 'utf8')).version}\n`);
-  expect(plm(root, 'new', '--help').stdout).toContain('Types: part test-run\n');
+  expect(plm(root, 'new', '--help').stdout).toContain('Types: requirement test-case test-run part assembly\n');
   expect(plm(root, 'link', '--help').stdout).toContain('(* any type):\n* satisfies requirement\n');
   expect(plm(root, 'validate').status).toBe(0);
   write(root, { 'meta/L.yaml': 'status: draft\nstatus: draft\n' });
@@ -276,7 +278,7 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
   expect([broken.status, broken.stderr.match(/fatal/g)?.length]).toEqual([3, 1]);
 });
 
-test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
+test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
   const coverage = () => json(root, 'report', 'coverage', 'A')[0],
     record = (...results) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'L', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
   expect(coverage().state).toBe('unverified');
@@ -307,7 +309,8 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
   expect(json(root, 'report', 'coverage', '--by', 'type')[0]).toMatchObject({ total: 1 });
-  renameSync(join(root, 'runs', run), join(root, 'r1'));
+  expect(json(root, '-C', `${root}/wing`, 'new', 'test-run', 'Rig').path).toBe('runs/rig/item.yaml');
+  renameSync(join(root, 'runs', run), join(root, 'wing/runs'));
   expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 });
 

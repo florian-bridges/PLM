@@ -73,7 +73,7 @@ export function activate(context: vscode.ExtensionContext) {
     const id = row?.id ?? activeItem(repo);
     if (!id) return;
     const found = entry(repo, id);
-    const check = itemSchema(root, found.item.data.type);
+    const check = itemSchema(repo, found.item.data.type);
     if (!check) throw new Error(`Unknown item type ${found.item.data.type}`);
     const fields = logic.formFields(check.schema as never);
     const panel = vscode.window.createWebviewPanel('plm.form', id, vscode.ViewColumn.Active, { enableScripts: true });
@@ -92,7 +92,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // VS-01.5
   const createItem = async (at?: Entry) => {
-    const type = await vscode.window.showQuickPick(Object.keys(open().settings.prefixes ?? {}).filter((type) => type !== 'test-run'));
+    const type = await vscode.window.showQuickPick(Object.keys(open().types).filter((type) => type !== 'meta'));
     const title = type && await vscode.window.showInputBox({ prompt: 'Title' });
     if (!title) return;
     editItem({ id: newItem(open(), type, title, join(root, at?.path ?? '')).id });

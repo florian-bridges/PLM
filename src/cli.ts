@@ -119,7 +119,7 @@ program.command('impact <range>').description('list a change\'s impact').action(
 
 // CL-01.1, CL-02.1
 program.command('new <type> <title>').description('create an item')
-  .addHelpText('after', () => `Types: ${Object.keys(openRepo().settings.prefixes ?? {}).join(' ')}`)
+  .addHelpText('after', () => `Types: ${Object.keys(openRepo().types).filter((type) => type !== 'meta').join(' ')}`)
   .action((type, title) => {
   const created = newItem(openRepo(), type, title, workingFolder());
   output(created.id, created);

@@ -11,7 +11,7 @@ Latest release: 0.3.0 (2026-11-11). Milestones and entry conditions: `timeline.m
 
 ## Open pull requests and blockers
 
-* #39 feature review meeting before a big feature (rules and skills only): waits for the owner's decision; do not merge it yourself.
+* None. #39 (feature review meeting before a big feature) was merged by the owner on 2026-11-14: big features in 0.4 go through it.
 
 ## Owner directions
 

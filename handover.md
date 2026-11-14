@@ -6,12 +6,13 @@ Latest release: 0.3.0 (2026-11-11). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* No milestone defined yet; the owner defines the development efforts and the timeline in a kickoff.
+* Next milestone 0.4, budget 3 windows: seven entry conditions in `timeline.md` (#64, #54, #36, #35, #33, #9, #20). Roadmap 0.4–0.9 set by the owner on 2026-11-14 (backlog cleanup from the control room); each milestone is a GitHub milestone.
+* Unreleased on `develop`, shipping with 0.4: #26–#28 type files (breaking; the CHANGELOG needs the conversion tables) and #19 parameter citations in `text`.
 
 ## Open pull requests and blockers
 
-* None.
+* #39 feature review meeting before a big feature (rules and skills only): waits for the owner's decision; do not merge it yourself.
 
 ## Owner directions
 
-* See `decisions.md`.
+* See `decisions.md`; the entries of 2026-11-14 apply to every feature: product data only (#64), agent use (#54).

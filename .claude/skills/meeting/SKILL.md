@@ -1,25 +1,26 @@
 ---
 name: meeting
-description: Prepare, hold and record an owner meeting - kickoff, release, decision meeting, re-plan or status. Use "/meeting <issue>" to hold a prepared meeting, and to prepare one when the work needs the owner.
+description: Prepare, hold and record an owner meeting - kickoff, feature review, release, decision meeting, re-plan or status. Use "/meeting <issue>" to hold a prepared meeting, and to prepare one when the work needs the owner.
 ---
 
 # Owner meeting
 
-The chief engineer chairs and presents; agents answer detail questions on request; only the owner decides.
+The chief engineer chairs and presents; agents answer detail questions on request; only the owner decides. The agenda and outcome of each kind are in `kinds/<kind>.md`; read only the one at hand.
 
-## Kinds
-
-* **Kickoff:** milestones, their entry conditions and budgets; standing directions.
-* **Release:** what the release contained against its entry conditions, open findings; the next milestone, its entry conditions and budget.
-* **Decision:** one or more `needs-owner` questions that block the remaining work.
-* **Re-plan:** a milestone over budget or stalled; new scope or budget, or stop.
-* **Status:** where the work stands, no decision needed.
+| Kind | When |
+|---|---|
+| `kickoff` | no milestone defined |
+| `feature` | before a big feature is built (`kinds/feature.md`, When) |
+| `release` | after a release, or every entry condition ticked and no next milestone |
+| `decision` | a `needs-owner` question blocks all remaining work, or three or more are open |
+| `replan` | a milestone over budget or stalled |
+| `status` | the owner asks where the work stands |
 
 ## 1. Prepare (chief engineer, usually on shift)
 
-1. Write `meetings/<yyyy-mm-dd>-<topic>.md`, at most about a page: a one-paragraph summary of what the owner must decide; per agenda point the facts (test count, word counts from `scripts/wordcount.py`, issues and pull requests); per decision the question, the options with their consequences, the recommendation and why.
+1. Write `meetings/<yyyy-mm-dd>-<topic>.md`, at most about a page, following the kind's agenda: a one-paragraph summary of what the owner must decide; per agenda point the facts (`scripts/check.sh`, `python3 scripts/wordcount.py -v`, `python3 scripts/trace.py <ID>`, issues and pull requests), generated, never hand-counted; per decision the question, the options with their consequences, the recommendation and why.
 2. `gh issue create --label meeting --title "Meeting: <topic> ready"` with the decisions needed and the path of the file.
-3. Add it to *Coming owner meetings* in `timeline.md`, commit, push. End the shift cycle with state `meeting` and the issue in `for_owner`.
+3. Add it to *Coming owner meetings* in `timeline.md`, commit, push. If other entry conditions can go on without the meeting, continue with them; otherwise end the shift cycle with state `meeting` and the issue in `for_owner`.
 
 ## 2. Hold (interactive, the owner is present)
 
@@ -33,7 +34,7 @@ The chief engineer chairs and presents; agents answer detail questions on reques
 
 1. Decisions into `decisions.md`; actions become issues with a *done when* line.
 2. Append the minutes to the meeting file: decisions, actions with issue numbers, nothing else.
-3. By kind: **release** and **re-plan:** the next milestone, its entry conditions and budget, or the new scope and budget, into `timeline.md`.
+3. What the kind's *Outcome* names: `timeline.md`, issues, requirement changes.
 4. Close the meeting issue and the answered `needs-owner` issues; update `timeline.md` and `handover.md`; commit, push.
 5. Ask the owner whether to start the shift.
 

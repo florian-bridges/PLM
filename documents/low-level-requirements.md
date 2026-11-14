@@ -46,7 +46,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 ## Traceability engine
 
 **TE-01.1** An item's version shall be the SHA-256 hex digest of its folder's Git tree hash followed by the versions of the items it uses, in listed order, then of the other items' parameters its `text` cites (CO-02.7), each once, in text order; a requirement's version shall be its Git blob hash, digested likewise only if it cites any, and a link to a parameter (`<ID>:<name>`) the hash of that entry.
-*Rationale:* Git hashes capture all files, including nested items and LFS pointers; adding used items' and cited parameters' versions propagates their changes. Content, not path, decides a version, so `git mv` keeps an item's ID, links and confirmations.
+*Rationale:* Git hashes capture all files, including nested items and LFS pointers; adding used items' and cited parameters' versions carries their changes forward. Content, not path, decides a version, so `git mv` keeps an item's ID, links and confirmations.
 
 **TE-01.2** Hashes of the working tree shall be computed by staging an item's artifacts (CO-01.3) and its `item.yaml` or requirement file into a temporary Git index, skipping paths Git cannot stage, so LFS filters apply and uncommitted and committed states yield identical versions.
 *Rationale:* Engineers need suspect states before committing; identical results avoid spurious differences between local runs and CI.
@@ -76,7 +76,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Pending verification differs from a missing test and needs a different action.
 
 **TE-06.3** Given a field name, coverage shall be grouped by its value into verified, pending, unverified and total, requirements lacking the field in their own group; JSON shall use the same groups.
-*Rationale:* Grouping by method gives the per-method denominator a gate needs.
+*Rationale:* Grouping by method gives the per-method denominator.
 
 **TE-06.4** With `--allocation`, coverage shall list each requirement of an item that has a lower item with requirements, as allocated (has a `satisfies` link, any state) or unallocated, and exit 1 if any is unallocated; it shall reject `--by`.
 *Rationale:* An unallocated requirement is an undetected derivation gap.
@@ -149,7 +149,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Users decide on one link with everything needed on one page.
 
 **VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file.
-*Rationale:* Links are inspected and navigated where they are written, replacing a separate links view.
+*Rationale:* Links are inspected and followed where they are written, replacing a separate links view.
 
 **VS-06.1** A command shall record a manual test run, picking test cases, system under test, each test case's result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
 *Rationale:* Manual and automated runs must produce identical evidence; one recording function in the core guarantees it.

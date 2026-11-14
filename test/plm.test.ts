@@ -278,7 +278,7 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
   expect([broken.status, broken.stderr.match(/fatal/g)?.length]).toEqual([3, 1]);
 });
 
-test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
+test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
   const coverage = () => json(root, 'report', 'coverage', 'A')[0],
     record = (...results) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'L', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
   expect(coverage().state).toBe('unverified');
@@ -309,7 +309,8 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-03.1–CL-03.3, TE-03.1, TE-06.1�
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
   expect(json(root, 'report', 'coverage', '--by', 'type')[0]).toMatchObject({ total: 1 });
-  renameSync(join(root, 'runs', run), join(root, 'r1'));
+  expect(json(root, '-C', `${root}/wing`, 'new', 'test-run', 'Rig').path).toBe('runs/rig/item.yaml');
+  renameSync(join(root, 'runs', run), join(root, 'wing/runs'));
   expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 });
 

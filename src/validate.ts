@@ -43,7 +43,7 @@ export function validate(repo: Repo) {
       validateSchema = schemaFor(ajv, repo.types, type, baseSchema), validateMeta = schemaFor(ajv, repo.types, 'meta'),
       // CO-02.2
       folders = dirname(entry.path).split('/'), home = repo.types[type]?.folder,
-      misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : homeFolders(repo).some((folder) => folders.includes(folder));
+      misplaced = home ? (type === 'test-run' ? folders[0] !== home : !!innermostItem(repo, folders.join('/')) && !folders.includes(home)) : homeFolders(repo).some((folder) => folders.includes(folder));
     // CO-02.2
     for (const file of [item, meta]) for (const error of file.doc.errors) findings.push({ ...finding(file, [], 'yaml', error.code), ...error.linePos![0] });
     if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', type)); // CO-02.8

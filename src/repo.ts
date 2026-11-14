@@ -137,7 +137,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
   if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item`);
 
   const id = newId(repo, type),
-    typeHome = parent && repo.types[type]?.folder && `${parent.path}/${repo.types[type].folder}`,
+    home = repo.types[type]?.folder, typeHome = home && (type === 'test-run' ? home : parent && `${parent.path}/${home}`), // CO-01.1
     inGroup = !!parent && (!typeHome || cwd === typeHome || cwd.startsWith(`${typeHome}/`)),
     path = [inGroup ? cwd : typeHome || parent?.path, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id].filter(Boolean).join('/'),
     item = { path: type === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`, doc: new Document(readYaml(repo.root, `types/${type}.yaml`).doc.get('template', true)) };

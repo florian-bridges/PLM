@@ -16,7 +16,7 @@ export const baseSchema = {
 };
 
 // CO-02.5, CO-02.8
-export interface TypeDef { prefix?: string; folder?: string; fields?: Record<string, object>; required?: string[] }
+export interface TypeDef { base?: string; prefix?: string; folder?: string; fields?: Record<string, object>; required?: string[] }
 export const builtinTypes: Record<string, TypeDef> = {
   requirement: { prefix: 'REQ-', folder: 'requirements' },
   'test-case': { prefix: 'TC-', folder: 'tests', fields: { procedure: str } },

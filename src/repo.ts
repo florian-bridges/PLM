@@ -47,12 +47,21 @@ export function findRoot(start: string) {
 // CO-02.2, CO-02.5, CO-02.8
 export const yamlIn = (root: string, folder: string) => (existsSync(join(root, folder)) ? readdirSync(join(root, folder)).filter((f) => f.endsWith('.yaml')) : []);
 
-const loadTypes = (root: string) => yamlIn(root, 'types').reduce((types, file) => {
-  const name = file.slice(0, -5), { data } = readYaml<TypeDef>(root, `types/${file}`);
-  return { ...types, [name]: { ...types[name], ...data, fields: { ...types[name]?.fields, ...data.fields } } };
-}, builtinTypes);
+const loadTypes = (root: string) => {
+  const types = yamlIn(root, 'types').reduce((types, file) => {
+    const name = file.slice(0, -5), { data } = readYaml<TypeDef>(root, `types/${file}`);
+    return { ...types, [name]: { ...types[name], ...data, fields: { ...types[name]?.fields, ...data.fields } } };
+  }, builtinTypes);
+  return Object.fromEntries(Object.entries(types).map(([name, t]) => { // CO-02.8: base
+    const b = types[t.base!];
+    return [name, t.base && Object.hasOwn(builtinTypes, t.base) && !Object.hasOwn(builtinTypes, name)
+      ? { ...b, ...t, folder: b.folder, fields: { ...b.fields, ...t.fields }, required: [...b.required ?? [], ...t.required ?? []] } : { ...t, base: undefined }];
+  }));
+};
 // CO-01.1, CO-01.3, CO-02.2
 export const homeFolders = (repo: Repo) => Object.values(repo.types).flatMap((type) => type.folder ?? []);
+// CO-02.8
+export const typeOf = (repo: Repo, type: unknown) => repo.types[String(type)]?.base ?? String(type);
 
 export function loadRepo(start: string) {
   const root = findRoot(start),
@@ -133,14 +142,14 @@ export function newId(repo: Repo, type: string) {
 
 // CL-02.1
 export function newItem(repo: Repo, type: string, title: string, folder: string) {
-  const cwd = relative(repo.root, resolve(folder)), parent = repo.entries.get(innermostItem(repo, cwd) ?? '');
-  if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item`);
+  const cwd = relative(repo.root, resolve(folder)), parent = repo.entries.get(innermostItem(repo, cwd) ?? ''), kind = typeOf(repo, type); // CO-02.8
+  if ((kind === 'requirement' || kind === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item`);
 
   const id = newId(repo, type),
-    home = repo.types[type]?.folder, typeHome = home && (type === 'test-run' ? home : parent && `${parent.path}/${home}`), // CO-01.1
+    home = repo.types[type]?.folder, typeHome = home && (kind === 'test-run' ? home : parent && `${parent.path}/${home}`), // CO-01.1
     inGroup = !!parent && (!typeHome || cwd === typeHome || cwd.startsWith(`${typeHome}/`)),
     path = [inGroup ? cwd : typeHome || parent?.path, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id].filter(Boolean).join('/'),
-    item = { path: type === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`, doc: new Document(readYaml(repo.root, `types/${type}.yaml`).doc.get('template', true)) };
+    item = { path: kind === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`, doc: new Document(readYaml(repo.root, `types/${type}.yaml`).doc.get('template', true)) };
   if (existsSync(join(repo.root, item.path))) throw new UsageError(`${item.path} exists`);
   for (const [key, value] of Object.entries({ id, type, title })) item.doc.setIn([key], value);
   writeYaml(repo.root, item);

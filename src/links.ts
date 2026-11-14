@@ -1,7 +1,7 @@
 import { copyFileSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, typeOf, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import { disallowed } from './schemas.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
@@ -41,7 +41,7 @@ export function linkStates(repo: Repo, versions: Map<string, string>, only?: str
 }
 
 // TE-03.1
-export const fromRun = (repo: Repo, state: LinkState) => repo.entries.get(state.source)?.item.data.type === 'test-run';
+export const fromRun = (repo: Repo, state: LinkState) => typeOf(repo, repo.entries.get(state.source)?.item.data.type) === 'test-run'; // CO-02.8
 
 // TE-02.1–TE-02.2
 function confirmation(repo: Repo, target: string, version: string | undefined) {
@@ -55,8 +55,8 @@ function confirmation(repo: Repo, target: string, version: string | undefined) {
 // TE-02.1, CL-01.2
 export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, target?: string) {
   const sourceEntry = entry(repo, source), links = linksOf(sourceEntry).filter((link) => !target || link.target === target);
-  // TE-02.2
-  if (sourceEntry.item.data.type === 'test-run') throw new Refused('Test runs confirm at recording');
+  // TE-02.2, CO-02.8
+  if (typeOf(repo, sourceEntry.item.data.type) === 'test-run') throw new Refused('Test runs confirm at recording');
   for (const link of links) {
     const targetFile = repo.entries.get(targetId(link.target))?.item.path,
       broken = findings.some((finding) => finding.severity === 'error' && finding.file === targetFile);
@@ -71,7 +71,7 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
 export function link(repo: Repo, source: string, type: string, target: string, remove?: boolean) {
   const { item, meta } = entry(repo, source), links = list<Link>(item.data.links),
     at = links.findIndex((l) => l.type === type && l.target === target), found = repo.entries.get(targetId(target)),
-    bad = !remove && found && disallowed(item.data.type, type, found.item.data.type);
+    bad = !remove && found && disallowed(typeOf(repo, item.data.type), type, typeOf(repo, found.item.data.type)); // CO-02.8
   if (bad) throw new UsageError(bad);
   if (!remove) item.doc.setIn(['links', links.length], { type, target });
   else if (at < 0) throw new UsageError(target);
@@ -120,7 +120,7 @@ export interface Coverage {
   tests: { testCase: Named; run?: Named; result?: string; outdated?: boolean }[];
 }
 
-// TE-06.1, TE-06.2, CL-05.3
+// TE-06.1, TE-06.2, CL-05.3, CO-02.8
 export function coverage(repo: Repo, states: LinkState[], root?: string): Coverage[] {
   const linksOfType = (type: string) => states.filter((state) => state.link.type === type),
     isCurrent = (state: LinkState) => state.state === 'current',
@@ -133,7 +133,7 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
     latestCurrentRun = latest(runs.filter((executes) => !outdatedRuns.has(executes.source)));
 
   const inScope = within(repo, root),
-    requirements = [...repo.entries.values()].filter((candidate) => candidate.item.data.type === 'requirement' && inScope(candidate.id));
+    requirements = [...repo.entries.values()].filter((candidate) => typeOf(repo, candidate.item.data.type) === 'requirement' && inScope(candidate.id));
 
   return requirements.map((requirement) => {
     const verifies = linksOfType('verifies').filter((state) => state.link.target === requirement.id),

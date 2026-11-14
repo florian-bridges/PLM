@@ -50,7 +50,7 @@ fields:              # JSON Schema properties, written in YAML
 required: [method]
 ```
 
-A file named after a built-in type extends or overrides it, e.g. `types/requirement.yaml` with `fields: {rationale: {type: string}}`. `types/meta.yaml` gives the fields of `meta/<ID>.yaml`. `plm validate` reports any other key in a type file as error `type-file`.
+A file named after a built-in type extends or overrides it, e.g. `types/requirement.yaml` with `fields: {rationale: {type: string}}`. `types/meta.yaml` gives the fields of `meta/<ID>.yaml`. With `base: test-case`, e.g. in `types/inspection.yaml`, a type behaves as a test case and has its fields, home folder and, unless set, prefix; `folder` is then not allowed. `plm validate` reports any other key in a type file as error `type-file`.
 
 `schemas/`, `templates/` and `plm.yaml`'s `prefixes` and `folders` are no longer read; convert them by hand:
 

@@ -1,7 +1,7 @@
 import { dirname } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, targetId, usesOf, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
-import { baseSchema, disallowed, type TypeDef } from './schemas.ts';
+import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, targetId, typeOf, usesOf, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
+import { baseSchema, builtinTypes, disallowed, type TypeDef } from './schemas.ts';
 
 // CO-02.4
 export interface Finding { file: string; line: number; col: number; severity: 'error' | 'warning'; code: string; message: string }
@@ -41,9 +41,9 @@ export function validate(repo: Repo) {
   for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
     const { id, item, meta } = entry, type = String(item.data.type), draft = meta.data.status === 'draft',
       validateSchema = schemaFor(ajv, repo.types, type, baseSchema), validateMeta = schemaFor(ajv, repo.types, 'meta'),
-      // CO-02.2
+      // CO-02.2, CO-02.8
       folders = dirname(entry.path).split('/'), home = repo.types[type]?.folder,
-      misplaced = home ? (type === 'test-run' ? folders[0] !== home : !!innermostItem(repo, folders.join('/')) && !folders.includes(home)) : homeFolders(repo).some((folder) => folders.includes(folder));
+      misplaced = home ? (typeOf(repo, type) === 'test-run' ? folders[0] !== home : !!innermostItem(repo, folders.join('/')) && !folders.includes(home)) : homeFolders(repo).some((folder) => folders.includes(folder));
     // CO-02.2
     for (const file of [item, meta]) for (const error of file.doc.errors) findings.push({ ...finding(file, [], 'yaml', error.code), ...error.linePos![0] });
     if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', type)); // CO-02.8
@@ -69,7 +69,7 @@ export function validate(repo: Repo) {
       const param = parameterOf(repo, link.target), targetEntry = repo.entries.get(targetId(link.target)),
         atTarget = (code: string) => finding(item, item.doc.hasIn(['links', index]) ? ['links', index, 'target'] : ['text'], code, link.target);
       if (!targetEntry || (link.target.includes(':') && !param)) return void findings.push(atTarget('unknown-target'));
-      const bad = disallowed(type, link.type, targetEntry.item.data.type);
+      const bad = disallowed(typeOf(repo, type), link.type, typeOf(repo, targetEntry.item.data.type)); // CO-02.8
       if (bad) findings.push(finding(item, ['links', index, 'type'], 'link-type', bad));
       if (!param) return; // CO-02.7
       if (param.parameter.value == null) findings.push({ ...atTarget('tbd-source'), severity: 'warning' });
@@ -80,8 +80,11 @@ export function validate(repo: Repo) {
   // CO-02.2
   for (const file of yamlIn(repo.root, 'meta')) if (!repo.entries.has(file.slice(0, -5))) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: file });
   // CO-02.8
-  for (const file of yamlIn(repo.root, 'types').map((f) => readYaml<object>(repo.root, `types/${f}`)))
-    for (const key of Object.keys(file.data)) if (!['prefix', 'folder', 'template', 'fields', 'required'].includes(key)) findings.push(finding(file, [key], 'type-file', key));
+  for (const file of yamlIn(repo.root, 'types').map((f) => readYaml<TypeDef>(repo.root, `types/${f}`))) {
+    for (const key of Object.keys(file.data)) if (!['base', 'prefix', 'folder', 'template', 'fields', 'required'].includes(key)) findings.push(finding(file, [key], 'type-file', key));
+    const { base } = file.data;
+    if (base && (!Object.hasOwn(builtinTypes, base) || Object.hasOwn(builtinTypes, file.path.slice(6, -5)) || file.data.folder)) findings.push(finding(file, ['base'], 'type-file', base));
+  }
 
   return [...findings, ...cycles(repo)];
 }

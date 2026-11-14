@@ -111,18 +111,29 @@ test('CO-01.1, CO-02.1, CO-02.8, CL-02.1–CL-02.2: types', () => {
   write(root, {
     'types/study.yaml': 'folder: studies\n',
     'types/analysis.yaml': 'colour: red\nprefix: ANA-\nfolder: analyses\ntemplate:\n  method: review\nfields:\n  method: {enum: [review]}\nrequired: [tool]\n',
-    'types/part.yaml': 'fields:\n  finish: {type: string}\n',
+    'types/part.yaml': 'base: assembly\nfields:\n  finish: {type: string}\n',
     'types/meta.yaml': 'fields:\n  owner: {type: string}\n',
     'bolt/item.yaml': `${bolt}finish: zinc\n`,
     'bracket/item.yaml': 'id: B\ntype: bracket\ntitle: Bracket\n',
     'wing/item.yaml': 'id: A\ntype: meta\ntitle: Wing\n',
+    // CO-02.8: base
+    'types/inspection.yaml': 'base: test-case\n',
+    'types/gauge.yaml': 'base: part\nprefix: GAU-\nfields:\n  rating: {type: number}\n',
+    'types/bad-base.yaml': 'base: gauge\n',
+    'types/boxed.yaml': 'base: part\nfolder: x\n',
+    'gauge/item.yaml': 'id: G\ntype: gauge\ntitle: Gauge\nmass_kg: heavy\nrating: 2\nfinish: zinc\n',
   });
-  const { path } = json(`${root}/wing`, 'new', 'analysis', 'Loads');
+  const { path } = json(`${root}/wing`, 'new', 'analysis', 'Loads'), visual = json(`${root}/wing`, 'new', 'inspection', 'Visual');
   expect(path).toBe('wing/analyses/loads/item.yaml');
+  expect(visual).toMatchObject({ id: expect.stringMatching(/^TC-/), path: 'wing/tests/visual/item.yaml' });
+  expect(json(root, 'new', 'gauge', 'Dial').id).toMatch(/^GAU-/);
+  plm(root, 'link', visual.id, 'verifies', 'R');
+  expect(json(root, 'report', 'coverage')[0].tests[0].testCase.id).toBe(visual.id);
   expect(plm(root, 'new', 'study', 'X').status).toBe(2);
   expect(readFileSync(join(root, path), 'utf8')).toContain('method: review\nid: ANA-');
   expect(validate(loadRepo(root)).map((f) => `${f.file} ${f.code} ${f.severity}`).sort()).toEqual([
-    'bracket/item.yaml unknown-type error', 'types/analysis.yaml type-file error', `${path} schema warning`, 'wing/item.yaml unknown-type error',
+    'bracket/item.yaml unknown-type error', 'gauge/item.yaml schema error', 'types/analysis.yaml type-file error', 'types/bad-base.yaml type-file error',
+    'types/boxed.yaml type-file error', 'types/part.yaml type-file error', `${path} schema warning`, 'wing/item.yaml unknown-type error',
   ]);
 });
 

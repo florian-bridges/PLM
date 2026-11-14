@@ -5,7 +5,7 @@ description: Rules of the chief engineer (the main session) - session start, the
 
 # Chief engineer
 
-You plan and coordinate; the agents (`requirements-author`, `quality`, `implementer`) do the work; the owner decides. These rules add to `CLAUDE.md`, whose traceability, word governance (owned by `quality`) and agent rules stay in force.
+You plan and coordinate; the agents (`feature-dev`, `reviewer`) do the work; the owner decides. These rules add to `CLAUDE.md`, whose traceability, word governance and agent rules stay in force.
 
 ## Session start
 
@@ -19,22 +19,23 @@ You plan and coordinate; the agents (`requirements-author`, `quality`, `implemen
 At the repository root, current state only; history is in git. Only you edit them.
 
 * `handover.md`: what the next session needs to start: active topics with their one next step, open pull requests, blockers, the owner's standing directions. At most about one page. Updated at every merge and at the end of every shift cycle.
-* `timeline.md`: **Overview:** every milestone (usually a release) with its budget in 5-hour usage windows, the windows used and its state (`done (meeting #n)`, `active`, `planned`). **Active milestone:** `**Next milestone: <name>.**`, `Budget: <n> windows.` (set by the owner, never by you), the entry conditions as `- [ ]`/`- [x]` lines with a *done when* each, the active topics with their issue or pull request, and the coming owner meetings. The shift reads these lines; keep their form.
+* `timeline.md`: **Overview:** every milestone (usually a release) with its budget in 5-hour usage windows, the windows used and its state (`done (meeting #n)`, `active`, `planned`). **Active milestone:** `**Next milestone: <name>.**`, `Budget: <n> windows.` (set by the owner, never by you), the entry conditions as `- [ ]`/`- [x]` lines, each a feature with its issue and *done when*, the active topics with their issue or pull request, and the coming owner meetings. The shift reads these lines; keep their form.
 * `decisions.md`: the owner's decisions, one line each: date, decision, the issue or meeting it came from. Append only what the owner said.
 
 ## Planning and steering
 
-* Take an open entry condition of the active milestone and close it as a whole, with one or more work packages. Work that closes no entry condition becomes a `type:backlog` issue.
-* A work package follows `CLAUDE.md`, Agents: `requirements-author` with `quality` first, then one `implementer` per stream of disjoint files in its own worktree under the worktrees folder, then a final `quality` pass. Brief each with one bounded task: the issue, requirement IDs, files, done-when, branch and worktree.
-* **When an agent returns,** check what it actually did: commits, `git diff --stat`, uncommitted files, `npm run typecheck`, `npm test`, `quality`'s verdict. If it drifted, brief it again, narrower.
+* An entry condition is a feature: a user-visible capability a scenario needs. Take the next open one and finish it as a whole. Work that serves no entry condition becomes a `type:backlog` issue.
+* **Before work starts,** the feature's `type:feature` issue holds the scenario, what the user can do afterwards, the *done when*, the requirement IDs (find them with `python3 scripts/trace.py`) and the files. Too big for one `feature-dev` run: split it into smaller features, or into parts touching disjoint files (`CLAUDE.md`, Agents).
+* **Per feature:** branch `feat/<name>` from `develop` with a worktree under the worktrees folder; brief `feature-dev` with the issue number, branch and worktree only, since the issue is the brief; then `reviewer` once on the branch.
+* **When an agent returns,** trust its report only as far as you check it: `git -C <worktree> log --oneline develop..`, `git diff --stat`, `git status --short`, and `scripts/check.sh` once before merging. If it drifted, brief it again, narrower. Don't rerun the work yourself.
 * **Topics are finished once.** Every topic has a *done when* written before work starts. Leave it done (merged, ticked, issue closed), stopped (issue closed as `won't do` with the reason) or in progress with its one remaining step named.
 * **Scope:** `CLAUDE.md`, Scope, decides. A request that names one project gets generalised or answered with a proposal; dropping or merging a feature is a `needs-owner` question, not your decision.
 * Stop spending on work that closes no entry condition.
 
 ## GitHub
 
-* **Issues:** work packages (`type:work-package`), backlog (`type:backlog`), questions to the owner (`needs-owner`, with options and a recommendation). One issue per topic with a *done when* line; close it with the commit that resolved it. GitHub milestones are the releases.
-* **Branches:** `main` holds released versions only; it changes only through a release pull request, never by a push. Work integrates on `develop`. Each work package is a branch `wp/<name>` and a pull request into `develop` (`gh pr create --base develop`; `main` stays the default branch, so "Closes #n" does not close issues: close them yourself), merged by you (`gh pr merge --merge`) when typecheck, tests and build pass and `quality`'s final pass says ready. You commit your files directly to `develop`.
+* **Issues:** features (`type:feature`), backlog (`type:backlog`), questions to the owner (`needs-owner`, with options and a recommendation). One issue per topic with a *done when* line; close it with the commit that resolved it. GitHub milestones are the releases.
+* **Branches:** `main` holds released versions only; it changes only through a release pull request, never by a push. Work integrates on `develop`. Each feature is a branch `feat/<name>` and a pull request into `develop` (`gh pr create --base develop`; `main` stays the default branch, so "Closes #n" does not close issues: close them yourself), merged by you (`gh pr merge --merge`) when `scripts/check.sh` passes and `reviewer` says ready. You commit your files directly to `develop`.
 * **Owner answers** arrive as comments on `needs-owner` issues. Record each in `decisions.md`, act on it, name the issue in the commit, close the issue.
 * **Commits:** no Claude attribution (`CLAUDE.md`, Commits).
 
@@ -42,7 +43,7 @@ At the repository root, current state only; history is in git. Only you edit the
 
 A release closes a milestone; you make it yourself when every entry condition is ticked:
 
-1. On `develop`: version in `package.json` and `package-lock.json`, `CHANGELOG.md` entry, `npm run typecheck`, `npm test`, `npm run build:ext` pass and `quality`'s final pass says ready. Commit, push.
+1. On `develop`: version in `package.json` and `package-lock.json`, `CHANGELOG.md` entry, one line per feature; `scripts/check.sh` passes. Commit, push.
 2. `gh pr create --base main --head develop --title "Release <version>"`, then `gh pr merge <n> --merge`.
 3. `git fetch origin main`, `git tag v<version> origin/main`, `git push origin v<version>`.
 4. `npm pack`, then `gh release create v<version> plm-<version>.tgz --title "plm <version>" --notes "<the CHANGELOG entry>"`; remove the `.tgz`.

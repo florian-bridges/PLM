@@ -4,7 +4,7 @@
 
 The aim: no code or documentation that nothing needs, no text with little content, no two pieces of code with similar functionality. Make every change in as few words as possible: reuse existing code and text, don't restate what another requirement, comment or test already says, and prefer deleting to adding.
 
-The `quality` agent owns this: it keeps the word limits (the defaults in `scripts/wordcount.py`, checked with `python3 scripts/wordcount.py -u`), judges every change against the aim and may raise a limit with a stated reason. A change it does not pass is not done.
+`scripts/check.sh` enforces the word limits (the defaults in `scripts/wordcount.py`) and the traces (`scripts/trace.py`); the `reviewer` agent judges every feature against the aim and alone may raise a limit, with a stated reason. A change that fails either is not done.
 
 ## Requirements and traceability
 
@@ -31,4 +31,8 @@ Commit messages do not include a `Co-Authored-By: Claude` line or any other Clau
 
 ## Agents
 
-Use the agents in `.claude/agents/`. Start `quality` together with `requirements-author`; it frees words before new ones are written and reviews drafts, plans and diffs as the other agents send them. Split implementation into streams touching disjoint files and run one `implementer` per stream in parallel, each in its own worktree; merge and commit stream by stream, then let `quality` do a final pass.
+Work is feature-driven: one feature is one GitHub issue (`type:feature`: the scenario it serves, what the user can do afterwards, a *done when*, the requirement IDs and files it touches), one branch `feat/<name>` in its own worktree and one pull request into `develop`.
+
+* `feature-dev` builds the feature end to end: low-level requirements, code, tests, until `scripts/check.sh` passes. A large feature may be split into parts touching disjoint files, one `feature-dev` each in its own worktree on a branch `feat/<name>-<part>`, merged into the feature branch part by part.
+* `reviewer` reviews the finished branch once, applies behaviour-preserving cuts and proposes removals.
+* Read narrowly: `python3 scripts/trace.py <ID>` shows where an ID is defined, implemented and tested; read those lines, not whole documents. `concepts/` holds past plans: read it only when the brief names it.

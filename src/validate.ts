@@ -1,8 +1,7 @@
-import { existsSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, citations, innermostItem, linksOf, list, parameterOf, readYaml, targetId, usesOf, type Parameter, type Repo, type YamlFile } from './repo.ts';
-import { baseSchema, builtinTypes, disallowed } from './schemas.ts';
+import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, targetId, usesOf, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
+import { baseSchema, disallowed, type TypeDef } from './schemas.ts';
 
 // CO-02.4
 export interface Finding { file: string; line: number; col: number; severity: 'error' | 'warning'; code: string; message: string }
@@ -14,19 +13,17 @@ function finding(file: YamlFile<unknown>, path: (string | number)[], code: strin
 }
 
 // CO-02.1, CO-02.8: meta is no item type
-function schemaFor(ajv: Ajv2020, root: string, name: string, base?: object) {
-  const path = `types/${name}.yaml`, { fields: properties = {}, required = [] } = readYaml<any>(root, path).data,
-    builtin = Object.hasOwn(builtinTypes, name) ? builtinTypes[name] : undefined,
-    parts = [builtin, existsSync(join(root, path)) && { properties, required }].filter(Boolean) as object[];
-  if (!parts.length || (base && name === 'meta')) return undefined;
-  if (!ajv.getSchema(name)) ajv.addSchema(base ? { allOf: [base, ...parts], unevaluatedProperties: false } : parts[0], name);
+function schemaFor(ajv: Ajv2020, types: Record<string, TypeDef>, name: string, base?: object) {
+  const def = Object.hasOwn(types, name) ? types[name] : undefined, own = { properties: def?.fields, required: def?.required };
+  if (!def || (base && name === 'meta')) return undefined;
+  if (!ajv.getSchema(name)) ajv.addSchema(base ? { allOf: [base, own], unevaluatedProperties: false } : own, name);
   return ajv.getSchema(name);
 }
 
 const newAjv = () => new Ajv2020({ allErrors: true, strictTypes: false });
 
 // VS-01.2
-export const itemSchema = (root: string, type: string) => schemaFor(newAjv(), root, type, baseSchema);
+export const itemSchema = (repo: Repo, type: string) => schemaFor(newAjv(), repo.types, type, baseSchema);
 
 // CO-02.1, CO-02.4
 function schemaFindings(file: YamlFile<unknown>, check: ValidateFunction, draft: boolean): Finding[] {
@@ -43,10 +40,10 @@ export function validate(repo: Repo) {
     states = (repo.settings as any).parameter_states ?? ['provisional', 'final'];
   for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
     const { id, item, meta } = entry, type = String(item.data.type), draft = meta.data.status === 'draft',
-      validateSchema = schemaFor(ajv, repo.root, type, baseSchema), validateMeta = schemaFor(ajv, repo.root, 'meta'),
+      validateSchema = schemaFor(ajv, repo.types, type, baseSchema), validateMeta = schemaFor(ajv, repo.types, 'meta'),
       // CO-02.2
-      folders = dirname(entry.path).split('/'), home = repo.settings.folders![type],
-      misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : Object.values(repo.settings.folders!).some((folder) => folders.includes(folder));
+      folders = dirname(entry.path).split('/'), home = repo.types[type]?.folder,
+      misplaced = home ? (type === 'test-run' || !!innermostItem(repo, folders.join('/'))) && !folders.includes(home) : homeFolders(repo).some((folder) => folders.includes(folder));
     // CO-02.2
     for (const file of [item, meta]) for (const error of file.doc.errors) findings.push({ ...finding(file, [], 'yaml', error.code), ...error.linePos![0] });
     if (!validateSchema) findings.push(finding(item, ['type'], 'unknown-type', type)); // CO-02.8
@@ -80,12 +77,11 @@ export function validate(repo: Repo) {
         findings.push(atTarget('stale-value'));
     });
   }
-  const yamlIn = (folder: string) => (existsSync(join(repo.root, folder)) ? readdirSync(join(repo.root, folder)).filter((f) => f.endsWith('.yaml')) : []);
   // CO-02.2
-  for (const file of yamlIn('meta')) if (!repo.entries.has(file.slice(0, -5))) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: file });
+  for (const file of yamlIn(repo.root, 'meta')) if (!repo.entries.has(file.slice(0, -5))) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: file });
   // CO-02.8
-  for (const file of yamlIn('types').map((f) => readYaml<object>(repo.root, `types/${f}`)))
-    for (const key of Object.keys(file.data)) if (!['template', 'fields', 'required'].includes(key)) findings.push(finding(file, [key], 'type-file', key));
+  for (const file of yamlIn(repo.root, 'types').map((f) => readYaml<object>(repo.root, `types/${f}`)))
+    for (const key of Object.keys(file.data)) if (!['prefix', 'folder', 'template', 'fields', 'required'].includes(key)) findings.push(finding(file, [key], 'type-file', key));
 
   return [...findings, ...cycles(repo)];
 }

@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { Document, LineCounter, parseDocument } from 'yaml';
+import { builtinTypes, type TypeDef } from './schemas.ts';
 
 // CL-05.2
 export function git(root: string, args: string[], env: Record<string, string> = {}) {
@@ -17,8 +18,8 @@ interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>>; stat
 
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 export interface Entry { id: string; path: string; nested: string[]; requirements: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
-interface Settings { prefixes?: Record<string, string>; informative?: string[]; folders?: Record<string, string> }
-export interface Repo { root: string; settings: Settings; entries: Map<string, Entry>; duplicates: Entry[] }
+interface Settings { informative?: string[] }
+export interface Repo { root: string; settings: Settings; types: Record<string, TypeDef>; entries: Map<string, Entry>; duplicates: Entry[] }
 
 export class UsageError extends Error {}
 export class Refused extends Error {}
@@ -43,11 +44,19 @@ export function findRoot(start: string) {
   }
 }
 
+// CO-02.2, CO-02.5, CO-02.8
+export const yamlIn = (root: string, folder: string) => (existsSync(join(root, folder)) ? readdirSync(join(root, folder)).filter((f) => f.endsWith('.yaml')) : []);
+
+const loadTypes = (root: string) => yamlIn(root, 'types').reduce((types, file) => {
+  const name = file.slice(0, -5), { data } = readYaml<TypeDef>(root, `types/${file}`);
+  return { ...types, [name]: { ...types[name], ...data, fields: { ...types[name]?.fields, ...data.fields } } };
+}, builtinTypes);
+// CO-01.1, CO-01.3, CO-02.2
+export const homeFolders = (repo: Repo) => Object.values(repo.types).flatMap((type) => type.folder ?? []);
+
 export function loadRepo(start: string) {
   const root = findRoot(start),
-    repo: Repo = { root, settings: readYaml<Settings>(root, 'plm.yaml').data, entries: new Map(), duplicates: [] };
-  // CO-01.1, CO-02.2
-  repo.settings.folders = { requirement: 'requirements', 'test-case': 'tests', 'test-run': 'runs', ...repo.settings.folders };
+    repo: Repo = { root, settings: readYaml<Settings>(root, 'plm.yaml').data, types: loadTypes(root), entries: new Map(), duplicates: [] };
 
   const addEntry = (path: string) => {
       const item = readYaml<Item>(root, isRequirementFile(path) ? path : `${path}/item.yaml`),
@@ -64,8 +73,8 @@ export function loadRepo(start: string) {
         if (child.isDirectory()) walk(path, parent, true);
         else if (isRequirementFile(path)) parent!.requirements.push(addEntry(path).id);
       } else if (!child.isDirectory() || child.name.startsWith('.')) continue;
-      else if (parent && child.name === repo.settings.folders!.requirement) walk(path, parent, true);
-      else if (parent ? child.name === repo.settings.folders!['test-case'] : !folder && child.name === repo.settings.folders!['test-run']) walk(path);
+      else if (parent && child.name === repo.types.requirement.folder) walk(path, parent, true);
+      else if (parent ? child.name === repo.types['test-case'].folder : !folder && child.name === repo.types['test-run'].folder) walk(path);
       else if (existsSync(join(root, path, 'item.yaml'))) {
         const nested = addEntry(path);
         parent?.nested.push(nested.id);
@@ -117,7 +126,7 @@ export const innermostItem = (repo: Repo, file: string) => [...repo.entries.valu
 
 // CL-02.2
 export function newId(repo: Repo, type: string) {
-  const prefix = repo.settings.prefixes?.[type];
+  const prefix = repo.types[type]?.prefix;
   if (!prefix) throw new UsageError(`No prefix for ${type}`);
   return prefix + Array.from(randomBytes(6), (byte) => '0123456789ABCDEFGHJKMNPQRSTVWXYZ'[byte & 31]).join('');
 }
@@ -128,7 +137,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
   if ((type === 'requirement' || type === 'test-case') && !parent) throw new UsageError(`Create ${type}s inside an item`);
 
   const id = newId(repo, type),
-    typeHome = parent && repo.settings.folders![type] && `${parent.path}/${repo.settings.folders![type]}`,
+    typeHome = parent && repo.types[type]?.folder && `${parent.path}/${repo.types[type].folder}`,
     inGroup = !!parent && (!typeHome || cwd === typeHome || cwd.startsWith(`${typeHome}/`)),
     path = [inGroup ? cwd : typeHome || parent?.path, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id].filter(Boolean).join('/'),
     item = { path: type === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`, doc: new Document(readYaml(repo.root, `types/${type}.yaml`).doc.get('template', true)) };
@@ -144,7 +153,7 @@ export const tracked = (repo: Repo) => git(repo.root, ['ls-files', '-co', '--exc
 
 export function artifacts(repo: Repo, { path, nested }: Entry) {
   if (isRequirementFile(path)) return [];
-  const skip = Object.values(repo.settings.folders!), prefix = `${path}/`,
+  const skip = homeFolders(repo), prefix = `${path}/`,
     nestedPaths = nested.map((id) => repo.entries.get(id)!.path),
     isPointer = (file: string, stat = statSync(join(repo.root, file))) => stat.isFile() && stat.size < 200
       && readFileSync(join(repo.root, file), 'utf8').startsWith('version https://git-lfs.github.com/spec/v1');

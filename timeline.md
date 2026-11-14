@@ -7,7 +7,7 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | Milestone | Budget | Used | State |
 |---|---|---|---|
 | 0.3.0 | — | — | done (released 2026-11-11) |
-| 0.4 | 3 | — | planned |
+| 0.4 | 3 | 0 | active |
 | 0.5 | — | — | planned |
 | 0.6 | — | — | planned |
 | 0.7 | — | — | planned |
@@ -35,6 +35,8 @@ Already on `develop` and unreleased, shipping with 0.4: #26–#28 type files (br
 - [ ] #20 Projects define their own link types. *Done when* a declared `mitigates` link is accepted, others refused, and uncovered targets can be listed.
 
 ### Active topics
+
+* #36 `feat/new-block-style`, #35 `feat/enum-values`, #64 `feat/product-data-only`: feature-dev running.
 
 ### Coming owner meetings
 

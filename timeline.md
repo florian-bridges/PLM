@@ -7,7 +7,7 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | Milestone | Budget | Used | State |
 |---|---|---|---|
 | 0.3.0 | — | — | done (released 2026-11-11) |
-| 0.4 | — | — | planned |
+| 0.4 | 3 | — | planned |
 | 0.5 | — | — | planned |
 | 0.6 | — | — | planned |
 | 0.7 | — | — | planned |
@@ -20,7 +20,9 @@ Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is
 
 **Next milestone: 0.4.** Findings from real use and scope.
 
-Budget: not set yet; the owner sets it before the shift starts on it.
+Budget: 3 windows.
+
+Already on `develop` and unreleased, shipping with 0.4: #26–#28 type files (breaking: the CHANGELOG gives the conversion tables) and #19 parameter citations in `text`.
 
 ### Entry conditions
 
@@ -39,7 +41,7 @@ Budget: not set yet; the owner sets it before the shift starts on it.
 ## Planned milestones
 
 * **0.5 Agent interface:** #58 schema in machine-readable form, #56 context view of an item, #63 trace queries, #57 atomic changes with dry run, #55 MCP server, #60 CI integration.
-* **0.6 Interfaces between subsystems:** #29 ports and connections, #30 directed port types, #31 connections report, #19 parameter values in requirement text.
+* **0.6 Interfaces between subsystems:** #29 ports and connections, #30 directed port types, #31 connections report.
 * **0.7 Releases and change control:** #45 item revisions, #46 baselines, #59 change requests, #66 consistency of related changes and merges, #2 HTML view and generated documents.
 * **0.8 Product structure and configurations:** #40 occurrences and quantities, #42 BOM views, #43 variants and effectivity, #65 queries at scale.
 * **0.9 UI redesign** once the backend is stable: #67.

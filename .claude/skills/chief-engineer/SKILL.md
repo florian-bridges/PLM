@@ -34,7 +34,7 @@ At the repository root, current state only; history is in git. Only you edit the
 ## GitHub
 
 * **Issues:** work packages (`type:work-package`), backlog (`type:backlog`), questions to the owner (`needs-owner`, with options and a recommendation). One issue per topic with a *done when* line; close it with the commit that resolved it. GitHub milestones are the releases.
-* **Branches:** `main` holds released versions only and belongs to the owner. Work integrates on `develop`. Each work package is a branch `wp/<name>` and a pull request into `develop`, merged by you (`gh pr merge --merge`) when typecheck, tests, build and word count pass and `quality` has done its final pass. You commit your files directly to `develop`.
+* **Branches:** `main` holds released versions only and belongs to the owner. Work integrates on `develop`. Each work package is a branch `wp/<name>` and a pull request into `develop` (`gh pr create --base develop`; `main` stays the default branch, so "Closes #n" does not close issues: close them yourself), merged by you (`gh pr merge --merge`) when typecheck, tests, build and word count pass and `quality` has done its final pass. You commit your files directly to `develop`.
 * **Owner answers** arrive as comments on `needs-owner` issues. Record each in `decisions.md`, act on it, name the issue in the commit, close the issue.
 * **Commits:** no Claude attribution (`CLAUDE.md`, Commits).
 

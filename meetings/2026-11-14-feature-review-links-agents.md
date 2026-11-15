@@ -1,6 +1,6 @@
 # Feature review: 0.4 features that add requirements (#54, #20, #33, #9)
 
-Four 0.4 entry conditions are big features (skill `meeting`, `kinds/feature.md`, When): #54 adds a scenario, #20 changes component requirement TE-06 and adds configuration, #33 and #9 change low-level requirements and add words while the limits sit at their counts. **Decide** for each: go, go with reduced scope, or no-go. The other three (#64, #36, #35) go on meanwhile.
+Four 0.4 entry conditions are big features (skill `meeting`, `kinds/feature.md`, When): #54 adds a scenario, #20 changes component requirement TE-06 and adds configuration, #33 and #9 change low-level requirements and add words while the limits sit at their counts. **Decide** for each: go, go with reduced scope, or no-go. The other three (#64, #36, #35) are merged.
 
 ## 1. #54 Use by LLM agents
 
@@ -30,7 +30,7 @@ Four 0.4 entry conditions are big features (skill `meeting`, `kinds/feature.md`,
 * B CO-02.9 only; the gap list waits for trace queries (#63, 0.5). Smaller (about ¼ window) but the 0.4 *done when* loses "uncovered targets can be listed".
 * C no-go: `derives-from` plus `plm search`; no rule checks, no gap list.
 
-Word limits are at their current counts (`scripts/wordcount.py -v`: `documents/` 4801/4801, `src/`+`test/` 4978/4978): either feature needs `reviewer` to raise them, with the reason above.
+Word limits (`scripts/wordcount.py -v`, 2026-11-15): `documents/` 4791/4801, `src/`+`test/` 4977/4978. The four drafts add about 190 and 360 words: `reviewer` raises both limits for the features that go, with the reasons above.
 
 ## 3. #33 Allocation: retained requirements, subtree links only
 
@@ -54,7 +54,10 @@ Word limits are at their current counts (`scripts/wordcount.py -v`: `documents/`
 
 ## Reviewer's findings
 
-(added after `reviewer` read the drafts)
+* #54: agree; drop the stated reason: CR-19 and CL-05 already cite US-5 and US-8, so JSON output and exit codes are not at risk. Cut US-12 to what is new (the agent reads and diffs the YAML in Git and runs the checks before it commits): about 25 words.
+* #20: agree with A. CO-02.9 should cite CO-02.2 (rejects disallowed links), not CO-02.6; CL-01.1 (`link --help` lists the links) changes too; TE-06.5 follows TE-06.4's wording.
+* #33: agree with A; cut "shown with the report". The `requirement` type gets the `retained` field (CO-02.8).
+* #9: agree with A; drop "the reason shows in coverage and in `plm show`" (a new output requirement; TE-02.1's `confirmed` record holds it). TE-02.2's rationale citing CL-03.2 is reworded.
 
 ## Plan
 

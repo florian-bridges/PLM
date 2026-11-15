@@ -26,20 +26,21 @@ Already on `develop` and unreleased, shipping with 0.4: #26–#28 type files (br
 
 ### Entry conditions
 
-- [ ] #64 Product data only: no gates, milestones, meetings or due dates in scenarios, requirements, README or code; the rule stands in `CLAUDE.md` Scope. *Done when* the grep in the issue finds nothing.
+- [x] #64 Product data only: no gates, milestones, meetings or due dates in scenarios, requirements, README or code; the rule stands in `CLAUDE.md` Scope. *Done when* the grep in the issue finds nothing.
 - [ ] #54 Use by LLM agents: a US entry in `documents/scenarios.md` and a README section. *Done when* both exist, built on existing commands.
-- [ ] #36 `plm new` writes block style whatever the template's style. *Done when* a flow-style template gives a block-style item, with a test.
-- [ ] #35 An enum finding lists the allowed values. *Done when* text and JSON output name them, with a test.
+- [x] #36 `plm new` writes block style whatever the template's style. *Done when* a flow-style template gives a block-style item, with a test.
+- [x] #35 An enum finding lists the allowed values. *Done when* text and JSON output name them, with a test.
 - [ ] #33 Allocation: a requirement can be retained at its level with a reason; only links from the subtree below count. *Done when* the report shows `retained` and ignores sibling links.
 - [ ] #9 A test run can be confirmed against a newer system-under-test version with a reason. *Done when* the run is current again without a rerun.
 - [ ] #20 Projects define their own link types. *Done when* a declared `mitigates` link is accepted, others refused, and uncovered targets can be listed.
 
 ### Active topics
 
-* #36 `feat/new-block-style`, #35 `feat/enum-values`, #64 `feat/product-data-only`: feature-dev relaunched; next step: check each branch, `reviewer`, merge.
-* Feature review #54, #20, #33, #9: draft in `meetings/2026-11-14-feature-review-links-agents.md`; next step: add `reviewer`'s findings, open the meeting issue.
+* Feature review #54, #20, #33, #9: prepared with `reviewer`'s findings; waits for the owner (#71).
 
 ### Coming owner meetings
+
+* #71 Feature review 0.4: `meetings/2026-11-14-feature-review-links-agents.md`.
 
 ## Planned milestones
 

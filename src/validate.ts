@@ -30,7 +30,7 @@ function schemaFindings(file: YamlFile<unknown>, check: ValidateFunction, draft:
   check(file.data);
   return (check.errors ?? []).map((error) => {
     const path = [...error.instancePath.split('/').slice(1), ...(error.params.unevaluatedProperty ? [error.params.unevaluatedProperty] : [])];
-    return { ...finding(file, path, 'schema', `${path.join('.') || 'item'} ${error.message}`), severity: error.keyword === 'required' && draft ? 'warning' : 'error' };
+    return { ...finding(file, path, 'schema', `${path.join('.') || 'item'} ${error.message}${error.params.allowedValues ? ': ' + error.params.allowedValues.join(', ') : ''}`), severity: error.keyword === 'required' && draft ? 'warning' : 'error' };
   });
 }
 

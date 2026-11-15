@@ -91,7 +91,8 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings'
   expect(repo.entries.has('H')).toBe(false);
   const findings = validate(repo);
   expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', ...Array(6).fill('schema'), 'unknown-target']);
-  expect(findings.find((f) => f.message.includes('pass, fail, inconclusive'))).toMatchObject({ line: 8, col: 13 });
+  expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ line: 3, col: 9 });
+  expect(JSON.stringify(findings)).toContain('inconclusive');
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
 

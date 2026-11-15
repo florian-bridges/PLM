@@ -64,7 +64,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* The user must judge whether the change matters; the diff shows exactly what happened since confirmation. The stored commit avoids searching history, which is needed only for uncommitted confirmations or squashed branches.
 
 **TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links other than from test runs that became suspect, and runs that became outdated.
-*Rationale:* These are the questions a change board asks before approval.
+*Rationale:* These are the questions a reviewer asks of a change.
 
 **TE-05.2** A link shall have become suspect when its confirmed version equals the target's version at base but not at head.
 *Rationale:* Links already suspect at base are not caused by the change.
@@ -76,7 +76,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Pending verification differs from a missing test and needs a different action.
 
 **TE-06.3** Given a field name, coverage shall be grouped by its value into verified, pending, unverified and total, requirements lacking the field in their own group; JSON shall use the same groups.
-*Rationale:* Grouping by method gives the per-method denominator a gate needs.
+*Rationale:* Each verification method needs its own denominator.
 
 **TE-06.4** With `--allocation`, coverage shall list each requirement of an item that has a lower item with requirements, as allocated (has a `satisfies` link, any state) or unallocated, and exit 1 if any is unallocated; it shall reject `--by`.
 *Rationale:* An unallocated requirement is an undetected derivation gap.

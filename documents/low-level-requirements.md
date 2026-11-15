@@ -13,8 +13,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.3** The core shall list as an item's artifacts the paths of files in its folder not ignored by Git, except `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
 
-**CO-02.1** The core shall validate `item.yaml` with Ajv against its type's JSON Schema (2020-12, CO-02.8), and `meta/<ID>.yaml` against `types/meta.yaml` if present.
-*Rationale:* JSON Schema is understood by editors, Ajv and form generators.
+**CO-02.1** The core shall validate `item.yaml` with Ajv against its JSON Schema (2020-12, CO-02.8), `meta/<ID>.yaml` against `types/meta.yaml` if present, naming enum values.
+*Rationale:* JSON Schema suits editors, Ajv and form generators.
 
 **CO-02.2** The core shall report as errors: YAML syntax errors in item, requirement and meta files, items outside their type's home folder (CO-01.1), other items inside them, a `meta/<ID>.yaml` with no item, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late.

@@ -110,7 +110,7 @@ program.command('impact <range>').description('list a change\'s impact').action(
     result = impact(snapshotAt(repo.root, base), headSnapshot, changedFiles(repo.root, base, head)),
     lines = [
       ...result.changed.map((item) => `changed ${label(item)}`),
-      ...result.indirect.map((item) => `indirect ${label(item)}`),
+      ...result.propagated.map((item) => `propagated ${label(item)}`),
       ...result.suspects.map((state) => `suspect ${linkLabel(state)}`),
       ...result.runs.map((run) => `outdated run ${label(run)}`),
     ];

@@ -274,7 +274,7 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
   expect(plm(root, 'suspects', 'L').status).toBe(0);
   expect(plm(root, 'report', 'coverage').stdout).toBe('unverified R (Load)\n');
   setLoad(root);
-  expect(plm(root, 'impact', 'HEAD').stdout).toBe('changed R (Load)\nindirect A (Wing)\n');
+  expect(plm(root, 'impact', 'HEAD').stdout).toBe('changed R (Load)\npropagated A (Wing)\n');
 
   write(root, { 'wing/requirements/gust.yaml': 'id: G\ntype: requirement\ntitle: Gust\n', 'wing/spar/requirements/low.yaml': 'id: Z\ntype: requirement\n' });
   const alloc = plm(root, 'report', 'coverage', '--allocation');
@@ -333,7 +333,7 @@ test('TE-05.1–TE-05.2: impact', () => {
   write(root, { 'meta/X.yaml': `confirmed:\n  A:\n    version: ${currentVersions(loadRepo(root)).get('A')}\n` });
   commit(root);
   setLoad(root);
-  const expected = { changed: [{ id: 'R', title: 'Load' }], indirect: [{ id: 'A', title: 'Wing' }], suspects: [], runs: [{ id: 'X', title: 'Run' }] };
+  const expected = { changed: [{ id: 'R', title: 'Load' }], propagated: [{ id: 'A', title: 'Wing' }], suspects: [], runs: [{ id: 'X', title: 'Run' }] };
   expect(json(root, 'impact', 'HEAD')).toMatchObject(expected);
   commit(root);
   expect(json(root, 'impact', 'HEAD~1..HEAD')).toMatchObject(expected);
@@ -353,7 +353,7 @@ test('TE-01.1–TE-01.2: commit', () => {
   commit(firmware);
   expect(currentVersions(loadRepo(root)).get('P')).not.toBe(before);
   commit(root);
-  expect(json(root, 'impact', 'HEAD')).toMatchObject({ changed: [], indirect: [] });
+  expect(json(root, 'impact', 'HEAD')).toMatchObject({ changed: [], propagated: [] });
 });
 
 test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {

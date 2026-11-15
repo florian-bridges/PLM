@@ -18,7 +18,7 @@ export function impact(base: Snapshot, head: Snapshot, files: string[]) {
     name = (id: string) => named(head.repo.entries.has(id) ? head.repo : base.repo, id);
   return {
     changed: changedIds.filter((id) => ownersOfChangedFiles.has(id)).map(name),
-    indirect: changedIds.filter((id) => !ownersOfChangedFiles.has(id)).map(name),
+    propagated: changedIds.filter((id) => !ownersOfChangedFiles.has(id)).map(name),
     suspects: becameSuspects.filter((state) => !fromRun(head.repo, state)),
     runs: [...new Set(becameSuspects.filter((state) => fromRun(head.repo, state)).map((state) => state.source))].map(name),
   };

@@ -23,6 +23,8 @@ The aim: no code or documentation that nothing needs, no text with little conten
 
 **PLM is a general tool.** It serves any product that is split into subsystems with their own requirements, tests and items, not one project. No code, requirement, test or document names a project, its item kinds, folders or tooling; what varies by project is configuration in `plm.yaml` with a default. Example data in tests and documents is neutral. Projects that use PLM (such as `autonomous-fixed-wing`) are sources of needs, not of specifications: generalise the need before building it.
 
+**PLM holds product data only.** It manages items, requirements, structure, links and verification evidence, not how a project is run: gates, milestones, phases, meetings, schedules and due dates belong to the project's own process, outside PLM and outside the product tree.
+
 Keep the tool tight: implement only what the scenarios need. For every feature, ask whether it can be dropped or merged into an existing one, and propose that before adding to it. When a change touches a requirement, update requirement, code and test together.
 
 ## Commits

@@ -64,7 +64,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* The user must judge whether the change matters; the diff shows exactly what happened since confirmation. The stored commit avoids searching history, which is needed only for uncommitted confirmations or squashed branches.
 
 **TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links other than from test runs that became suspect, and runs that became outdated.
-*Rationale:* These are the questions a change board asks before approval.
+*Rationale:* These are the questions a reviewer asks of a change.
 
 **TE-05.2** A link shall have become suspect when its confirmed version equals the target's version at base but not at head.
 *Rationale:* Links already suspect at base are not caused by the change.
@@ -76,7 +76,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Pending verification differs from a missing test and needs a different action.
 
 **TE-06.3** Given a field name, coverage shall be grouped by its value into verified, pending, unverified and total, requirements lacking the field in their own group; JSON shall use the same groups.
-*Rationale:* Grouping by method gives the per-method denominator a gate needs.
+*Rationale:* Each verification method needs its own denominator.
 
 **TE-06.4** With `--allocation`, coverage shall list each requirement of an item that has a lower item with requirements, as allocated (has a `satisfies` link, any state) or unallocated, and exit 1 if any is unallocated; it shall reject `--by`.
 *Rationale:* An unallocated requirement is an undetected derivation gap.
@@ -95,7 +95,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.4** `get <ref> [<key>]` shall print a parameter's `value` or key, nothing else; if unset or TBD, nothing and exit 1; usage error if unknown.
 *Rationale:* Scripts read a value, not a copy.
 
-**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8), in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
+**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8) in block style, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters outside `a-z0-9` replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
 *Rationale:* Templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
 
 **CL-02.2** New IDs shall be the type's prefix (CO-02.8) plus six random Crockford Base32 characters; a type without one is a usage error.

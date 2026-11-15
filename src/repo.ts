@@ -149,7 +149,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
     home = repo.types[type]?.folder, typeHome = home && (kind === 'test-run' ? home : parent && `${parent.path}/${home}`), // CO-01.1
     inGroup = !!parent && (!typeHome || cwd === typeHome || cwd.startsWith(`${typeHome}/`)),
     path = [inGroup ? cwd : typeHome || parent?.path, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id].filter(Boolean).join('/'),
-    item = { path: kind === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`, doc: new Document(readYaml(repo.root, `types/${type}.yaml`).doc.get('template', true)) };
+    item = { path: kind === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`, doc: new Document(readYaml(repo.root, `types/${type}.yaml`).doc.toJS()?.template) };
   if (existsSync(join(repo.root, item.path))) throw new UsageError(`${item.path} exists`);
   for (const [key, value] of Object.entries({ id, type, title })) item.doc.setIn([key], value);
   writeYaml(repo.root, item);

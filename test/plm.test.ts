@@ -111,7 +111,7 @@ test('CL-01.1,CO-02.1,CO-02.8:remove',()=>{
 test('CO-01.1, CO-02.1, CO-02.8, CL-02.1–CL-02.2: types', () => {
   write(root, {
     'types/study.yaml': 'folder: studies\n',
-    'types/analysis.yaml': 'colour: red\nprefix: ANA-\nfolder: analyses\ntemplate:\n  method: review\nfields:\n  method: {enum: [review]}\nrequired: [tool]\n',
+    'types/analysis.yaml': 'colour: red\nprefix: ANA-\nfolder: analyses\ntemplate: {method: review}\nfields:\n  method: {enum: [review]}\nrequired: [tool]\n',
     'types/part.yaml': 'base: assembly\nfields:\n  finish: {type: string}\n',
     'types/meta.yaml': 'fields:\n  owner: {type: string}\n',
     'bolt/item.yaml': `${bolt}finish: zinc\n`,

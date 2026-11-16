@@ -1,7 +1,7 @@
 import { dirname } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, targetId, typeOf, usesOf, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
-import { baseSchema, builtinTypes, disallowed, type TypeDef } from './schemas.ts';
+import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, targetId, typeOf, usesOf, yamlIn, type Parameter, type Repo, type Settings, type YamlFile } from './repo.ts';
+import { baseSchema, builtinTypes, disallowed, linkRules, type TypeDef } from './schemas.ts';
 
 // CO-02.4
 export interface Finding { file: string; line: number; col: number; severity: 'error' | 'warning'; code: string; message: string }
@@ -69,7 +69,7 @@ export function validate(repo: Repo) {
       const param = parameterOf(repo, link.target), targetEntry = repo.entries.get(targetId(link.target)),
         atTarget = (code: string) => finding(item, item.doc.hasIn(['links', index]) ? ['links', index, 'target'] : ['text'], code, link.target);
       if (!targetEntry || (link.target.includes(':') && !param)) return void findings.push(atTarget('unknown-target'));
-      const bad = disallowed(typeOf(repo, type), link.type, typeOf(repo, targetEntry.item.data.type)); // CO-02.8
+      const bad = disallowed(repo, typeOf(repo, type), link.type, typeOf(repo, targetEntry.item.data.type)); // CO-02.8
       if (bad) findings.push(finding(item, ['links', index, 'type'], 'link-type', bad));
       if (!param) return; // CO-02.7
       if (param.parameter.value == null) findings.push({ ...atTarget('tbd-source'), severity: 'warning' });
@@ -84,6 +84,12 @@ export function validate(repo: Repo) {
     for (const key of Object.keys(file.data)) if (!['base', 'prefix', 'folder', 'template', 'fields', 'required'].includes(key)) findings.push(finding(file, [key], 'type-file', key));
     const { base } = file.data;
     if (base && (!Object.hasOwn(builtinTypes, base) || Object.hasOwn(builtinTypes, file.path.slice(6, -5)) || file.data.folder)) findings.push(finding(file, ['base'], 'type-file', base));
+  }
+  // CO-02.9
+  const declaredLinks = Object.keys(repo.settings.links ?? {});
+  if (declaredLinks.some((name) => Object.hasOwn(linkRules, name))) {
+    const plmFile = readYaml<Settings>(repo.root, 'plm.yaml');
+    for (const name of declaredLinks) if (Object.hasOwn(linkRules, name)) findings.push(finding(plmFile, ['links', name], 'builtin-link', name));
   }
 
   return [...findings, ...cycles(repo)];

@@ -4,9 +4,9 @@ import { createRequire } from 'node:module';
 import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, type LinkState } from './links.ts';
+import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, unreached, type LinkState } from './links.ts';
 import { artifacts, entry, expanded, loadRepo, named, newItem, parameterOf, Refused, targetId, UsageError, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
-import { linkRules, results } from './schemas.ts';
+import { allowedLinks, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
 import { currentVersions, snapshotAt } from './version.ts';
@@ -54,7 +54,7 @@ program.command('show <id>').description('show an item').action((id) => {
 
 program.command('link <source> <type> <target>').description('add a link')
   .option('--remove')
-  .addHelpText('after', () => 'Links (* any type):\n' + Object.entries(linkRules).map(([type, [from, to]]) => `${from} ${type} ${to}`).join('\n'))
+  .addHelpText('after', () => 'Links (* any type):\n' + Object.entries(allowedLinks(openRepo())).map(([type, [from, to]]) => `${from} ${type} ${to}`).join('\n'))
   .action((source, type, target, options) => link(openRepo(), source, type, target, options.remove));
 
 // CL-01.3
@@ -136,12 +136,19 @@ program.command('test').command('record <test-case...>').description('record a t
     output(id, { id });
   });
 
-// TE-06.2, TE-06.4
+// TE-06.2, TE-06.4, TE-06.5
 program.command('report').command('coverage [item]').description('report verification coverage')
   .option('--by <field>')
   .option('--allocation')
+  .option('--link <type>')
   .action((item, options) => {
-    const state = scoped(item), alloc = options?.allocation,
+    const state = scoped(item);
+    if (options.link) {
+      const rows = unreached(state[0], state[1], options.link, state[2]);
+      exitCode = +rows.length;
+      return output(rows.map(label).join('\n'), rows);
+    }
+    const alloc = options?.allocation,
       rows = alloc ? allocation(...state) : coverage(...state);
     if (alloc && options.by) throw new UsageError('--by');
     exitCode = +rows.some((row) => alloc ? row.state === 'unallocated' : row.state !== 'verified');

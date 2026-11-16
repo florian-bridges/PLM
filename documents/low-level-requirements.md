@@ -34,6 +34,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.8** A type shall be built in (CO-02.5) or defined by `types/<type>.yaml` with optional `base` (a built-in type), `prefix`, `folder` (home folder), `template`, `fields` (JSON Schema properties) and `required`; a file named after a built-in type extends or overrides it, and `types/meta.yaml` instead gives the fields of `meta/<ID>.yaml`. A type with `base` adds its `fields` and `required` to the base's and has the base's home folder and, unless it sets one, prefix; a core or CLI requirement naming a built-in type applies to types based on it. The core shall report as error an item of any other type (`unknown-type`) and a type file with any other key, a `base` that is not a built-in type or is in a built-in type's file, or `folder` with `base` (`type-file`).
 *Rationale:* One YAML file per type defines it in one place and lets programs add types and attributes without mixing JSON and YAML, and `base` lets a variant keep a built-in type's behaviour.
 
+**CO-02.9** `plm.yaml` may declare `links: {<name>: {from: [<type>…], to: [<type>…]}}` (`*` any type); declared link types shall be checked as built-in ones (CO-02.2), and naming a built-in link type shall be an error.
+*Rationale:* Projects link items in ways PLM does not build in, with the same rule checking as built-in links.
+
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes.
 *Rationale:* One index format serves the CLI and VS Code without a search server.
 
@@ -81,9 +84,12 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-06.4** With `--allocation`, coverage shall list each requirement of an item that has a lower item as allocated (a `satisfies` link, any state, from an item below its own item or one of its requirements), retained (field `retained: <reason>` on the requirement) or unallocated, and exit 1 if any is unallocated; it shall reject `--by`.
 *Rationale:* An unallocated requirement is an undetected derivation gap; a sibling's link does not close it, and `retained` records a deliberate stay.
 
+**TE-06.5** With `--link <type>`, coverage shall list the items of the link type's target types, in the repository or subtree, that no link of that type reaches (any state), and exit 1 if any.
+*Rationale:* Declared link types need the same gap check as unallocated requirements (TE-06.4).
+
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`. `new --help` shall list all types (CO-02.8), `link --help` the links CO-02.6 allows; each command shall have a one-line description.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`. `new --help` shall list all types (CO-02.8), `link --help` the links CO-02.6 and CO-02.9 allow; each command shall have a one-line description.
 *Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made; help spares looking types up.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.

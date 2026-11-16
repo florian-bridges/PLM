@@ -18,7 +18,8 @@ interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>>; stat
 
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 export interface Entry { id: string; path: string; nested: string[]; requirements: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
-interface Settings { informative?: string[] }
+// CO-02.9
+interface Settings { informative?: string[]; links?: Record<string, { from: string[]; to: string[] }> }
 export interface Repo { root: string; settings: Settings; types: Record<string, TypeDef>; entries: Map<string, Entry>; duplicates: Entry[] }
 
 export class UsageError extends Error {}

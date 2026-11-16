@@ -1,4 +1,5 @@
 // CO-01.2, CO-02.1, CO-02.5
+import { typeOf, type Repo } from './repo.ts';
 const str = { type: 'string' };
 export const results = ['pass', 'fail', 'inconclusive'];
 
@@ -34,6 +35,14 @@ export const linkRules: Record<string, [string[], string[]]> = {
   tests: [['test-run'], ['*']],
   'derives-from': [['*'], ['*']],
 };
+// CO-02.9
+export const allowedLinks = (repo: Repo): Record<string, [string[], string[]]> => ({
+  ...linkRules,
+  ...Object.fromEntries(Object.entries(repo.settings.links ?? {}).map(([name, { from, to }]) => [name, [from, to]])),
+});
+
+// CO-02.9: a listed type matches an item's own type or its base
+export const allows = (repo: Repo, types: string[], type: string) => types.some((a) => a === '*' || a === type || a === typeOf(repo, type));
 // CO-02.2: message, empty if allowed
-export const disallowed = (source: string, type: string, target: string) =>
-  [source, target].every((t, i) => (linkRules[type]?.[i] ?? []).some((a) => a === '*' || a === t)) ? '' : [source, type, target].join(' ');
+export const disallowed = (repo: Repo, source: string, type: string, target: string) =>
+  [source, target].every((t, i) => allows(repo, allowedLinks(repo)[type]?.[i] ?? [], t)) ? '' : [typeOf(repo, source), type, typeOf(repo, target)].join(' ');

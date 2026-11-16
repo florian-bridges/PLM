@@ -108,6 +108,18 @@ test('CL-01.1,CO-02.1,CO-02.8:remove',()=>{
   expect(loadRepo(root).entries.get('P')!.meta.data.confirmed?.L).toBeUndefined();
 });
 
+test('CO-02.2, CO-02.9, CL-01.1, TE-06.5: declared links', () => {
+  write(root, { 'plm.yaml': 'links:\n  mitigates: {from: ["*"], to: [assembly]}\n', 'types/wing.yaml': 'base: assembly\n', 'wing/item.yaml': 'id: A\ntype: wing\ntitle: Wing\nuses: [L]\n' });
+  expect(plm(root, 'link', '--help').stdout).toContain('* mitigates assembly\n');
+  expect(plm(root, 'link', 'P', 'mitigates', 'R')).toMatchObject({ status: 2, stderr: 'part mitigates requirement\n' });
+  expect(plm(root, 'report', 'coverage', '--link', 'mitigates')).toMatchObject({ status: 1, stdout: 'A (Wing)\n' });
+  expect(plm(root, 'link', 'P', 'mitigates', 'A').status).toBe(0);
+  expect(plm(root, 'report', 'coverage', '--link', 'mitigates')).toMatchObject({ status: 0, stdout: '\n' });
+
+  write(root, { 'plm.yaml': 'links:\n  satisfies: {from: ["*"], to: [part]}\n' });
+  expect(validate(loadRepo(root)).map((f) => f.code)).toContain('builtin-link');
+});
+
 test('CO-01.1, CO-02.1, CO-02.8, CL-02.1–CL-02.2: types', () => {
   write(root, {
     'types/study.yaml': 'folder: studies\n',
@@ -265,6 +277,7 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
   expect(plm(root, '--version').stdout).toBe(`${JSON.parse(readFileSync('package.json', 'utf8')).version}\n`);
   expect(plm(root, 'new', '--help').stdout).toContain('Types: requirement test-case test-run part assembly\n');
   expect(plm(root, 'link', '--help').stdout).toContain('(* any type):\n* satisfies requirement\n');
+  expect(plm(base, 'link', '--help').stdout).toContain('* satisfies requirement\n'); // CL-01.1: outside a repository
   expect(plm(root, 'validate').status).toBe(0);
   write(root, { 'meta/L.yaml': 'status: draft\nstatus: draft\n' });
   expect(plm(root, 'validate')).toMatchObject({ status: 1, stdout: 'meta/L.yaml:2:1 error yaml: DUPLICATE_KEY\n' });

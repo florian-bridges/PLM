@@ -32,7 +32,7 @@ Already on `develop` and unreleased, shipping with 0.4: #26–#28 type files (br
 - [x] #35 An enum finding lists the allowed values. *Done when* text and JSON output name them, with a test.
 - [x] #33 Allocation: a requirement can be retained at its level with a reason; only links from the subtree below count. *Done when* the report shows `retained` and ignores sibling links.
 - [x] #9 A test run can be confirmed against a newer system-under-test version with a reason. *Done when* the run is current again without a rerun.
-- [ ] #20 Projects define their own link types. *Done when* a declared `mitigates` link is accepted, others refused, and uncovered targets can be listed.
+- [x] #20 Projects define their own link types. *Done when* a declared `mitigates` link is accepted, others refused, and uncovered targets can be listed.
 
 ### Active topics
 

@@ -116,7 +116,7 @@ export const suspects = (repo: Repo, states: LinkState[], root?: string) => {
 };
 
 export interface Coverage {
-  requirement: string; title: string; state: 'verified' | 'pending' | 'unverified' | 'allocated' | 'unallocated';
+  requirement: string; title: string; state: 'verified' | 'pending' | 'unverified' | 'allocated' | 'retained' | 'unallocated';
   tests: { testCase: Named; run?: Named; result?: string; outdated?: boolean }[];
 }
 
@@ -148,7 +148,14 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
 
 // TE-06.4
 export function allocation(repo: Repo, states: LinkState[], root?: string): Coverage[] {
-  const inScope = within(repo, root), satisfied = new Set(states.filter((s) => s.link.type === 'satisfies').map((s) => s.link.target));
-  return [...repo.entries.values()].filter((i) => inScope(i.id) && subtree(repo, i.id).slice(1).some((c) => entry(repo, c).requirements.length))
-    .flatMap((i) => i.requirements.map((id) => ({ requirement: id, title: named(repo, id).title, tests: [], state: satisfied.has(id) ? 'allocated' : 'unallocated' })));
+  const inScope = within(repo, root), satisfiesLinks = states.filter((s) => s.link.type === 'satisfies');
+  return [...repo.entries.values()].filter((i) => inScope(i.id) && subtree(repo, i.id).length > 1)
+    .flatMap((i) => {
+      const below = new Set(subtree(repo, i.id).slice(1));
+      return i.requirements.map((id) => {
+        const allocated = satisfiesLinks.some((s) => s.link.target === id && below.has(s.source)),
+          retained = entry(repo, id).item.data.retained;
+        return { requirement: id, title: named(repo, id).title, tests: [], state: allocated ? 'allocated' : retained ? 'retained' : 'unallocated' } as Coverage;
+      });
+    });
 }

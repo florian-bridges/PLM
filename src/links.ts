@@ -72,7 +72,7 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
 export function link(repo: Repo, source: string, type: string, target: string, remove?: boolean) {
   const { item, meta } = entry(repo, source), links = list<Link>(item.data.links),
     at = links.findIndex((l) => l.type === type && l.target === target), found = repo.entries.get(targetId(target)),
-    bad = !remove && found && disallowed(repo, typeOf(repo, item.data.type), type, typeOf(repo, found.item.data.type)); // CO-02.8
+    bad = !remove && found && disallowed(repo, String(item.data.type), type, String(found.item.data.type)); // CO-02.9
   if (bad) throw new UsageError(bad);
   if (!remove) item.doc.setIn(['links', links.length], { type, target });
   else if (at < 0) throw new UsageError(target);
@@ -168,6 +168,6 @@ export function unreached(repo: Repo, states: LinkState[], type: string, root?: 
   if (!to) throw new UsageError(type);
   const reached = new Set(states.filter((s) => s.link.type === type).map((s) => targetId(s.link.target))),
     inScope = within(repo, root);
-  return [...repo.entries.values()].filter((e) => inScope(e.id) && !reached.has(e.id) && allows(to, typeOf(repo, e.item.data.type)))
+  return [...repo.entries.values()].filter((e) => inScope(e.id) && !reached.has(e.id) && allows(repo, to, String(e.item.data.type)))
     .map((e) => named(repo, e.id));
 }

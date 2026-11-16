@@ -6,7 +6,7 @@ import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, unreached, type LinkState } from './links.ts';
 import { artifacts, entry, expanded, loadRepo, named, newItem, parameterOf, Refused, targetId, UsageError, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
-import { allowedLinks, results } from './schemas.ts';
+import { allowedLinks, linkRules, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
 import { currentVersions, snapshotAt } from './version.ts';
@@ -52,9 +52,11 @@ program.command('show <id>').description('show an item').action((id) => {
   output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
+// CL-01.1: built-in links outside a repository
 program.command('link <source> <type> <target>').description('add a link')
   .option('--remove')
-  .addHelpText('after', () => 'Links (* any type):\n' + Object.entries(allowedLinks(openRepo())).map(([type, [from, to]]) => `${from} ${type} ${to}`).join('\n'))
+  .addHelpText('after', () => { let links; try { links = allowedLinks(openRepo()); } catch { links = linkRules; }
+    return 'Links (* any type):\n' + Object.entries(links).map(([type, [from, to]]) => `${from} ${type} ${to}`).join('\n'); })
   .action((source, type, target, options) => link(openRepo(), source, type, target, options.remove));
 
 // CL-01.3

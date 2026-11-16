@@ -69,7 +69,7 @@ export function validate(repo: Repo) {
       const param = parameterOf(repo, link.target), targetEntry = repo.entries.get(targetId(link.target)),
         atTarget = (code: string) => finding(item, item.doc.hasIn(['links', index]) ? ['links', index, 'target'] : ['text'], code, link.target);
       if (!targetEntry || (link.target.includes(':') && !param)) return void findings.push(atTarget('unknown-target'));
-      const bad = disallowed(repo, typeOf(repo, type), link.type, typeOf(repo, targetEntry.item.data.type)); // CO-02.8
+      const bad = disallowed(repo, type, link.type, String(targetEntry.item.data.type)); // CO-02.9
       if (bad) findings.push(finding(item, ['links', index, 'type'], 'link-type', bad));
       if (!param) return; // CO-02.7
       if (param.parameter.value == null) findings.push({ ...atTarget('tbd-source'), severity: 'warning' });

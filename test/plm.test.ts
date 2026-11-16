@@ -290,7 +290,7 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
   expect([broken.status, broken.stderr.match(/fatal/g)?.length]).toEqual([3, 1]);
 });
 
-test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
+test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-02.2, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
   const coverage = () => json(root, 'report', 'coverage', 'A')[0],
     record = (...results) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'L', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
   expect(coverage().state).toBe('unverified');
@@ -318,6 +318,11 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-03.1, 
   expect(coverage()).toMatchObject({ state: 'verified', tests: tests(false) });
   write(root, { 'wing/spar/item.yaml': spar + 'material: x\n' });
   expect(coverage()).toEqual({ requirement: 'R', title: 'Load', state: 'pending', tests: tests(true) });
+  // TE-02.2
+  expect(plm(root, 'confirm', run, 'T', '--reason', 'pinned').status).toBe(1);
+  expect(plm(root, 'confirm', run, 'A', '--reason', 'pinned').status).toBe(0);
+  expect(loadRepo(root).entries.get(run)?.meta.data.confirmed?.A.reason).toBe('pinned');
+  expect(coverage()).toMatchObject({ state: 'verified', tests: tests(false) });
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
   expect(json(root, 'report', 'coverage', '--by', 'type')[0]).toMatchObject({ total: 1 });

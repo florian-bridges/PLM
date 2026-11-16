@@ -44,24 +44,25 @@ export function linkStates(repo: Repo, versions: Map<string, string>, only?: str
 export const fromRun = (repo: Repo, state: LinkState) => typeOf(repo, repo.entries.get(state.source)?.item.data.type) === 'test-run'; // CO-02.8
 
 // TE-02.1–TE-02.2
-function confirmation(repo: Repo, target: string, version: string | undefined) {
+function confirmation(repo: Repo, target: string, version: string | undefined, reason?: string) {
   const by = tryGit(repo.root, ['config', 'user.name']);
   if (!by) throw new Refused('Set git user.name');
   const hash = tryGit(repo.root, ['rev-parse', '--verify', '-q', '--short', 'HEAD']),
     exact = hash && versionAt(repo.root, 'HEAD', target) === version;
-  return { title: named(repo, targetId(target)).title, version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }) };
+  return { title: named(repo, targetId(target)).title, version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }), ...(reason && { reason }) };
 }
 
 // TE-02.1, CL-01.2
-export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, target?: string) {
-  const sourceEntry = entry(repo, source), links = linksOf(sourceEntry).filter((link) => !target || link.target === target);
-  // TE-02.2, CO-02.8
-  if (typeOf(repo, sourceEntry.item.data.type) === 'test-run') throw new Refused('Test runs confirm at recording');
+export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, target?: string, reason?: string) {
+  const sourceEntry = entry(repo, source), links = linksOf(sourceEntry).filter((link) => !target || link.target === target),
+    isRun = typeOf(repo, sourceEntry.item.data.type) === 'test-run'; // CO-02.8
+  // TE-02.2
+  if (isRun && (!reason || links.some((link) => link.type !== 'tests'))) throw new Refused('Only a run\'s tests link, with --reason');
   for (const link of links) {
     const targetFile = repo.entries.get(targetId(link.target))?.item.path,
       broken = findings.some((finding) => finding.severity === 'error' && finding.file === targetFile);
     if (broken || !versions.has(link.target)) throw new Refused(`${link.target} fails validation`);
-    sourceEntry.meta.doc.setIn(['confirmed', link.target], confirmation(repo, link.target, versions.get(link.target)));
+    sourceEntry.meta.doc.setIn(['confirmed', link.target], confirmation(repo, link.target, versions.get(link.target), reason));
   }
   if (links.length) writeYaml(repo.root, sourceEntry.meta);
   return links;

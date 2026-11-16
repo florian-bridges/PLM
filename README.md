@@ -29,7 +29,7 @@ plm suspects; plm show $PRT                      # suspect until confirmed again
 
 ## Use by LLM agents
 
-PLM suits an LLM coding agent as well as a human: items are plain YAML files in Git, so the agent reads and diffs them like code, with no server or database to reach. `plm new` prints the new ID, so a script can capture it: `REQ=$(plm new requirement "Title")`. Every command accepts `--format json` and returns a defined exit code (0 success, 1 findings, 2 usage error, 3 internal error), so an agent acts on the result without parsing prose. Before it commits, an agent runs `plm validate`, `plm suspects` and `plm impact` as checks: the first two catch schema errors and links left unconfirmed after a change, the third lists what else a change in a given range may affect.
+PLM suits an LLM coding agent as well as a human: items are plain YAML files the agent reads and diffs like code, and the commands above script cleanly, since `plm new` prints the ID and `--format json` and the exit codes replace parsing prose. Before it commits, an agent runs `plm validate` (schema errors), `plm suspects` (links unconfirmed after a change) and `plm impact` (what a change in a range may affect).
 
 ## Configuration
 

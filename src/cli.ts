@@ -91,9 +91,9 @@ program.command('search <query...>').description('find items').action((query) =>
   output(found.map(label).join('\n'), found);
 });
 
-// CL-01.2
-program.command('confirm <source> [target]').description('confirm links').action((source, target) => {
-  const repo = openRepo(), links = confirm(repo, currentVersions(repo), validate(repo), source, target);
+// CL-01.2, TE-02.2
+program.command('confirm <source> [target]').description('confirm links').option('--reason <text>').action((source, target, options) => {
+  const repo = openRepo(), links = confirm(repo, currentVersions(repo), validate(repo), source, target, options.reason);
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 

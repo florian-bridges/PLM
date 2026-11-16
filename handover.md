@@ -9,7 +9,7 @@ Latest release: 0.3.0 (2026-11-11). Milestones and entry conditions: `timeline.m
 * Next milestone 0.4, budget 3 windows: seven entry conditions in `timeline.md` (#64, #54, #36, #35, #33, #9, #20). Roadmap 0.4–0.9 set by the owner on 2026-11-14 (backlog cleanup from the control room); each milestone is a GitHub milestone.
 * Unreleased on `develop`, shipping with 0.4: #26–#28 type files (breaking; the CHANGELOG needs the conversion tables) and #19 parameter citations in `text`.
 
-* #64, #36, #35 merged and ticked. Feature review #71 held: go for #54, #33, #9, #20; the issues hold the decided scope; US-12 and TE-06 are on `develop`, word limits raised for them. Building #54, #33, #9 in parallel (`feat/llm-agents`, `feat/allocation-retained`, `feat/confirm-run`); #20 after #33 merges.
+* #64, #36, #35 merged and ticked. Feature review #71 held: go for #54, #33, #9, #20; the issues hold the decided scope; US-12 and TE-06 are on `develop`, word limits raised for them. #54 merged (#72). Building #33, #9 in parallel (`feat/allocation-retained`, `feat/confirm-run`); #20 after #33 merges.
 
 ## Open pull requests and blockers
 

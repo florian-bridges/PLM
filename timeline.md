@@ -30,13 +30,13 @@ Already on `develop` and unreleased, shipping with 0.4: #26–#28 type files (br
 - [x] #54 Use by LLM agents: a US entry in `documents/scenarios.md` and a README section. *Done when* both exist, built on existing commands.
 - [x] #36 `plm new` writes block style whatever the template's style. *Done when* a flow-style template gives a block-style item, with a test.
 - [x] #35 An enum finding lists the allowed values. *Done when* text and JSON output name them, with a test.
-- [ ] #33 Allocation: a requirement can be retained at its level with a reason; only links from the subtree below count. *Done when* the report shows `retained` and ignores sibling links.
+- [x] #33 Allocation: a requirement can be retained at its level with a reason; only links from the subtree below count. *Done when* the report shows `retained` and ignores sibling links.
 - [x] #9 A test run can be confirmed against a newer system-under-test version with a reason. *Done when* the run is current again without a rerun.
 - [ ] #20 Projects define their own link types. *Done when* a declared `mitigates` link is accepted, others refused, and uncovered targets can be listed.
 
 ### Active topics
 
-* Feature review #71 held 2026-11-16: go for #54, #33, #9, #20 (A with the reviewer's cuts). #54 (#72), #9 (#73) merged. #33 in review; #20 after #33 (both touch coverage).
+* Feature review #71 held 2026-11-16: go for #54, #33, #9, #20 (A with the reviewer's cuts). #54 (#72), #9 (#73), #33 (#74) merged. #20 being built (`feat/link-types`).
 
 ### Coming owner meetings
 

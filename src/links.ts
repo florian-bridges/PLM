@@ -149,10 +149,10 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
 // TE-06.4
 export function allocation(repo: Repo, states: LinkState[], root?: string): Coverage[] {
   const inScope = within(repo, root), satisfiesLinks = states.filter((s) => s.link.type === 'satisfies');
-  return [...repo.entries.values()].filter((i) => inScope(i.id) && subtree(repo, i.id).length > 1)
+  return [...repo.entries.values()].filter((i) => inScope(i.id))
     .flatMap((i) => {
       const below = new Set(subtree(repo, i.id).slice(1));
-      return i.requirements.map((id) => {
+      return !below.size ? [] : i.requirements.map((id) => {
         const allocated = satisfiesLinks.some((s) => s.link.target === id && below.has(s.source)),
           retained = entry(repo, id).item.data.retained;
         return { requirement: id, title: named(repo, id).title, tests: [], state: allocated ? 'allocated' : retained ? 'retained' : 'unallocated' } as Coverage;

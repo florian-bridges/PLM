@@ -27,6 +27,10 @@ plm suspects; plm show $PRT                      # suspect until confirmed again
 
 `plm --help` lists all commands, among them `search`, `impact <base>[..<head>]`, `test record` and `report coverage`. `plm` works from any folder of the repository; `--format json` gives machine-readable output. Exit codes: 0 success, 1 findings, 2 usage error, 3 internal error.
 
+## Use by LLM agents
+
+PLM suits an LLM coding agent as well as a human: items are plain YAML files the agent reads and diffs like code, and the commands above script cleanly, since `plm new` prints the ID and `--format json` and the exit codes replace parsing prose. Before it commits, an agent runs `plm validate` (schema errors), `plm suspects` (links unconfirmed after a change) and `plm impact` (what a change in a range may affect).
+
 ## Configuration
 
 `plm.yaml` marks the repository root:

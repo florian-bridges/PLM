@@ -27,7 +27,7 @@ Already on `develop` and unreleased, shipping with 0.4: #26–#28 type files (br
 ### Entry conditions
 
 - [x] #64 Product data only: no gates, milestones, meetings or due dates in scenarios, requirements, README or code; the rule stands in `CLAUDE.md` Scope. *Done when* the grep in the issue finds nothing.
-- [ ] #54 Use by LLM agents: a US entry in `documents/scenarios.md` and a README section. *Done when* both exist, built on existing commands.
+- [x] #54 Use by LLM agents: a US entry in `documents/scenarios.md` and a README section. *Done when* both exist, built on existing commands.
 - [x] #36 `plm new` writes block style whatever the template's style. *Done when* a flow-style template gives a block-style item, with a test.
 - [x] #35 An enum finding lists the allowed values. *Done when* text and JSON output name them, with a test.
 - [ ] #33 Allocation: a requirement can be retained at its level with a reason; only links from the subtree below count. *Done when* the report shows `retained` and ignores sibling links.
@@ -36,7 +36,7 @@ Already on `develop` and unreleased, shipping with 0.4: #26–#28 type files (br
 
 ### Active topics
 
-* Feature review #71 held 2026-11-16: go for #54, #33, #9, #20 (A with the reviewer's cuts). Building #54, #33, #9 in parallel; #20 after #33 (both touch coverage).
+* Feature review #71 held 2026-11-16: go for #54, #33, #9, #20 (A with the reviewer's cuts). #54 merged (#72). Building #33, #9 in parallel; #20 after #33 (both touch coverage).
 
 ### Coming owner meetings
 

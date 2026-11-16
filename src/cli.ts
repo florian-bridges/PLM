@@ -145,7 +145,7 @@ program.command('report').command('coverage [item]').description('report verific
     const state = scoped(item);
     if (options.link) {
       const rows = unreached(state[0], state[1], options.link, state[2]);
-      exitCode = +rows.length;
+      exitCode = rows.length && 1;
       return output(rows.map(label).join('\n'), rows);
     }
     const alloc = options?.allocation,

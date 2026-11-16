@@ -1,6 +1,6 @@
 import { dirname } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, targetId, typeOf, usesOf, yamlIn, type Parameter, type Repo, type Settings, type YamlFile } from './repo.ts';
+import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, targetId, typeOf, usesOf, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, disallowed, linkRules, type TypeDef } from './schemas.ts';
 
 // CO-02.4
@@ -86,11 +86,8 @@ export function validate(repo: Repo) {
     if (base && (!Object.hasOwn(builtinTypes, base) || Object.hasOwn(builtinTypes, file.path.slice(6, -5)) || file.data.folder)) findings.push(finding(file, ['base'], 'type-file', base));
   }
   // CO-02.9
-  const declaredLinks = Object.keys(repo.settings.links ?? {});
-  if (declaredLinks.some((name) => Object.hasOwn(linkRules, name))) {
-    const plmFile = readYaml<Settings>(repo.root, 'plm.yaml');
-    for (const name of declaredLinks) if (Object.hasOwn(linkRules, name)) findings.push(finding(plmFile, ['links', name], 'builtin-link', name));
-  }
+  const plmFile = readYaml(repo.root, 'plm.yaml');
+  for (const name of Object.keys(repo.settings.links ?? {})) if (Object.hasOwn(linkRules, name)) findings.push(finding(plmFile, ['links', name], 'builtin-link', name));
 
   return [...findings, ...cycles(repo)];
 }

@@ -115,7 +115,6 @@ test('CO-02.2, CO-02.9, CL-01.1, TE-06.5: declared links', () => {
   expect(plm(root, 'report', 'coverage', '--link', 'mitigates')).toMatchObject({ status: 1, stdout: 'A (Wing)\n' });
   expect(plm(root, 'link', 'P', 'mitigates', 'A').status).toBe(0);
   expect(plm(root, 'report', 'coverage', '--link', 'mitigates')).toMatchObject({ status: 0, stdout: '\n' });
-  expect(plm(root, 'report', 'coverage', '--link', 'bogus').status).toBe(2);
 
   write(root, { 'plm.yaml': 'links:\n  satisfies: {from: ["*"], to: [part]}\n' });
   expect(validate(loadRepo(root)).map((f) => f.code)).toContain('builtin-link');

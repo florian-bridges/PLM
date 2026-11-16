@@ -35,7 +35,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* One YAML file per type defines it in one place and lets programs add types and attributes without mixing JSON and YAML, and `base` lets a variant keep a built-in type's behaviour.
 
 **CO-02.9** `plm.yaml` may declare `links: {<name>: {from: [<type>…], to: [<type>…]}}` (`*` any type); declared link types shall be checked as built-in ones (CO-02.2), and naming a built-in link type shall be an error.
-*Rationale:* Projects link items in ways PLM does not build in, with the same rule checking as built-in links.
+*Rationale:* Projects link items in ways PLM does not build in.
 
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes.
 *Rationale:* One index format serves the CLI and VS Code without a search server.

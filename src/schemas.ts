@@ -41,8 +41,7 @@ export const allowedLinks = (repo: Repo): Record<string, [string[], string[]]> =
   ...Object.fromEntries(Object.entries(repo.settings.links ?? {}).map(([name, { from, to }]) => [name, [from, to]])),
 });
 
+export const allows = (types: string[], type: string) => types.some((a) => a === '*' || a === type);
 // CO-02.2: message, empty if allowed
-export const disallowed = (repo: Repo, source: string, type: string, target: string) => {
-  const rules = allowedLinks(repo);
-  return [source, target].every((t, i) => (rules[type]?.[i] ?? []).some((a) => a === '*' || a === t)) ? '' : [source, type, target].join(' ');
-};
+export const disallowed = (repo: Repo, source: string, type: string, target: string) =>
+  [source, target].every((t, i) => allows(allowedLinks(repo)[type]?.[i] ?? [], t)) ? '' : [source, type, target].join(' ');

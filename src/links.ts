@@ -2,7 +2,7 @@ import { copyFileSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
 import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, typeOf, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
-import { allowedLinks, disallowed } from './schemas.ts';
+import { allowedLinks, allows, disallowed } from './schemas.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
 
@@ -168,6 +168,6 @@ export function unreached(repo: Repo, states: LinkState[], type: string, root?: 
   if (!to) throw new UsageError(type);
   const reached = new Set(states.filter((s) => s.link.type === type).map((s) => targetId(s.link.target))),
     inScope = within(repo, root);
-  return [...repo.entries.values()].filter((e) => inScope(e.id) && !reached.has(e.id) && to.some((t) => t === '*' || typeOf(repo, e.item.data.type) === t))
+  return [...repo.entries.values()].filter((e) => inScope(e.id) && !reached.has(e.id) && allows(to, typeOf(repo, e.item.data.type)))
     .map((e) => named(repo, e.id));
 }

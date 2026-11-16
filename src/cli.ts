@@ -144,7 +144,7 @@ program.command('report').command('coverage [item]').description('report verific
     const state = scoped(item), alloc = options?.allocation,
       rows = alloc ? allocation(...state) : coverage(...state);
     if (alloc && options.by) throw new UsageError('--by');
-    exitCode = +rows.some((row) => row.state !== (alloc ? 'allocated' : 'verified'));
+    exitCode = +rows.some((row) => alloc ? row.state === 'unallocated' : row.state !== 'verified');
     if (options?.by) {
       // TE-06.3
       const groups: Record<string, any> = {};

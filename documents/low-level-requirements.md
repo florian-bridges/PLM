@@ -78,8 +78,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-06.3** Given a field name, coverage shall be grouped by its value into verified, pending, unverified and total, requirements lacking the field in their own group; JSON shall use the same groups.
 *Rationale:* Each verification method needs its own denominator.
 
-**TE-06.4** With `--allocation`, coverage shall list each requirement of an item that has a lower item with requirements, as allocated (has a `satisfies` link, any state) or unallocated, and exit 1 if any is unallocated; it shall reject `--by`.
-*Rationale:* An unallocated requirement is an undetected derivation gap.
+**TE-06.4** With `--allocation`, coverage shall list each requirement of an item that has a lower item as allocated (a `satisfies` link, any state, from an item below its own item or one of its requirements), retained (field `retained: <reason>` on the requirement) or unallocated, and exit 1 if any is unallocated; it shall reject `--by`.
+*Rationale:* An unallocated requirement is an undetected derivation gap; a sibling's link does not close it, and `retained` records a deliberate stay.
 
 ## CLI
 

@@ -18,7 +18,8 @@ interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>>; stat
 
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 export interface Entry { id: string; path: string; nested: string[]; requirements: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
-interface Settings { informative?: string[] }
+// CO-02.9
+interface Settings { informative?: string[]; links?: Record<string, { from: string[]; to: string[] }> }
 export interface Repo { root: string; settings: Settings; types: Record<string, TypeDef>; entries: Map<string, Entry>; duplicates: Entry[] }
 
 export class UsageError extends Error {}
@@ -149,7 +150,7 @@ export function newItem(repo: Repo, type: string, title: string, folder: string)
     home = repo.types[type]?.folder, typeHome = home && (kind === 'test-run' ? home : parent && `${parent.path}/${home}`), // CO-01.1
     inGroup = !!parent && (!typeHome || cwd === typeHome || cwd.startsWith(`${typeHome}/`)),
     path = [inGroup ? cwd : typeHome || parent?.path, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || id].filter(Boolean).join('/'),
-    item = { path: kind === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`, doc: new Document(readYaml(repo.root, `types/${type}.yaml`).doc.get('template', true)) };
+    item = { path: kind === 'requirement' ? `${path}.yaml` : `${path}/item.yaml`, doc: new Document(readYaml(repo.root, `types/${type}.yaml`).doc.toJS()?.template) };
   if (existsSync(join(repo.root, item.path))) throw new UsageError(`${item.path} exists`);
   for (const [key, value] of Object.entries({ id, type, title })) item.doc.setIn([key], value);
   writeYaml(repo.root, item);

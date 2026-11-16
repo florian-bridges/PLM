@@ -4,9 +4,9 @@ import { createRequire } from 'node:module';
 import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, type LinkState } from './links.ts';
+import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, unreached, type LinkState } from './links.ts';
 import { artifacts, entry, expanded, loadRepo, named, newItem, parameterOf, Refused, targetId, UsageError, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
-import { linkRules, results } from './schemas.ts';
+import { allowedLinks, linkRules, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
 import { currentVersions, snapshotAt } from './version.ts';
@@ -52,9 +52,11 @@ program.command('show <id>').description('show an item').action((id) => {
   output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
+// CL-01.1: built-in links outside a repository
 program.command('link <source> <type> <target>').description('add a link')
   .option('--remove')
-  .addHelpText('after', () => 'Links (* any type):\n' + Object.entries(linkRules).map(([type, [from, to]]) => `${from} ${type} ${to}`).join('\n'))
+  .addHelpText('after', () => { let links; try { links = allowedLinks(openRepo()); } catch { links = linkRules; }
+    return 'Links (* any type):\n' + Object.entries(links).map(([type, [from, to]]) => `${from} ${type} ${to}`).join('\n'); })
   .action((source, type, target, options) => link(openRepo(), source, type, target, options.remove));
 
 // CL-01.3
@@ -91,9 +93,9 @@ program.command('search <query...>').description('find items').action((query) =>
   output(found.map(label).join('\n'), found);
 });
 
-// CL-01.2
-program.command('confirm <source> [target]').description('confirm links').action((source, target) => {
-  const repo = openRepo(), links = confirm(repo, currentVersions(repo), validate(repo), source, target);
+// CL-01.2, TE-02.2
+program.command('confirm <source> [target]').description('confirm links').option('--reason <text>').action((source, target, options) => {
+  const repo = openRepo(), links = confirm(repo, currentVersions(repo), validate(repo), source, target, options.reason);
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 
@@ -136,15 +138,22 @@ program.command('test').command('record <test-case...>').description('record a t
     output(id, { id });
   });
 
-// TE-06.2, TE-06.4
+// TE-06.2, TE-06.4, TE-06.5
 program.command('report').command('coverage [item]').description('report verification coverage')
   .option('--by <field>')
   .option('--allocation')
+  .option('--link <type>')
   .action((item, options) => {
-    const state = scoped(item), alloc = options?.allocation,
+    const state = scoped(item);
+    if (options.link) {
+      const rows = unreached(state[0], state[1], options.link, state[2]);
+      exitCode = rows.length && 1;
+      return output(rows.map(label).join('\n'), rows);
+    }
+    const alloc = options?.allocation,
       rows = alloc ? allocation(...state) : coverage(...state);
     if (alloc && options.by) throw new UsageError('--by');
-    exitCode = +rows.some((row) => row.state !== (alloc ? 'allocated' : 'verified'));
+    exitCode = +rows.some((row) => alloc ? row.state === 'unallocated' : row.state !== 'verified');
     if (options?.by) {
       // TE-06.3
       const groups: Record<string, any> = {};

@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.4.0 (2026-11-16)
+
+* Breaking: project types are defined in `types/<type>.yaml` (`prefix`, `folder`, `template`, `fields`, `required`, `base`); `schemas/`, `templates/` and `plm.yaml`'s `prefixes` and `folders` are no longer read. Convert by hand:
+
+  | Before | After |
+  |---|---|
+  | `schemas/<type>.schema.json` `properties` / `required` | `fields` / `required` in `types/<type>.yaml` |
+  | `templates/<type>.yaml` | `template:` in `types/<type>.yaml` |
+  | `schemas/meta.schema.json` | `types/meta.yaml` |
+  | `prefixes: {analysis: ANA-}` in `plm.yaml` | `prefix: ANA-` in `types/analysis.yaml` |
+  | `folders: {analysis: analyses}` in `plm.yaml` | `folder: analyses` in `types/analysis.yaml` |
+
+* A type with `base: <built-in type>` behaves as that type.
+* An item's `text` cites a parameter as `{<ID>:<name>}`: a `derives-from` link, shown with its value in `plm show`.
+* `plm.yaml` `links:` declares project link types; `plm report coverage --link <type>` lists the items no such link reaches.
+* `plm report coverage --allocation`: `retained: <reason>` keeps a requirement at its level; only `satisfies` links from below count.
+* `plm confirm <run> <sut> --reason <text>` makes a test run current again against a changed system under test.
+* `plm new` writes block-style YAML; an enum finding lists the allowed values.
+* README: use by LLM agents.
+
 ## 0.3.0 (2026-11-11)
 
 * `plm new` prints the new item's path on stderr and in JSON output.

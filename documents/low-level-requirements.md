@@ -13,8 +13,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.3** The core shall list as an item's artifacts the paths of files in its folder not ignored by Git, except `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
 
-**CO-02.1** The core shall validate `item.yaml` with Ajv against its type's JSON Schema (2020-12, CO-02.8), and `meta/<ID>.yaml` against `types/meta.yaml` if present.
-*Rationale:* JSON Schema is understood by editors, Ajv and form generators.
+**CO-02.1** The core shall validate `item.yaml` with Ajv against its JSON Schema (2020-12, CO-02.8), `meta/<ID>.yaml` against `types/meta.yaml` if present, naming enum values.
+*Rationale:* JSON Schema suits editors, Ajv and form generators.
 
 **CO-02.2** The core shall report as errors: YAML syntax errors in item, requirement and meta files, items outside their type's home folder (CO-01.1), other items inside them, a `meta/<ID>.yaml` with no item, duplicate IDs, unknown used items or link targets, link types not allowed between the source and target types, and composition cycles.
 *Rationale:* These errors break versions, links or composition and would otherwise surface late.
@@ -34,6 +34,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.8** A type shall be built in (CO-02.5) or defined by `types/<type>.yaml` with optional `base` (a built-in type), `prefix`, `folder` (home folder), `template`, `fields` (JSON Schema properties) and `required`; a file named after a built-in type extends or overrides it, and `types/meta.yaml` instead gives the fields of `meta/<ID>.yaml`. A type with `base` adds its `fields` and `required` to the base's and has the base's home folder and, unless it sets one, prefix; a core or CLI requirement naming a built-in type applies to types based on it. The core shall report as error an item of any other type (`unknown-type`) and a type file with any other key, a `base` that is not a built-in type or is in a built-in type's file, or `folder` with `base` (`type-file`).
 *Rationale:* One YAML file per type defines it in one place and lets programs add types and attributes without mixing JSON and YAML, and `base` lets a variant keep a built-in type's behaviour.
 
+**CO-02.9** `plm.yaml` may declare `links: {<name>: {from: [<type>…], to: [<type>…]}}` (`*` any type); declared link types shall be checked as built-in ones (CO-02.2), matching an item's base, and naming a built-in link type shall be an error.
+*Rationale:* Projects link items in ways PLM does not build in.
+
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes.
 *Rationale:* One index format serves the CLI and VS Code without a search server.
 
@@ -51,20 +54,20 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-01.2** Hashes of the working tree shall be computed by staging an item's artifacts (CO-01.3) and its `item.yaml` or requirement file into a temporary Git index, skipping paths Git cannot stage, so LFS filters apply and uncommitted and committed states yield identical versions.
 *Rationale:* Engineers need suspect states before committing; identical results avoid spurious differences between local runs and CI.
 
-**TE-02.1** Confirming a link shall write to `confirmed.<target>` in the source's `meta/<ID>.yaml` the target's current `version` and `title`, the confirming Git `user.name` as `by`, the date as `on`, and as `commit` the short hash of HEAD if the target has the confirmed version there; a link without `version` there is unconfirmed.
-*Rationale:* Keeping the version in its own file makes confirmations reviewable as diffs; title, confirmer, date and commit show what was reviewed. Uncommitted targets have no commit to name.
+**TE-02.1** Confirming a link shall write to `confirmed.<target>` in the source's `meta/<ID>.yaml` the target's current `version` and `title`, the confirming Git `user.name` as `by`, the date as `on`, as `commit` the short hash of HEAD if the target has the confirmed version there, and as `reason` the text given with `--reason`, if any; a link without `version` there is unconfirmed.
+*Rationale:* Keeping the version in its own file makes confirmations reviewable as diffs; title, confirmer, date, commit and reason show what was reviewed. Uncommitted targets have no commit to name.
 
-**TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset, and for links of test runs.
-*Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review. Run links are confirmed when recording (CL-03.2).
+**TE-02.2** Confirmation shall be refused while the target fails validation or Git `user.name` is unset, and for a run's `executes` links; a run's `tests` link may be confirmed again with `--reason <text>`.
+*Rationale:* Confirming against a broken item would record a meaningless state, and an anonymous confirmation is no review. Executes links stay as recorded (CL-03.2): a changed test case is a changed test. A tests link may be re-confirmed when the system under test changed but not what was tested.
 
 **TE-03.1** A link shall be suspect when its confirmed version differs from the target's current version, and unconfirmed when it has none; it stays current when its TE-03.2 change touches only `item.yaml` or requirement files present and equal, after removing the fields under `informative:` in `plm.yaml` (default `[rationale, links]`), at the confirmed commit and now; no confirmed commit keeps it suspect. Links from test runs are evidence, not links to review: suspect lists shall omit them, and a run with a suspect link is outdated. A link naming a parameter (`<ID>:<name>`, TE-01.1) is suspect only when that parameter's version differs.
-*Rationale:* Separating unconfirmed from suspect distinguishes new links from links invalidated by change. Re-confirming a run's links would falsify what was tested. A target's own links don't change what was confirmed.
+*Rationale:* Separating unconfirmed from suspect distinguishes new links from links invalidated by change. A target's own links don't change what was confirmed.
 
 **TE-03.2** To show what changed, the engine shall return the diff of the target's subtree since the link's `commit` or, if it is missing or unknown, since the latest commit at which the target had the confirmed version.
 *Rationale:* The user must judge whether the change matters; the diff shows exactly what happened since confirmation. The stored commit avoids searching history, which is needed only for uncommitted confirmations or squashed branches.
 
 **TE-05.1** Given a base commit and a head commit or the working tree, the engine shall list items whose own files changed, items changed through them, links other than from test runs that became suspect, and runs that became outdated.
-*Rationale:* These are the questions a change board asks before approval.
+*Rationale:* These are the questions a reviewer asks of a change.
 
 **TE-05.2** A link shall have become suspect when its confirmed version equals the target's version at base but not at head.
 *Rationale:* Links already suspect at base are not caused by the change.
@@ -76,14 +79,17 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Pending verification differs from a missing test and needs a different action.
 
 **TE-06.3** Given a field name, coverage shall be grouped by its value into verified, pending, unverified and total, requirements lacking the field in their own group; JSON shall use the same groups.
-*Rationale:* Grouping by method gives the per-method denominator a gate needs.
+*Rationale:* Each verification method needs its own denominator.
 
-**TE-06.4** With `--allocation`, coverage shall list each requirement of an item that has a lower item with requirements, as allocated (has a `satisfies` link, any state) or unallocated, and exit 1 if any is unallocated; it shall reject `--by`.
-*Rationale:* An unallocated requirement is an undetected derivation gap.
+**TE-06.4** With `--allocation`, coverage shall list each requirement of an item that has a lower item as allocated (a `satisfies` link, any state, from an item below its own item or one of its requirements), retained (field `retained: <reason>` on the requirement) or unallocated, and exit 1 if any is unallocated; it shall reject `--by`.
+*Rationale:* An unallocated requirement is an undetected derivation gap; a sibling's link does not close it, and `retained` records a deliberate stay.
+
+**TE-06.5** With `--link <type>`, coverage shall list the items of the link type's target types, in the repository or subtree, that no link of that type reaches (any state), and exit 1 if any.
+*Rationale:* Declared link types need the same gap check as unallocated requirements (TE-06.4).
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation]`, finding the repository by searching upward for `plm.yaml`. `new --help` shall list all types (CO-02.8), `link --help` the links CO-02.6 allows; each command shall have a one-line description.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]`, finding the repository by searching upward for `plm.yaml`. `new --help` shall list all types (CO-02.8), `link --help` the links CO-02.6 and CO-02.9 allow (built-in outside a repository); each command shall have a one-line description.
 *Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made; help spares looking types up.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
@@ -95,7 +101,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.4** `get <ref> [<key>]` shall print a parameter's `value` or key, nothing else; if unset or TBD, nothing and exit 1; usage error if unknown.
 *Rationale:* Scripts read a value, not a copy.
 
-**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8), in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters other than ASCII letters and digits replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
+**CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8) in block style, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters outside `a-z0-9` replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
 *Rationale:* Templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
 
 **CL-02.2** New IDs shall be the type's prefix (CO-02.8) plus six random Crockford Base32 characters; a type without one is a usage error.

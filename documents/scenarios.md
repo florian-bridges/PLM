@@ -19,4 +19,7 @@ Records one review of a scope at a commit with findings on its items, and lists 
 Lists the impact of a change, reviews each suspect link against what changed, and confirms only the links that still hold; an editorial field change leaves a link current.
 
 **US-11 — Project lead**
-Assigns each item's owner and status, and prepares a gate or milestone with queries for validity, suspects, verification coverage, allocation and open findings.
+Assigns each item's owner and status, and runs queries for validity, suspects, verification coverage, allocation and open findings.
+
+**US-12 — Agent operator**
+Lets an LLM coding agent keep items and traces: the agent reads and diffs the YAML files in Git and runs validation, suspects and impact before it commits.

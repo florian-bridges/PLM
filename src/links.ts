@@ -2,7 +2,7 @@ import { copyFileSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
 import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, typeOf, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
-import { disallowed } from './schemas.ts';
+import { allowedLinks, allows, disallowed } from './schemas.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
 
@@ -44,24 +44,25 @@ export function linkStates(repo: Repo, versions: Map<string, string>, only?: str
 export const fromRun = (repo: Repo, state: LinkState) => typeOf(repo, repo.entries.get(state.source)?.item.data.type) === 'test-run'; // CO-02.8
 
 // TE-02.1–TE-02.2
-function confirmation(repo: Repo, target: string, version: string | undefined) {
+function confirmation(repo: Repo, target: string, version: string | undefined, reason?: string) {
   const by = tryGit(repo.root, ['config', 'user.name']);
   if (!by) throw new Refused('Set git user.name');
   const hash = tryGit(repo.root, ['rev-parse', '--verify', '-q', '--short', 'HEAD']),
     exact = hash && versionAt(repo.root, 'HEAD', target) === version;
-  return { title: named(repo, targetId(target)).title, version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }) };
+  return { title: named(repo, targetId(target)).title, version, by, on: new Date().toISOString().slice(0, 10), ...(exact && { commit: hash }), ...(reason && { reason }) };
 }
 
 // TE-02.1, CL-01.2
-export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, target?: string) {
-  const sourceEntry = entry(repo, source), links = linksOf(sourceEntry).filter((link) => !target || link.target === target);
-  // TE-02.2, CO-02.8
-  if (typeOf(repo, sourceEntry.item.data.type) === 'test-run') throw new Refused('Test runs confirm at recording');
+export function confirm(repo: Repo, versions: Map<string, string>, findings: Finding[], source: string, target?: string, reason?: string) {
+  const sourceEntry = entry(repo, source), links = linksOf(sourceEntry).filter((link) => !target || link.target === target),
+    isRun = typeOf(repo, sourceEntry.item.data.type) === 'test-run'; // CO-02.8
+  // TE-02.2
+  if (isRun && (!reason || links.some((link) => link.type !== 'tests'))) throw new Refused('Only a run\'s tests link, with --reason');
   for (const link of links) {
     const targetFile = repo.entries.get(targetId(link.target))?.item.path,
       broken = findings.some((finding) => finding.severity === 'error' && finding.file === targetFile);
     if (broken || !versions.has(link.target)) throw new Refused(`${link.target} fails validation`);
-    sourceEntry.meta.doc.setIn(['confirmed', link.target], confirmation(repo, link.target, versions.get(link.target)));
+    sourceEntry.meta.doc.setIn(['confirmed', link.target], confirmation(repo, link.target, versions.get(link.target), reason));
   }
   if (links.length) writeYaml(repo.root, sourceEntry.meta);
   return links;
@@ -71,7 +72,7 @@ export function confirm(repo: Repo, versions: Map<string, string>, findings: Fin
 export function link(repo: Repo, source: string, type: string, target: string, remove?: boolean) {
   const { item, meta } = entry(repo, source), links = list<Link>(item.data.links),
     at = links.findIndex((l) => l.type === type && l.target === target), found = repo.entries.get(targetId(target)),
-    bad = !remove && found && disallowed(typeOf(repo, item.data.type), type, typeOf(repo, found.item.data.type)); // CO-02.8
+    bad = !remove && found && disallowed(repo, String(item.data.type), type, String(found.item.data.type)); // CO-02.9
   if (bad) throw new UsageError(bad);
   if (!remove) item.doc.setIn(['links', links.length], { type, target });
   else if (at < 0) throw new UsageError(target);
@@ -116,7 +117,7 @@ export const suspects = (repo: Repo, states: LinkState[], root?: string) => {
 };
 
 export interface Coverage {
-  requirement: string; title: string; state: 'verified' | 'pending' | 'unverified' | 'allocated' | 'unallocated';
+  requirement: string; title: string; state: 'verified' | 'pending' | 'unverified' | 'allocated' | 'retained' | 'unallocated';
   tests: { testCase: Named; run?: Named; result?: string; outdated?: boolean }[];
 }
 
@@ -148,7 +149,25 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
 
 // TE-06.4
 export function allocation(repo: Repo, states: LinkState[], root?: string): Coverage[] {
-  const inScope = within(repo, root), satisfied = new Set(states.filter((s) => s.link.type === 'satisfies').map((s) => s.link.target));
-  return [...repo.entries.values()].filter((i) => inScope(i.id) && subtree(repo, i.id).slice(1).some((c) => entry(repo, c).requirements.length))
-    .flatMap((i) => i.requirements.map((id) => ({ requirement: id, title: named(repo, id).title, tests: [], state: satisfied.has(id) ? 'allocated' : 'unallocated' })));
+  const inScope = within(repo, root), satisfiesLinks = states.filter((s) => s.link.type === 'satisfies');
+  return [...repo.entries.values()].filter((i) => inScope(i.id))
+    .flatMap((i) => {
+      const items = subtree(repo, i.id).slice(1),
+        below = new Set([...items, ...items.flatMap((id) => entry(repo, id).requirements)]);
+      return !below.size ? [] : i.requirements.map((id) => {
+        const allocated = satisfiesLinks.some((s) => s.link.target === id && below.has(s.source)),
+          retained = entry(repo, id).item.data.retained;
+        return { requirement: id, title: named(repo, id).title, tests: [], state: allocated ? 'allocated' : retained ? 'retained' : 'unallocated' } as Coverage;
+      });
+    });
+}
+
+// TE-06.5
+export function unreached(repo: Repo, states: LinkState[], type: string, root?: string): Named[] {
+  const to = allowedLinks(repo)[type]?.[1];
+  if (!to) throw new UsageError(type);
+  const reached = new Set(states.filter((s) => s.link.type === type).map((s) => targetId(s.link.target))),
+    inScope = within(repo, root);
+  return [...repo.entries.values()].filter((e) => inScope(e.id) && !reached.has(e.id) && allows(repo, to, String(e.item.data.type)))
+    .map((e) => named(repo, e.id));
 }

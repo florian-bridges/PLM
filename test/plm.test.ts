@@ -78,7 +78,7 @@ test('TE-01.2, CO-01.3: artifacts', () => {
 
 test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings', () => {
   write(root, {
-    'wing/spar/item.yaml': 'id: P\ntype: part\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: pass\n  - type: derives-from\n    target: A/x\n',
+    'wing/spar/item.yaml': 'id: P\ntype: part\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: invalid\n  - type: derives-from\n    target: A/x\n',
     'copy/item.yaml': bolt,
     'bolt/item.yaml': bolt + 'external_ids: { reqif: B1 }\n',
     'wing/requirements/structure/stringer.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
@@ -90,8 +90,9 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings'
   expect(repo.entries.get('Z')?.path).toBe('wing/misc/panel');
   expect(repo.entries.has('H')).toBe(false);
   const findings = validate(repo);
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', ...Array(5).fill('schema'), 'unknown-target']);
-  expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ file: 'wing/spar/item.yaml', line: 3, col: 9 });
+  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', ...Array(6).fill('schema'), 'unknown-target']);
+  expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ line: 3, col: 9 });
+  expect(JSON.stringify(findings)).toContain('inconclusive');
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
 });
 
@@ -107,10 +108,22 @@ test('CL-01.1,CO-02.1,CO-02.8:remove',()=>{
   expect(loadRepo(root).entries.get('P')!.meta.data.confirmed?.L).toBeUndefined();
 });
 
+test('CO-02.2, CO-02.9, CL-01.1, TE-06.5: declared links', () => {
+  write(root, { 'plm.yaml': 'links:\n  mitigates: {from: ["*"], to: [assembly]}\n', 'types/wing.yaml': 'base: assembly\n', 'wing/item.yaml': 'id: A\ntype: wing\ntitle: Wing\nuses: [L]\n' });
+  expect(plm(root, 'link', '--help').stdout).toContain('* mitigates assembly\n');
+  expect(plm(root, 'link', 'P', 'mitigates', 'R')).toMatchObject({ status: 2, stderr: 'part mitigates requirement\n' });
+  expect(plm(root, 'report', 'coverage', '--link', 'mitigates')).toMatchObject({ status: 1, stdout: 'A (Wing)\n' });
+  expect(plm(root, 'link', 'P', 'mitigates', 'A').status).toBe(0);
+  expect(plm(root, 'report', 'coverage', '--link', 'mitigates')).toMatchObject({ status: 0, stdout: '\n' });
+
+  write(root, { 'plm.yaml': 'links:\n  satisfies: {from: ["*"], to: [part]}\n' });
+  expect(validate(loadRepo(root)).map((f) => f.code)).toContain('builtin-link');
+});
+
 test('CO-01.1, CO-02.1, CO-02.8, CL-02.1–CL-02.2: types', () => {
   write(root, {
     'types/study.yaml': 'folder: studies\n',
-    'types/analysis.yaml': 'colour: red\nprefix: ANA-\nfolder: analyses\ntemplate:\n  method: review\nfields:\n  method: {enum: [review]}\nrequired: [tool]\n',
+    'types/analysis.yaml': 'colour: red\nprefix: ANA-\nfolder: analyses\ntemplate: {method: review}\nfields:\n  method: {enum: [review]}\nrequired: [tool]\n',
     'types/part.yaml': 'base: assembly\nfields:\n  finish: {type: string}\n',
     'types/meta.yaml': 'fields:\n  owner: {type: string}\n',
     'bolt/item.yaml': `${bolt}finish: zinc\n`,
@@ -264,6 +277,7 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
   expect(plm(root, '--version').stdout).toBe(`${JSON.parse(readFileSync('package.json', 'utf8')).version}\n`);
   expect(plm(root, 'new', '--help').stdout).toContain('Types: requirement test-case test-run part assembly\n');
   expect(plm(root, 'link', '--help').stdout).toContain('(* any type):\n* satisfies requirement\n');
+  expect(plm(base, 'link', '--help').stdout).toContain('* satisfies requirement\n'); // CL-01.1: outside a repository
   expect(plm(root, 'validate').status).toBe(0);
   write(root, { 'meta/L.yaml': 'status: draft\nstatus: draft\n' });
   expect(plm(root, 'validate')).toMatchObject({ status: 1, stdout: 'meta/L.yaml:2:1 error yaml: DUPLICATE_KEY\n' });
@@ -275,11 +289,20 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
   expect(plm(root, 'report', 'coverage').stdout).toBe('unverified R (Load)\n');
   setLoad(root);
   expect(plm(root, 'impact', 'HEAD').stdout).toBe('changed R (Load)\npropagated A (Wing)\n');
+  expect(plm(root, 'report', 'coverage', '--allocation').stdout).toBe('allocated R (Load)\n');
 
-  write(root, { 'wing/requirements/gust.yaml': 'id: G\ntype: requirement\ntitle: Gust\n', 'wing/spar/requirements/low.yaml': 'id: Z\ntype: requirement\n' });
+  write(root, { 'wing/requirements/need.yaml': 'id: V\ntype: requirement\ntitle: Need\nretained: kept at system level\n' });
+  expect(plm(root, 'report', 'coverage', '--allocation')).toMatchObject({ status: 0, stdout: expect.stringContaining('retained V (Need)') });
+
+  setLoad(root, 'links:\n  - type: satisfies\n    target: G\n');
+  write(root, {
+    'wing/requirements/gust.yaml': 'id: G\ntype: requirement\ntitle: Gust\n',
+    'wing/requirements/weight.yaml': 'id: W\ntype: requirement\ntitle: Weight\n',
+    'wing/spar/requirements/low.yaml': 'id: Z\ntype: requirement\nlinks:\n  - type: satisfies\n    target: W\n',
+  });
   const alloc = plm(root, 'report', 'coverage', '--allocation');
-  expect(alloc.stdout).toContain('allocated R (Load)');
   expect(alloc.stdout).toContain('unallocated G (Gust)');
+  expect(alloc.stdout).toContain('allocated W (Weight)');
   expect(alloc.stdout).not.toContain('Z');
   expect(alloc.status).toBe(1);
   expect(plm(root, 'report', 'coverage', '--allocation', '--by', 'x').status).toBe(2);
@@ -289,7 +312,7 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
   expect([broken.status, broken.stderr.match(/fatal/g)?.length]).toEqual([3, 1]);
 });
 
-test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
+test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-02.2, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
   const coverage = () => json(root, 'report', 'coverage', 'A')[0],
     record = (...results) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'L', 'A', '--result', ...results, '--log', join(root, 'rig.log'));
   expect(coverage().state).toBe('unverified');
@@ -317,6 +340,11 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-03.1, 
   expect(coverage()).toMatchObject({ state: 'verified', tests: tests(false) });
   write(root, { 'wing/spar/item.yaml': spar + 'material: x\n' });
   expect(coverage()).toEqual({ requirement: 'R', title: 'Load', state: 'pending', tests: tests(true) });
+  // TE-02.2
+  expect(plm(root, 'confirm', run, 'T', '--reason', 'pinned').status).toBe(1);
+  expect(plm(root, 'confirm', run, 'A', '--reason', 'pinned').status).toBe(0);
+  expect(loadRepo(root).entries.get(run)?.meta.data.confirmed?.A.reason).toBe('pinned');
+  expect(coverage()).toMatchObject({ state: 'verified', tests: tests(false) });
   expect(plm(root, 'confirm', 'P').status).toBe(0);
   expect(plm(root, 'suspects').status).toBe(0);
   expect(json(root, 'report', 'coverage', '--by', 'type')[0]).toMatchObject({ total: 1 });

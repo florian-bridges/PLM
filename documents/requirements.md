@@ -55,5 +55,5 @@ The tool shall assign each item a responsible owner and let users list items by 
 *Rationale:* Suspect links and changes need someone to act on them; owners make responsibility explicit.
 
 **CR-19 — Automation**
-The tool shall provide its functions to scripts and external tools. (US-5, US-8)
+The tool shall provide its functions to scripts and external tools. (US-5, US-8, US-12)
 *Rationale:* Automated rigs and analysis scripts produce and consume engineering data; automation removes manual transfer and its errors.

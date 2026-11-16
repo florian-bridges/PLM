@@ -27,7 +27,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **TE-05** The engine shall list the items, links and verification evidence affected by a change. (CR-13; US-10)
 *Rationale:* Impact must be known before approving a change, both locally and in CI, so the analysis belongs in the engine.
 
-**TE-06** The engine shall report requirements without verifying tests, suspect test evidence, and unallocated requirements. (CR-09, CR-10; US-5, US-11)
+**TE-06** The engine shall report requirements without verifying tests, suspect test evidence, unallocated requirements, and items that no link of a given type reaches. (CR-09, CR-10; US-5, US-11)
 *Rationale:* Coverage gaps and stale evidence are what reviews look for first.
 
 ## CLI (CL)
@@ -41,7 +41,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **CL-03** The CLI shall record test runs of test cases with SUT version, results and logs. (CR-09; US-5)
 *Rationale:* Automated tests run on CI and HIL rigs without an editor and must report their results directly.
 
-**CL-05** The CLI shall offer machine-readable output and fail with non-zero exit codes. (CR-19; US-5, US-8)
+**CL-05** The CLI shall offer machine-readable output and fail with non-zero exit codes. (CR-19; US-5, US-8, US-12)
 *Rationale:* Scripts and CI need parseable results and reliable failure signals.
 
 ## VS Code extension (VS)

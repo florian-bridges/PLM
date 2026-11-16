@@ -9,7 +9,7 @@ Latest release: 0.3.0 (2026-11-11). Milestones and entry conditions: `timeline.m
 * Next milestone 0.4, budget 3 windows: seven entry conditions in `timeline.md` (#64, #54, #36, #35, #33, #9, #20). Roadmap 0.4–0.9 set by the owner on 2026-11-14 (backlog cleanup from the control room); each milestone is a GitHub milestone.
 * Unreleased on `develop`, shipping with 0.4: #26–#28 type files (breaking; the CHANGELOG needs the conversion tables) and #19 parameter citations in `text`.
 
-* #64, #36, #35 merged and ticked. The four remaining entry conditions (#54, #20, #33, #9) wait for the feature review meeting #71 (`meetings/2026-11-14-feature-review-links-agents.md`, reviewer's findings added). Next: hold it; after a go, put the approved requirements into `documents/`, one feature issue per part, build in the order #54, #33, #9, #20.
+* #64, #36, #35 merged and ticked. Feature review #71 held: go for #54, #33, #9, #20; the issues hold the decided scope; US-12 and TE-06 are on `develop`, word limits raised for them. Building #54, #33, #9 in parallel (`feat/llm-agents`, `feat/allocation-retained`, `feat/confirm-run`); #20 after #33 merges.
 
 ## Open pull requests and blockers
 
@@ -17,4 +17,4 @@ Latest release: 0.3.0 (2026-11-11). Milestones and entry conditions: `timeline.m
 
 ## Owner directions
 
-* See `decisions.md`; the entries of 2026-11-14 apply to every feature: product data only (#64), agent use (#54).
+* See `decisions.md`; the entries of 2026-11-14 apply to every feature: product data only (#64), agent use (#54). Since #71: the chief engineer governs the word limits; ask the owner only for key design decisions.

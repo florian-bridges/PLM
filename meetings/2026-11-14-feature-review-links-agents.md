@@ -62,3 +62,9 @@ Word limits (`scripts/wordcount.py -v`, 2026-11-15): `documents/` 4791/4801, `sr
 ## Plan
 
 For each go: its issue updated to the decided scope, naming this meeting, built in the order #54, #33, #9, #20; 0.4 keeps its seven entry conditions and budget.
+
+## Minutes (2026-11-16, control room)
+
+* Go: #54, #33, #9, #20, each A with the reviewer's cuts. US-12, CR-19 and CL-05 citing US-12, and TE-06 put into `documents/` with the word limits raised for them.
+* The chief engineer governs the word limits; the owner is asked only for key design decisions.
+* Actions: build in the order #54, #33, #9, #20 (the feature issues).

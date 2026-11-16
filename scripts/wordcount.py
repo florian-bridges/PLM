@@ -68,9 +68,9 @@ def main():
     parser.add_argument("--src-dir", default="src")
     parser.add_argument("--test-dir", default="test")
     parser.add_argument("--ext-dir", default="extension")
-    # The limits are kept by the reviewer agent (.claude/agents/reviewer.md).
-    parser.add_argument("--max-docs", type=int, default=4801, help="word limit for the documents directory")
-    parser.add_argument("--max-src", type=int, default=4978, help="word limit for the source and test directories")
+    # The limits are kept by the chief engineer (owner, #71); 0.4 raise: feature review #71.
+    parser.add_argument("--max-docs", type=int, default=5000, help="word limit for the documents directory")
+    parser.add_argument("--max-src", type=int, default=5340, help="word limit for the source and test directories")
     parser.add_argument("--max-ext", type=int, default=1635, help="word limit for the extension directory")
     parser.add_argument("-u", "--include-untracked", action="store_true",
                         help="also count untracked files that are not git-ignored")

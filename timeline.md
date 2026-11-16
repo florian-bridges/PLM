@@ -36,11 +36,11 @@ Already on `develop` and unreleased, shipping with 0.4: #26–#28 type files (br
 
 ### Active topics
 
-* Feature review #54, #20, #33, #9: prepared with `reviewer`'s findings; waits for the owner (#71).
+* Feature review #71 held 2026-11-16: go for #54, #33, #9, #20 (A with the reviewer's cuts). Building #54, #33, #9 in parallel; #20 after #33 (both touch coverage).
 
 ### Coming owner meetings
 
-* #71 Feature review 0.4: `meetings/2026-11-14-feature-review-links-agents.md`.
+* None. The release meeting follows the 0.4 release.
 
 ## Planned milestones
 

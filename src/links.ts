@@ -151,7 +151,8 @@ export function allocation(repo: Repo, states: LinkState[], root?: string): Cove
   const inScope = within(repo, root), satisfiesLinks = states.filter((s) => s.link.type === 'satisfies');
   return [...repo.entries.values()].filter((i) => inScope(i.id))
     .flatMap((i) => {
-      const below = new Set(subtree(repo, i.id).slice(1));
+      const items = subtree(repo, i.id).slice(1),
+        below = new Set([...items, ...items.flatMap((id) => entry(repo, id).requirements)]);
       return !below.size ? [] : i.requirements.map((id) => {
         const allocated = satisfiesLinks.some((s) => s.link.target === id && below.has(s.source)),
           retained = entry(repo, id).item.data.retained;

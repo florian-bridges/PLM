@@ -282,9 +282,14 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
   expect(plm(root, 'report', 'coverage', '--allocation')).toMatchObject({ status: 0, stdout: expect.stringContaining('retained V (Need)') });
 
   setLoad(root, 'links:\n  - type: satisfies\n    target: G\n');
-  write(root, { 'wing/requirements/gust.yaml': 'id: G\ntype: requirement\ntitle: Gust\n', 'wing/spar/requirements/low.yaml': 'id: Z\ntype: requirement\n' });
+  write(root, {
+    'wing/requirements/gust.yaml': 'id: G\ntype: requirement\ntitle: Gust\n',
+    'wing/requirements/weight.yaml': 'id: W\ntype: requirement\ntitle: Weight\n',
+    'wing/spar/requirements/low.yaml': 'id: Z\ntype: requirement\nlinks:\n  - type: satisfies\n    target: W\n',
+  });
   const alloc = plm(root, 'report', 'coverage', '--allocation');
   expect(alloc.stdout).toContain('unallocated G (Gust)');
+  expect(alloc.stdout).toContain('allocated W (Weight)');
   expect(alloc.stdout).not.toContain('Z');
   expect(alloc.status).toBe(1);
   expect(plm(root, 'report', 'coverage', '--allocation', '--by', 'x').status).toBe(2);

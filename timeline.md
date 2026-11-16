@@ -7,7 +7,7 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | Milestone | Budget | Used | State |
 |---|---|---|---|
 | 0.3.0 | — | — | done (released 2026-11-11) |
-| 0.4 | 3 | 0 | active |
+| 0.4 | 3 | 1 | done (v0.4.0) |
 | 0.5 | — | — | planned |
 | 0.6 | — | — | planned |
 | 0.7 | — | — | planned |
@@ -36,11 +36,11 @@ Already on `develop` and unreleased, shipping with 0.4: #26–#28 type files (br
 
 ### Active topics
 
-* Feature review #71 held 2026-11-16: go for #54, #33, #9, #20 (A with the reviewer's cuts). #54 (#72), #9 (#73), #33 (#74) merged. #20 being built (`feat/link-types`).
+* 0.4.0 released 2026-11-16 (release PR #76, v0.4.0). Next milestone and its budget wait for the release meeting #77.
 
 ### Coming owner meetings
 
-* None. The release meeting follows the 0.4 release.
+* #77 Release 0.4.0 and next milestone: `meetings/2026-11-16-release-0.4.md`.
 
 ## Planned milestones
 

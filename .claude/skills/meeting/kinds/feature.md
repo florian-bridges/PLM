@@ -1,16 +1,10 @@
 # Feature review
 
-The owner decides whether a big feature is built, and in what scope, before any requirement in `documents/` or code changes. Smaller features need no meeting.
+The owner decides each milestone's features in its release or kickoff meeting, prepared as below. A separate feature review is held only for a real architecture change found later.
 
 ## When
 
-A feature is big when it:
-
-* adds or changes a scenario (US) or tool requirement (CR), or adds a component requirement;
-* would need more than one `feature-dev` part, or more than about one usage window;
-* would make `reviewer` raise a word limit.
-
-Found at planning (skill `chief-engineer`) or reported by `feature-dev`, which stops at such a change.
+A feature changes the architecture when it adds a new storage, a new public interface style, or breaks the data format. Found at planning (skill `chief-engineer`) or reported by `feature-dev`, which stops at such a change.
 
 ## Preparation
 

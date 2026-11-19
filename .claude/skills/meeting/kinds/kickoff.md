@@ -6,7 +6,7 @@ Defines the development: no milestone in `timeline.md`. No preparation file: the
 
 1. **Needs:** what the projects using PLM need next (`improvements.md`, open `type:backlog` issues), generalised.
 2. **Milestones:** usually releases; per milestone its features as entry conditions, each with a *done when*, and its budget in usage windows.
-3. **Big features:** those needing a feature review before they are built (`feature.md`, When).
+3. **First milestone's features:** go, smaller scope or no-go each, as in `release.md`, Agenda 3.
 4. **Standing directions.**
 
 ## Outcome

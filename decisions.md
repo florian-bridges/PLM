@@ -14,3 +14,6 @@ One line each: date, decision, source (issue or meeting). Append only; the chief
 * 2026-11-16: Ask the owner only for key design decisions, not every small one. (#71)
 * 2026-11-17: 0.5 scope A: #58, #63 with #56 folded in (`plm trace` at depth 1 is the context view), #57, #55, and #60 as documentation (README CI section on existing commands). (#77)
 * 2026-11-17: 0.5 budget 4 windows. (#77)
+* 2026-11-19: One owner meeting per milestone: the release or next-milestone meeting decides scope, budget and go / smaller scope / no-go per feature; the shift then builds without asking again. (#80)
+* 2026-11-19: A separate feature review only for a real architecture change (new storage, a new public interface style, a breaking data format change), prepared while other entry conditions go on. (#80)
+* 2026-11-19: Meetings held in the control room while the shift waits count as held: the owner posts each decision on the meeting issue and ends with "Meeting closed". #78 is held as prepared. (#80)

@@ -30,11 +30,11 @@ Scope decided in meeting #77 (option A). Each feature adds a command or interfac
 - [ ] #63 Trace queries, with #56 folded in. *Done when* `plm trace <ID>` walks links up or down to a given depth, depth 1 being the item's context view, text and JSON, with tests.
 - [ ] #57 Atomic changes with a dry run. *Done when* a change file is applied all or nothing, a dry run shows the result without writing, with tests.
 - [ ] #55 MCP server. *Done when* an MCP client lists and calls PLM commands as typed tools, with a test.
-- [ ] #60 CI integration as documentation. *Done when* the README has a CI section with a generic script on `validate`, `impact` and `suspects`.
+- [x] #60 CI integration as documentation. *Done when* the README has a CI section with a generic script on `validate`, `impact` and `suspects`.
 
 ### Active topics
 
-* 0.5 feature review #78 waits for the owner; #60 in review on `feat/ci-docs`.
+* 0.5 feature review #78 waits for the owner; #60 merged (PR #79).
 
 ### Coming owner meetings
 

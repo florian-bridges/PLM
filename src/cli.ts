@@ -49,13 +49,13 @@ program.command('validate').description('check the repository').action(() => {
 program.command('show <id>').description('show an item')
   .option('--down <n>').option('--up <n>')
   .action((id, options) => {
-    const repo = openRepo(), down = options.down !== undefined;
-    if (down || options.up !== undefined) {
-      const rows = walk(repo, id, down, Number(down ? options.down : options.up)).filter((w) => w.depth)
+    const repo = openRepo(), found = entry(repo, id), steps = options.down ?? options.up;
+    if (steps !== undefined) {
+      const rows = walk(repo, id, options.down !== undefined, Number(steps)).filter((w) => w.depth)
         .map((w) => ({ ...named(repo, w.id), depth: w.depth, via: w.via }));
       return output(rows.map((w) => `${w.depth} ${w.via} ${label(w)}`).join('\n'), rows);
     }
-    const found = entry(repo, id), versions = currentVersions(repo),
+    const versions = currentVersions(repo),
       data = {
         ...record(repo, found), version: versions.get(id), parent: parentOf(repo, id),
         requirements: found.requirements.map((r) => ({ ...named(repo, r), links: linkStates(repo, versions, r) })),

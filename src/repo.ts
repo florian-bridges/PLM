@@ -209,7 +209,7 @@ export function walk(repo: Repo, id: string, down: boolean, depth = Infinity) {
     ];
   }, seen = new Map([[id, { depth: 0, via: '' }]]);
   for (let frontier = [id], d = 0; d < depth && frontier.length; d++) {
-    const next = frontier.flatMap(edgesOf).filter((e) => !seen.has(e.id));
+    const next = frontier.flatMap(edgesOf);
     frontier = [];
     for (const e of next) if (!seen.has(e.id)) { seen.set(e.id, { depth: d + 1, via: e.via }); frontier.push(e.id); }
   }

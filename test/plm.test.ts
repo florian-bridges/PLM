@@ -89,6 +89,30 @@ test('CL-01.5: show walk', () => {
   expect(plm(root, 'show', 'R', '--down', '1').stdout).toBe('1 satisfies P (Spar)\n');
 });
 
+test('CL-01.6: apply', () => {
+  const file=join(root,'ops.yaml'), ops=(...lines)=>write(root,{'ops.yaml':lines.map((l)=>`- ${l}\n`).join('')});
+  ops('new part Rib', 'link $1 derives-from L');
+  const out=plm(root,'apply',file);
+  expect(out.status).toBe(0);
+  const id=out.stdout.match(/PRT-\w+/)[0];
+  expect(linksOf(loadRepo(root).entries.get(id)!)).toEqual([{type:'derives-from',target:'L'}]);
+
+  ops('new part Rib2', 'link $1 derives-from ZZZZ');
+  expect(plm(root,'apply',file).status).toBe(1);
+  expect(existsSync(join(root,'rib2'))).toBe(false);
+
+  ops('set P bogus hi');
+  expect(plm(root,'apply',file).status).toBe(1);
+  expect(readFileSync(join(root,'wing/spar/item.yaml'),'utf8')).not.toContain('bogus');
+
+  ops('new part Rib3');
+  expect(plm(root,'apply',file,'--dry-run').status).toBe(0);
+  expect(loadRepo(root).entries.has('Rib3')).toBe(false);
+
+  ops('show A');
+  expect(plm(root,'apply',file).status).toBe(1);
+});
+
 test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings', () => {
   write(root, {
     'wing/spar/item.yaml': 'id: P\ntype: part\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: invalid\n  - type: derives-from\n    target: A/x\n',

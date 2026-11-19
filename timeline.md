@@ -8,7 +8,7 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 |---|---|---|---|
 | 0.3.0 | — | — | done (released 2026-11-11) |
 | 0.4 | 3 | 1 | done (v0.4.0, meeting #77) |
-| 0.5 | 4 | 0 | active |
+| 0.5 | 4 | 1 | done (v0.5.0) |
 | 0.6 | — | — | planned |
 | 0.7 | — | — | planned |
 | 0.8 | — | — | planned |
@@ -28,16 +28,16 @@ Scope decided in meeting #77 (option A); feature review #78 held 2026-11-19: #58
 
 - [x] #58 The effective schema (types, prefixes, fields, required fields, link types) in machine-readable form. *Done when* one command prints it as JSON, with a test.
 - [x] #63 Trace queries, with #56 folded in. *Done when* `plm trace <ID>` walks links up or down to a given depth, depth 1 being the item's context view, text and JSON, with tests.
-- [ ] #57 Atomic changes with a dry run. *Done when* a change file is applied all or nothing, a dry run shows the result without writing, with tests.
+- [x] #57 Atomic changes with a dry run. *Done when* a change file is applied all or nothing, a dry run shows the result without writing, with tests.
 - [x] #60 CI integration as documentation. *Done when* the README has a CI section with a generic script on `validate`, `impact` and `suspects`.
 
 ### Active topics
 
-* #60 merged (PR #79), #58 merged (PR #81). #63 merged (PR #82). #57 in progress (`feat/apply`).
+* #60 merged (PR #79), #58 merged (PR #81). #63 merged (PR #82), #57 merged (PR #83). Released as v0.5.0 (PR #84). Next milestone and budget: release meeting (owner).
 
 ### Coming owner meetings
 
-* None until 0.5 is released.
+* Release meeting 0.5 / next milestone 0.6: in preparation (`meetings/2026-11-19-release-0.5.md`).
 
 ## Planned milestones
 

@@ -6,7 +6,7 @@ Latest release: 0.4.0 (2026-11-16). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* 0.5 Agent interface active (meeting #77: scope A, budget 4 windows; feature review #78 held, #55 to backlog). #60, #58 merged. #63 in progress on `feat/show-walk` (worktree `/home/tower/PLM-wt/show-walk`): next step reviewer, then merge, then brief #57 likewise.
+* 0.5 Agent interface active (meeting #77: scope A, budget 4 windows; feature review #78 held, #55 to backlog). #60, #58, #63 (PR #82) merged. #57 in progress on `feat/apply` (worktree `/home/tower/PLM-wt/apply`): next step reviewer, merge, then release 0.5.0.
 
 ## Open pull requests and blockers
 

@@ -27,13 +27,13 @@ Scope decided in meeting #77 (option A); feature review #78 held 2026-11-19: #58
 ### Entry conditions
 
 - [x] #58 The effective schema (types, prefixes, fields, required fields, link types) in machine-readable form. *Done when* one command prints it as JSON, with a test.
-- [ ] #63 Trace queries, with #56 folded in. *Done when* `plm trace <ID>` walks links up or down to a given depth, depth 1 being the item's context view, text and JSON, with tests.
+- [x] #63 Trace queries, with #56 folded in. *Done when* `plm trace <ID>` walks links up or down to a given depth, depth 1 being the item's context view, text and JSON, with tests.
 - [ ] #57 Atomic changes with a dry run. *Done when* a change file is applied all or nothing, a dry run shows the result without writing, with tests.
 - [x] #60 CI integration as documentation. *Done when* the README has a CI section with a generic script on `validate`, `impact` and `suspects`.
 
 ### Active topics
 
-* #60 merged (PR #79), #58 merged (PR #81). #63 in progress (`feat/show-walk`), then #57.
+* #60 merged (PR #79), #58 merged (PR #81). #63 merged (PR #82). #57 in progress (`feat/apply`).
 
 ### Coming owner meetings
 

@@ -126,7 +126,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up. Reusing `show`'s fields for `search` answers many items in one call.
 
 **CL-05.4** `plm types` shall print each type (CO-02.8) with its base, prefix, home folder, fields and required fields, and each link type (CO-02.9) with its source and target types.
-*Rationale:* An agent or script looks the schema up instead of guessing it (US-12).
+*Rationale:* An agent or script looks the schema up instead of guessing it.
 
 ## VS Code extension
 

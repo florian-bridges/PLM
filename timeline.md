@@ -34,11 +34,11 @@ Scope decided in meeting #77 (option A). Each feature adds a command or interfac
 
 ### Active topics
 
-* 0.5 feature review: prepare for #58, #63, #57, #55.
+* 0.5 feature review #78 waits for the owner; #60 in review on `feat/ci-docs`.
 
 ### Coming owner meetings
 
-* 0.5 feature review (being prepared).
+* #78 Feature review 0.5: `meetings/2026-11-19-feature-review-0.5.md`.
 
 ## Planned milestones
 

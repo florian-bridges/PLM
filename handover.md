@@ -6,7 +6,7 @@ Latest release: 0.4.0 (2026-11-16). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* 0.5 Agent interface active (meeting #77: scope A, budget 4 windows). Next: the 0.5 feature review for #58, #63 (with #56), #57, #55; #60 is a README section and needs none.
+* 0.5 Agent interface active (meeting #77: scope A, budget 4 windows). Feature review #78 prepared (`meetings/2026-11-19-feature-review-0.5.md`), waits for the owner. #60 built on `feat/ci-docs`, in review.
 
 ## Open pull requests and blockers
 

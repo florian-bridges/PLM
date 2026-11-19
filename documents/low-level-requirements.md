@@ -89,8 +89,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]`, finding the repository by searching upward for `plm.yaml`. `new --help` shall list all types (CO-02.8), `link --help` the links CO-02.6 and CO-02.9 allow (built-in outside a repository); each command shall have a one-line description.
-*Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made; help spares looking types up.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]` and `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]`, finding the repository by searching upward for `plm.yaml`; each command shall have a one-line description.
+*Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
 *Rationale:* Links are reviewed one by one, or all at once after reviewing an item.
@@ -124,6 +124,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`. `show` and JSON `search` shall give `text` with each citation (CO-02.7) replaced by the parameter's value and unit, or `TBD`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
 *Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up. Reusing `show`'s fields for `search` answers many items in one call.
+
+**CL-05.4** `plm types` shall print each type (CO-02.8) with its base, prefix, home folder, fields and required fields, and each link type (CO-02.9) with its source and target types.
+*Rationale:* An agent or script looks the schema up instead of guessing it (US-12).
 
 ## VS Code extension
 

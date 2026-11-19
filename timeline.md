@@ -37,7 +37,7 @@ Scope decided in meeting #77 (option A); feature review #78 held 2026-11-19: #58
 
 ### Coming owner meetings
 
-* Release meeting 0.5 / next milestone 0.6: in preparation (`meetings/2026-11-19-release-0.5.md`).
+* #85 Release meeting 0.5 / next milestone 0.6: `meetings/2026-11-19-release-0.5.md`.
 
 ## Planned milestones
 

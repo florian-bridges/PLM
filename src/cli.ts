@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // CL-01.1
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { Command, CommanderError, Option } from 'commander';
-import { stringify } from 'yaml';
+import { parse as parseYaml, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, unreached, type LinkState } from './links.ts';
-import { artifacts, entry, expanded, loadRepo, named, newItem, parameterOf, parentOf, Refused, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
+import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, parentOf, Refused, rollback, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
 import { allowedLinks, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
@@ -25,8 +26,7 @@ const scoped = (item?: string) => {
 };
 
 // CL-05.1
-function output(text: string, data: unknown) {
-  const json = program.opts().format === 'json';
+function output(text: string, data: unknown, json = program.opts().format === 'json') {
   console.log(json ? JSON.stringify({ schema: 4, data }, null, 2) : text);
 }
 
@@ -146,6 +146,37 @@ program.command('new <type> <title>').description('create an item')
   output(created.id, created);
   if (program.opts().format !== 'json') console.error(created.path);
 });
+
+// CL-01.6
+const splitLine=(line: string)=>[...line.matchAll(/"[^"]*"|'[^']*'|\S+/g)].map((m)=>m[0].replace(/^['"]|['"]$/g,'')),
+  errorKeys=(repo: Repo)=>validate(repo).filter((f)=>f.severity==='error').map((f)=>`${f.file}:${f.code}:${f.message}`);
+
+program.command('apply <file>').description('run related commands all or nothing, with a dry run').option('--dry-run').action((file,options)=>{
+    const root=workingFolder(),json=program.opts().format==='json',
+      lines=parseYaml(readFileSync(file,'utf8')) as string[],before=errorKeys(openRepo()),ids:string[]=[],texts:string[]=[];
+    journalOn();
+    try {
+      for(const raw of lines) {
+        const line=raw.replace(/\$(\d+)/g,(m: string,n: string)=>ids[+n-1]??m),args=splitLine(line),log=console.log,cerr=console.error;
+        let text='';
+        console.log=console.error=(s: string)=>{text+=`${s}\n`;};
+        exitCode=0;
+        try {
+          if(!['new','set','link','confirm'].includes(args[0])) throw new UsageError(args[0]);
+          program.parse(['-C',root,...args],{from:'user'});
+        } catch(e) {exitCode=1;text+=`${String(e)}\n`;}
+        console.log=log;console.error=cerr;
+        texts.push(`${line}\n${text}`.trimEnd());
+        ids.push(text.split('\n')[0]);
+        if(exitCode||errorKeys(openRepo()).some((e)=>!before.includes(e))) {exitCode=1;break;}
+      }
+    } finally {
+      const written=journalFiles();
+      if(exitCode||options.dryRun) rollback(root);
+      journalOff();
+      output([...texts,`files: ${written.join(' ')}`].join('\n'),{commands:texts,files:written},json);
+    }
+  });
 
 // CL-03.1
 program.command('test').command('record <test-case...>').description('record a test run')

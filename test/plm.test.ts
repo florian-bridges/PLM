@@ -76,6 +76,19 @@ test('TE-01.2, CO-01.3: artifacts', () => {
   expect(json(root, 'show', 'P').artifacts).toHaveLength(1);
 });
 
+test('CL-01.5: show walk', () => {
+  const a = json(root, 'show', 'A');
+  expect(a).not.toHaveProperty('parent');
+  expect(a.requirements).toMatchObject([{ id: 'R', title: 'Load', links: [{ link: { type: 'satisfies', target: 'R' } }] }]);
+  expect(json(root, 'show', 'P').parent).toBe('A');
+  expect(json(root, 'show', 'R', '--down', '1')).toEqual([{ id: 'P', title: 'Spar', depth: 1, via: 'satisfies' }]);
+  expect(json(root, 'show', 'P', '--up', '1')).toEqual(expect.arrayContaining([
+    { id: 'A', title: 'Wing', depth: 1, via: 'nesting' }, { id: 'R', title: 'Load', depth: 1, via: 'satisfies' },
+  ]));
+  expect(json(root, 'show', 'L', '--up', '1')).toEqual([{ id: 'A', title: 'Wing', depth: 1, via: 'uses' }]);
+  expect(plm(root, 'show', 'R', '--down', '1').stdout).toBe('1 satisfies P (Spar)\n');
+});
+
 test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings', () => {
   write(root, {
     'wing/spar/item.yaml': 'id: P\ntype: part\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: invalid\n  - type: derives-from\n    target: A/x\n',

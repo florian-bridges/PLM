@@ -10,7 +10,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
 *Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
 
-**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder not ignored by Git, except `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers; `plm show` shall print them.
+**CO-01.3** The core shall list as an item's artifacts the paths of files in its folder not ignored by Git, except `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
 
 **CO-02.1** The core shall validate `item.yaml` with Ajv against its JSON Schema (2020-12, CO-02.8), `meta/<ID>.yaml` against `types/meta.yaml` if present, naming enum values.
@@ -101,6 +101,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.4** `get <ref> [<key>]` shall print a parameter's `value` or key, nothing else; if unset or TBD, nothing and exit 1; usage error if unknown.
 *Rationale:* Scripts read a value, not a copy.
 
+**CL-01.5** `show <id>` shall print the item, version, artifacts, parent, its requirements, links in both directions with state, and its requirements' links. With `--down <n>` or `--up <n>`, it shall instead list the items reached within n steps, each with its depth and how it was reached (nesting, `uses` or link type): down through nested and used items, requirements and links to it; up through the parent, items that use it and its links' targets; JSON as `{id, title, depth, via}`.
+*Rationale:* An item's context and reach answer in one query; `report coverage` scopes by the same walk (TE-06.2).
+
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8) in block style, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters outside `a-z0-9` replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
 *Rationale:* Templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
 
@@ -122,7 +125,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-05.2** Exit codes shall be 0 for success, 1 for findings, 2 for usage errors and 3 for internal errors; only the exit-3 message includes Git's error output.
 *Rationale:* Separating findings from failures lets CI tell rejected changes from broken tooling; Git's messages on handled failures mislead.
 
-**CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`. `show` and JSON `search` shall give `text` with each citation (CO-02.7) replaced by the parameter's value and unit, or `TBD`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
+**CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`, `parent` and `requirements`. `show` and JSON `search` shall give `text` with each citation (CO-02.7) replaced by the parameter's value and unit, or `TBD`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
 *Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up. Reusing `show`'s fields for `search` answers many items in one call.
 
 **CL-05.4** `plm types` shall print each type (CO-02.8) with its base, prefix, home folder, fields and required fields, and each link type (CO-02.9) with its source and target types.

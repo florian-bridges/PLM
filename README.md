@@ -34,10 +34,11 @@ PLM suits an LLM coding agent as well as a human: items are plain YAML files the
 The same three commands check a pull request in any CI service; set `BASE`/`HEAD` to its range and run this in a job:
 
 ```sh
-plm validate; a=$?
-plm suspects; b=$?
+s=0
+plm validate || s=1
+plm suspects || s=1
 plm impact "$BASE..$HEAD"     # reports only
-test $a = 0 && test $b = 0
+exit $s
 ```
 
 ## Configuration

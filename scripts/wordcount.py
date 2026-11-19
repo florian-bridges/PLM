@@ -72,9 +72,9 @@ def main():
     # 0.5 raise (#58), measured after cuts: feature review #78.
     # #63 (show walk), measured after review cuts: feature review #78.
     # #63 narrow fix (walk scope), reviewer-directed: measured after cuts.
-    # #57 (apply), measured after cuts: feature review #78.
+    # #57 (apply), measured after review cuts (-10 src).
     parser.add_argument("--max-docs", type=int, default=5213, help="word limit for the documents directory")
-    parser.add_argument("--max-src", type=int, default=5723, help="word limit for the source and test directories")
+    parser.add_argument("--max-src", type=int, default=5713, help="word limit for the source and test directories")
     parser.add_argument("--max-ext", type=int, default=1635, help="word limit for the extension directory")
     parser.add_argument("-u", "--include-untracked", action="store_true",
                         help="also count untracked files that are not git-ignored")

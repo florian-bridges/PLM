@@ -7,8 +7,8 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | Milestone | Budget | Used | State |
 |---|---|---|---|
 | 0.3.0 | — | — | done (released 2026-11-11) |
-| 0.4 | 3 | 0 | active |
-| 0.5 | — | — | planned |
+| 0.4 | 3 | 1 | done (v0.4.0, meeting #77) |
+| 0.5 | 4 | 0 | active |
 | 0.6 | — | — | planned |
 | 0.7 | — | — | planned |
 | 0.8 | — | — | planned |
@@ -18,35 +18,31 @@ Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is
 
 ## Active milestone
 
-**Next milestone: 0.4.** Findings from real use and scope.
+**Next milestone: 0.5.** Agent interface.
 
-Budget: 3 windows.
+Budget: 4 windows.
 
-Already on `develop` and unreleased, shipping with 0.4: #26–#28 type files (breaking: the CHANGELOG gives the conversion tables) and #19 parameter citations in `text`.
+Scope decided in meeting #77 (option A); feature review #78 held 2026-11-19: #58, #63, #57 go with option A and the reviewer's corrections, #55 to the backlog.
 
 ### Entry conditions
 
-- [x] #64 Product data only: no gates, milestones, meetings or due dates in scenarios, requirements, README or code; the rule stands in `CLAUDE.md` Scope. *Done when* the grep in the issue finds nothing.
-- [x] #54 Use by LLM agents: a US entry in `documents/scenarios.md` and a README section. *Done when* both exist, built on existing commands.
-- [x] #36 `plm new` writes block style whatever the template's style. *Done when* a flow-style template gives a block-style item, with a test.
-- [x] #35 An enum finding lists the allowed values. *Done when* text and JSON output name them, with a test.
-- [x] #33 Allocation: a requirement can be retained at its level with a reason; only links from the subtree below count. *Done when* the report shows `retained` and ignores sibling links.
-- [x] #9 A test run can be confirmed against a newer system-under-test version with a reason. *Done when* the run is current again without a rerun.
-- [x] #20 Projects define their own link types. *Done when* a declared `mitigates` link is accepted, others refused, and uncovered targets can be listed.
+- [x] #58 The effective schema (types, prefixes, fields, required fields, link types) in machine-readable form. *Done when* one command prints it as JSON, with a test.
+- [x] #63 Trace queries, with #56 folded in. *Done when* `plm trace <ID>` walks links up or down to a given depth, depth 1 being the item's context view, text and JSON, with tests.
+- [ ] #57 Atomic changes with a dry run. *Done when* a change file is applied all or nothing, a dry run shows the result without writing, with tests.
+- [x] #60 CI integration as documentation. *Done when* the README has a CI section with a generic script on `validate`, `impact` and `suspects`.
 
 ### Active topics
 
-* Feature review #71 held 2026-11-16: go for #54, #33, #9, #20 (A with the reviewer's cuts). #54 (#72), #9 (#73), #33 (#74) merged. #20 being built (`feat/link-types`).
+* #60 merged (PR #79), #58 merged (PR #81). #63 merged (PR #82). #57 in progress (`feat/apply`).
 
 ### Coming owner meetings
 
-* None. The release meeting follows the 0.4 release.
+* None until 0.5 is released.
 
 ## Planned milestones
 
-* **0.5 Agent interface:** #58 schema in machine-readable form, #56 context view of an item, #63 trace queries, #57 atomic changes with dry run, #55 MCP server, #60 CI integration.
 * **0.6 Interfaces between subsystems:** #29 ports and connections, #30 directed port types, #31 connections report.
 * **0.7 Releases and change control:** #45 item revisions, #46 baselines, #59 change requests, #66 consistency of related changes and merges, #2 HTML view and generated documents.
 * **0.8 Product structure and configurations:** #40 occurrences and quantities, #42 BOM views, #43 variants and effectivity, #65 queries at scale.
 * **0.9 UI redesign** once the backend is stable: #67.
-* **Backlog, no milestone:** #61 requirements import and export (ReqIF, CSV).
+* **Backlog, no milestone:** #61 requirements import and export (ReqIF, CSV), #55 MCP server (#78).

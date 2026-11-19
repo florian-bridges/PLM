@@ -1,7 +1,7 @@
 // CO-01.1–CO-01.2
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { Document, LineCounter, parseDocument } from 'yaml';
 import { builtinTypes, type TypeDef } from './schemas.ts';
@@ -31,9 +31,19 @@ export function readYaml<T>(root: string, path: string) {
   return { path, doc, lines, data: (doc.toJS() ?? {}) as T };
 }
 
+// CL-01.6: apply's journal of files written and folders created, for rollback
+let journal:{path:string;original?:string}[]|undefined,created:string[];
+export const journalOn=()=>{journal=[];created=[];},journalOff=()=>{journal=undefined;},journalFiles=()=>journal!.map((f)=>f.path);
+export function rollback(root: string) {
+  for(const file of journal!) file.original===undefined?rmSync(join(root,file.path),{force:true}):writeFileSync(join(root,file.path),file.original);
+  for(const dir of created) rmSync(dir,{recursive:true,force:true});
+}
+
 export function writeYaml(root: string, file: Pick<YamlFile<unknown>, 'path' | 'doc'>) {
   const target = join(root, file.path);
-  mkdirSync(dirname(target), { recursive: true });
+  if (journal&&!journal.some((f)=>f.path===file.path)) journal.push({path:file.path,original:existsSync(target)?readFileSync(target,'utf8'):undefined});
+  const dir = mkdirSync(dirname(target), { recursive: true });
+  if (journal && dir) created.push(dir);
   writeFileSync(target, file.doc.toString({ lineWidth: 0 }));
 }
 
@@ -182,9 +192,36 @@ export function entry(repo: Repo, id: string) {
   return found;
 }
 
-// TE-03.2, TE-06.2
+// TE-03.2
 export function subtree(repo: Repo, id: string, seen = new Set<string>()): string[] {
   if (seen.has(id) || !repo.entries.has(id)) return [];
   seen.add(id);
   return [id, ...childrenOf(repo.entries.get(id)).flatMap((child) => subtree(repo, child, seen))];
+}
+
+// CL-01.5
+export const parentOf = (repo: Repo, id: string) => [...repo.entries.values()].find((e) => e.nested.includes(id) || e.requirements.includes(id))?.id;
+
+// CL-01.5, TE-06.2
+export function walk(repo: Repo, id: string, down: boolean, depth = Infinity, links = true) {
+  const edgesOf = (cur: string) => {
+    const e = repo.entries.get(cur);
+    if (down) return [
+      ...[...(e?.nested ?? []), ...(e?.requirements ?? [])].map((n) => ({ id: n, via: 'nesting' })),
+      ...usesOf(e).map((n) => ({ id: n, via: 'uses' })),
+      ...(links ? [...repo.entries.values()].flatMap((o) => linksOf(o).filter((l) => targetId(l.target) === cur).map((l) => ({ id: o.id, via: l.type }))) : []),
+    ];
+    const parent = parentOf(repo, cur);
+    return [
+      ...(parent ? [{ id: parent, via: 'nesting' }] : []),
+      ...[...repo.entries.values()].filter((o) => usesOf(o).includes(cur)).map((o) => ({ id: o.id, via: 'uses' })),
+      ...(links && e ? linksOf(e).filter((l) => repo.entries.has(targetId(l.target))).map((l) => ({ id: targetId(l.target), via: l.type })) : []),
+    ];
+  }, seen = new Map([[id, { depth: 0, via: '' }]]);
+  for (let frontier = [id], d = 0; d < depth && frontier.length; d++) {
+    const next = frontier.flatMap(edgesOf);
+    frontier = [];
+    for (const e of next) if (!seen.has(e.id)) { seen.set(e.id, { depth: d + 1, via: e.via }); frontier.push(e.id); }
+  }
+  return [...seen].map(([wid, v]) => ({ id: wid, ...v }));
 }

@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // CL-01.1
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { Command, CommanderError, Option } from 'commander';
-import { stringify } from 'yaml';
+import { parse as parseYaml, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, unreached, type LinkState } from './links.ts';
-import { artifacts, entry, expanded, loadRepo, named, newItem, parameterOf, Refused, targetId, UsageError, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
-import { allowedLinks, linkRules, results } from './schemas.ts';
+import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, parentOf, Refused, rollback, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
+import { allowedLinks, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
 import { currentVersions, snapshotAt } from './version.ts';
@@ -25,8 +26,7 @@ const scoped = (item?: string) => {
 };
 
 // CL-05.1
-function output(text: string, data: unknown) {
-  const json = program.opts().format === 'json';
+function output(text: string, data: unknown, json = program.opts().format === 'json') {
   console.log(json ? JSON.stringify({ schema: 4, data }, null, 2) : text);
 }
 
@@ -45,19 +45,39 @@ program.command('validate').description('check the repository').action(() => {
   exitCode = +findings.some((finding) => finding.severity === 'error');
 });
 
-program.command('show <id>').description('show an item').action((id) => {
-  const repo = openRepo(), found = entry(repo, id), versions = currentVersions(repo),
-    // CO-01.3
-    data = { ...record(repo, found), version: versions.get(id), links: linkStates(repo, versions, id), artifacts: artifacts(repo, found) };
-  output(stringify(data, { aliasDuplicateObjects: false }), data);
-});
+// CL-01.5
+program.command('show <id>').description('show an item')
+  .option('--down <n>').option('--up <n>')
+  .action((id, options) => {
+    const repo = openRepo(), found = entry(repo, id), steps = options.down ?? options.up;
+    if (steps !== undefined) {
+      const rows = walk(repo, id, options.down !== undefined, Number(steps)).filter((w) => w.depth)
+        .map((w) => ({ ...named(repo, w.id), depth: w.depth, via: w.via }));
+      return output(rows.map((w) => `${w.depth} ${w.via} ${label(w)}`).join('\n'), rows);
+    }
+    const versions = currentVersions(repo),
+      data = {
+        ...record(repo, found), version: versions.get(id), parent: parentOf(repo, id),
+        requirements: found.requirements.map((r) => ({ ...named(repo, r), links: linkStates(repo, versions, r) })),
+        links: linkStates(repo, versions, id), artifacts: artifacts(repo, found),
+      };
+    output(stringify(data, { aliasDuplicateObjects: false }), data);
+  });
 
-// CL-01.1: built-in links outside a repository
 program.command('link <source> <type> <target>').description('add a link')
   .option('--remove')
-  .addHelpText('after', () => { let links; try { links = allowedLinks(openRepo()); } catch { links = linkRules; }
-    return 'Links (* any type):\n' + Object.entries(links).map(([type, [from, to]]) => `${from} ${type} ${to}`).join('\n'); })
   .action((source, type, target, options) => link(openRepo(), source, type, target, options.remove));
+
+// CL-05.4
+program.command('types').description('print the type and link schema').action(() => {
+  const repo = openRepo(), types = Object.fromEntries(Object.entries(repo.types).filter(([name]) => name !== 'meta')),
+    links = allowedLinks(repo),
+    lines = [
+      ...Object.entries(types).map(([name, t]) => `${name}${t.base ? ` (${t.base})` : ''} ${t.prefix ?? ''} ${t.folder ?? ''} fields:${Object.keys(t.fields ?? {})} required:${t.required ?? ''}`),
+      ...Object.entries(links).map(([type, [from, to]]) => `${from} ${type} ${to}`),
+    ];
+  output(lines.join('\n'), { types, links });
+});
 
 // CL-01.3
 program.command('set <ref> <field> <value>').description('write a field or parameter').action((ref, field, value) => {
@@ -119,14 +139,44 @@ program.command('impact <range>').description('list a change\'s impact').action(
   output(lines.join('\n'), result);
 });
 
-// CL-01.1, CL-02.1
+// CL-02.1
 program.command('new <type> <title>').description('create an item')
-  .addHelpText('after', () => `Types: ${Object.keys(openRepo().types).filter((type) => type !== 'meta').join(' ')}`)
   .action((type, title) => {
   const created = newItem(openRepo(), type, title, workingFolder());
   output(created.id, created);
   if (program.opts().format !== 'json') console.error(created.path);
 });
+
+// CL-01.6
+const splitLine=(line: string)=>[...line.matchAll(/"[^"]*"|'[^']*'|\S+/g)].map((m)=>m[0].replace(/^['"]|['"]$/g,'')),
+  errorKeys=(repo: Repo)=>validate(repo).filter((f)=>f.severity==='error').map((f)=>`${f.file}:${f.code}:${f.message}`);
+
+program.command('apply <file>').description('run related commands all or nothing, with a dry run').option('--dry-run').action((file,options)=>{
+    const root=workingFolder(),json=program.opts().format==='json',
+      lines=parseYaml(readFileSync(file,'utf8')) as string[],before=errorKeys(openRepo()),ids:string[]=[],texts:string[]=[];
+    journalOn();
+    try {
+      for(const raw of lines) {
+        const line=raw.replace(/\$(\d+)/g,(m: string,n: string)=>ids[+n-1]??m),args=splitLine(line),log=console.log,cerr=console.error;
+        let text='';
+        console.log=console.error=(s: string)=>{text+=`${s}\n`;};
+        exitCode=0;
+        try {
+          if(!['new','set','link','confirm'].includes(args[0])) throw new UsageError(args[0]);
+          program.parse(['-C',root,...args],{from:'user'});
+        } catch(e) {exitCode=1;text+=`${String(e)}\n`;}
+        console.log=log;console.error=cerr;
+        texts.push(`${line}\n${text}`.trimEnd());
+        ids.push(text.split('\n')[0]);
+        if(exitCode||errorKeys(openRepo()).some((e)=>!before.includes(e))) {exitCode=1;break;}
+      }
+    } finally {
+      const written=journalFiles();
+      if(exitCode||options.dryRun) rollback(root);
+      journalOff();
+      output([...texts,`files: ${written.join(' ')}`].join('\n'),{commands:texts,files:written},json);
+    }
+  });
 
 // CL-03.1
 program.command('test').command('record <test-case...>').description('record a test run')

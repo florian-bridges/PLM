@@ -76,6 +76,43 @@ test('TE-01.2, CO-01.3: artifacts', () => {
   expect(json(root, 'show', 'P').artifacts).toHaveLength(1);
 });
 
+test('CL-01.5: show walk', () => {
+  const a = json(root, 'show', 'A');
+  expect(a).not.toHaveProperty('parent');
+  expect(a.requirements).toMatchObject([{ id: 'R', title: 'Load', links: [{ link: { type: 'satisfies', target: 'R' } }] }]);
+  expect(json(root, 'show', 'P').parent).toBe('A');
+  expect(json(root, 'show', 'R', '--down', '1')).toEqual([{ id: 'P', title: 'Spar', depth: 1, via: 'satisfies' }]);
+  expect(json(root, 'show', 'P', '--up', '1')).toEqual(expect.arrayContaining([
+    { id: 'A', title: 'Wing', depth: 1, via: 'nesting' }, { id: 'R', title: 'Load', depth: 1, via: 'satisfies' },
+  ]));
+  expect(json(root, 'show', 'L', '--up', '1')).toEqual([{ id: 'A', title: 'Wing', depth: 1, via: 'uses' }]);
+  expect(plm(root, 'show', 'R', '--down', '1').stdout).toBe('1 satisfies P (Spar)\n');
+});
+
+test('CL-01.6: apply', () => {
+  const file=join(root,'ops.yaml'), ops=(...lines)=>write(root,{'ops.yaml':lines.map((l)=>`- ${l}\n`).join('')});
+  ops('new part Rib', 'link $1 derives-from L');
+  const out=plm(root,'apply',file);
+  expect(out.status).toBe(0);
+  const id=out.stdout.match(/PRT-\w+/)[0];
+  expect(linksOf(loadRepo(root).entries.get(id)!)).toEqual([{type:'derives-from',target:'L'}]);
+
+  ops('new part Rib2', 'link $1 derives-from ZZZZ');
+  expect(plm(root,'apply',file).status).toBe(1);
+  expect(existsSync(join(root,'rib2'))).toBe(false);
+
+  ops('set P bogus hi');
+  expect(plm(root,'apply',file).status).toBe(1);
+  expect(readFileSync(join(root,'wing/spar/item.yaml'),'utf8')).not.toContain('bogus');
+
+  ops('new part Rib3');
+  expect(plm(root,'apply',file,'--dry-run').status).toBe(0);
+  expect(existsSync(join(root,'rib3'))).toBe(false);
+
+  ops('show A');
+  expect(plm(root,'apply',file).status).toBe(1);
+});
+
 test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings', () => {
   write(root, {
     'wing/spar/item.yaml': 'id: P\ntype: part\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: invalid\n  - type: derives-from\n    target: A/x\n',
@@ -108,9 +145,9 @@ test('CL-01.1,CO-02.1,CO-02.8:remove',()=>{
   expect(loadRepo(root).entries.get('P')!.meta.data.confirmed?.L).toBeUndefined();
 });
 
-test('CO-02.2, CO-02.9, CL-01.1, TE-06.5: declared links', () => {
+test('CO-02.2, CO-02.9, CL-01.1, CL-05.4, TE-06.5: declared links', () => {
   write(root, { 'plm.yaml': 'links:\n  mitigates: {from: ["*"], to: [assembly]}\n', 'types/wing.yaml': 'base: assembly\n', 'wing/item.yaml': 'id: A\ntype: wing\ntitle: Wing\nuses: [L]\n' });
-  expect(plm(root, 'link', '--help').stdout).toContain('* mitigates assembly\n');
+  expect(plm(root, 'types').stdout).toContain('* mitigates assembly');
   expect(plm(root, 'link', 'P', 'mitigates', 'R')).toMatchObject({ status: 2, stderr: 'part mitigates requirement\n' });
   expect(plm(root, 'report', 'coverage', '--link', 'mitigates')).toMatchObject({ status: 1, stdout: 'A (Wing)\n' });
   expect(plm(root, 'link', 'P', 'mitigates', 'A').status).toBe(0);
@@ -120,7 +157,7 @@ test('CO-02.2, CO-02.9, CL-01.1, TE-06.5: declared links', () => {
   expect(validate(loadRepo(root)).map((f) => f.code)).toContain('builtin-link');
 });
 
-test('CO-01.1, CO-02.1, CO-02.8, CL-02.1–CL-02.2: types', () => {
+test('CO-01.1, CO-02.1, CO-02.8, CL-02.1–CL-02.2, CL-05.4: types', () => {
   write(root, {
     'types/study.yaml': 'folder: studies\n',
     'types/analysis.yaml': 'colour: red\nprefix: ANA-\nfolder: analyses\ntemplate: {method: review}\nfields:\n  method: {enum: [review]}\nrequired: [tool]\n',
@@ -140,6 +177,7 @@ test('CO-01.1, CO-02.1, CO-02.8, CL-02.1–CL-02.2: types', () => {
   expect(path).toBe('wing/analyses/loads/item.yaml');
   expect(visual).toMatchObject({ id: expect.stringMatching(/^TC-/), path: 'wing/tests/visual/item.yaml' });
   expect(json(root, 'new', 'gauge', 'Dial').id).toMatch(/^GAU-/);
+  expect(json(root, 'types').types.gauge).toMatchObject({ base: 'part', prefix: 'GAU-', fields: { rating: { type: 'number' } }, required: [] });
   plm(root, 'link', visual.id, 'verifies', 'R');
   expect(json(root, 'report', 'coverage')[0].tests[0].testCase.id).toBe(visual.id);
   expect(plm(root, 'new', 'study', 'X').status).toBe(2);
@@ -275,9 +313,6 @@ test('CL-02.1–CL-02.2, CL-05.2, CO-01.1, CO-02.2, CO-02.5: nest', () => {
 
 test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () => {
   expect(plm(root, '--version').stdout).toBe(`${JSON.parse(readFileSync('package.json', 'utf8')).version}\n`);
-  expect(plm(root, 'new', '--help').stdout).toContain('Types: requirement test-case test-run part assembly\n');
-  expect(plm(root, 'link', '--help').stdout).toContain('(* any type):\n* satisfies requirement\n');
-  expect(plm(base, 'link', '--help').stdout).toContain('* satisfies requirement\n'); // CL-01.1: outside a repository
   expect(plm(root, 'validate').status).toBe(0);
   write(root, { 'meta/L.yaml': 'status: draft\nstatus: draft\n' });
   expect(plm(root, 'validate')).toMatchObject({ status: 1, stdout: 'meta/L.yaml:2:1 error yaml: DUPLICATE_KEY\n' });
@@ -310,6 +345,11 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
   write(root, { '.git/index': 'x' });
   const broken = plm(root, 'suspects');
   expect([broken.status, broken.stderr.match(/fatal/g)?.length]).toEqual([3, 1]);
+});
+
+test('TE-06.2: scope', () => {
+  write(root, { 'other/item.yaml': '', 'other/requirements/extra.yaml': 'type: requirement\nlinks: [{type: satisfies,target: R}]\n' });
+  expect(plm(root, 'report', 'coverage', 'A').stdout).toBe('unverified R (Load)\n');
 });
 
 test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-02.2, TE-03.1, TE-06.1–TE-06.3: SUT', () => {

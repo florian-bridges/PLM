@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0 (2026-11-19)
+
+* `plm types` prints the effective schema (types, prefixes, fields, required fields, link types) as JSON; `new --help` and `link --help` no longer list them (#58).
+* `plm show <ID>` adds the parent and the item's requirements; `--down <n>` / `--up <n>` walk the product graph n steps, each item with its depth and how it was reached (#63).
+* `plm apply <file> [--dry-run]` runs a list of `new`, `set`, `link` and `confirm` commands all or nothing (#57).
+* README: a CI section with a generic script on `validate`, `impact` and `suspects` (#60).
+
 ## 0.4.0 (2026-11-16)
 
 * Breaking: project types are defined in `types/<type>.yaml` (`prefix`, `folder`, `template`, `fields`, `required`, `base`); `schemas/`, `templates/` and `plm.yaml`'s `prefixes` and `folders` are no longer read. Convert by hand:

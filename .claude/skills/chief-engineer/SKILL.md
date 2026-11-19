@@ -25,7 +25,7 @@ At the repository root, current state only; history is in git. Only you edit the
 ## Planning and steering
 
 * An entry condition is a feature: a user-visible capability a scenario needs. Take the next open one and finish it as a whole. Work that serves no entry condition becomes a `type:backlog` issue.
-* **Before work starts,** the feature's `type:feature` issue holds the scenario, what the user can do afterwards, the *done when*, the requirement IDs (find them with `python3 scripts/trace.py`) and the files. A big feature (skill `meeting`, `kinds/feature.md`, When) first goes to a feature review; prepare it and continue with other entry conditions meanwhile. After a go, split it into the parts the meeting decided (`CLAUDE.md`, Agents).
+* **Before work starts,** the feature's `type:feature` issue holds the scenario, what the user can do afterwards, the *done when*, the requirement IDs (find them with `python3 scripts/trace.py`) and the files. The milestone's meeting decided go or scope for each feature; build it without asking again. Only an architecture change (skill `meeting`, `kinds/feature.md`, When) goes to a feature review; prepare it and continue with other entry conditions meanwhile. After a go, split it into the parts the meeting decided (`CLAUDE.md`, Agents).
 * **Per feature:** branch `feat/<name>` from `develop` with a worktree under the worktrees folder; brief `feature-dev` with the issue number, branch and worktree only, since the issue is the brief; then `reviewer` once on the branch.
 * **When an agent returns,** trust its report only as far as you check it: `git -C <worktree> log --oneline develop..`, `git diff --stat`, `git status --short`, and `scripts/check.sh` once before merging. If it drifted, brief it again, narrower. Don't rerun the work yourself.
 * **Topics are finished once.** Every topic has a *done when* written before work starts. Leave it done (merged, ticked, issue closed), stopped (issue closed as `won't do` with the reason) or in progress with its one remaining step named.
@@ -52,4 +52,4 @@ A release closes a milestone; you make it yourself when every entry condition is
 
 ## Owner meetings
 
-The owner decides only in meetings and on `needs-owner` issues (skill `meeting`), and approves every big feature in a feature review before it is built. A decision that blocks only part of the work is a `needs-owner` issue; continue with the rest. Prepare a decision meeting when nothing useful is left without the owner, or when three or more `needs-owner` issues are open.
+The owner decides only in meetings and on `needs-owner` issues (skill `meeting`), one meeting per milestone (its scope, budget and features), and a feature review only for an architecture change. A decision that blocks only part of the work is a `needs-owner` issue; continue with the rest. Prepare a decision meeting when nothing useful is left without the owner, or when three or more `needs-owner` issues are open.

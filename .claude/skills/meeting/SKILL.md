@@ -10,7 +10,7 @@ The chief engineer chairs and presents; agents answer detail questions on reques
 | Kind | When |
 |---|---|
 | `kickoff` | no milestone defined |
-| `feature` | before a big feature is built (`kinds/feature.md`, When) |
+| `feature` | before an architecture change is built (`kinds/feature.md`, When) |
 | `release` | after a release, or every entry condition ticked and no next milestone |
 | `decision` | a `needs-owner` question blocks all remaining work, or three or more are open |
 | `replan` | a milestone over budget or stalled |
@@ -24,7 +24,7 @@ The chief engineer chairs and presents; agents answer detail questions on reques
 
 ## 2. Hold (interactive, the owner is present)
 
-1. Check that the shift is not running. Hold the meeting only then.
+1. Check that the shift is not running. Hold the meeting only then. Or the owner holds it in the control room while the shift waits: each decision as a comment on the meeting issue, ending with "Meeting closed"; the shift records it (section 3).
 2. Open with the summary in a few lines; go through the agenda, each point in at most ten lines, then wait for questions.
 3. Answer from the repository; never invent an answer: what it cannot answer becomes an action.
 4. Present each decision with AskUserQuestion, the recommended option first. Note the option chosen and the owner's reason.

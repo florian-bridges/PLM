@@ -107,7 +107,7 @@ export function changeSince(repo: Repo, link: Link) {
 
 // TE-03.1, TE-06.2
 const within = (repo: Repo, root?: string) => {
-  const items = root && new Set(walk(repo, root, true).map((w) => w.id));
+  const items = root && new Set(walk(repo, root, true, Infinity, false).map((w) => w.id));
   return (id: string) => !items || items.has(id);
 };
 

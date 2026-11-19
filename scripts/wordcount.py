@@ -71,8 +71,9 @@ def main():
     # The limits are kept by the chief engineer (owner, #71); 0.4 raise: feature review #71.
     # 0.5 raise (#58), measured after cuts: feature review #78.
     # #63 (show walk), measured after review cuts: feature review #78.
+    # #63 narrow fix (walk scope), reviewer-directed: measured after cuts.
     parser.add_argument("--max-docs", type=int, default=5117, help="word limit for the documents directory")
-    parser.add_argument("--max-src", type=int, default=5542, help="word limit for the source and test directories")
+    parser.add_argument("--max-src", type=int, default=5564, help="word limit for the source and test directories")
     parser.add_argument("--max-ext", type=int, default=1635, help="word limit for the extension directory")
     parser.add_argument("-u", "--include-untracked", action="store_true",
                         help="also count untracked files that are not git-ignored")

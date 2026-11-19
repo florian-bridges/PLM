@@ -323,6 +323,11 @@ test('CL-01.1, CL-05.1–CL-05.3, CO-02.2, CO-02.4, TE-03.1, TE-06.4: exit', () 
   expect([broken.status, broken.stderr.match(/fatal/g)?.length]).toEqual([3, 1]);
 });
 
+test('TE-06.2: scope', () => {
+  write(root, { 'other/item.yaml': '', 'other/requirements/extra.yaml': 'type: requirement\nlinks: [{type: satisfies,target: R}]\n' });
+  expect(plm(root, 'report', 'coverage', 'A').stdout).toBe('unverified R (Load)\n');
+});
+
 test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-02.2, TE-03.1, TE-06.1–TE-06.3: SUT', () => {
   const coverage = () => json(root, 'report', 'coverage', 'A')[0],
     record = (...results) => plm(root, 'test', 'record', 'T', 'U', '--sut', 'L', 'A', '--result', ...results, '--log', join(root, 'rig.log'));

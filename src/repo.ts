@@ -193,19 +193,19 @@ export function subtree(repo: Repo, id: string, seen = new Set<string>()): strin
 export const parentOf = (repo: Repo, id: string) => [...repo.entries.values()].find((e) => e.nested.includes(id) || e.requirements.includes(id))?.id;
 
 // CL-01.5, TE-06.2
-export function walk(repo: Repo, id: string, down: boolean, depth = Infinity) {
+export function walk(repo: Repo, id: string, down: boolean, depth = Infinity, links = true) {
   const edgesOf = (cur: string) => {
     const e = repo.entries.get(cur);
     if (down) return [
       ...[...(e?.nested ?? []), ...(e?.requirements ?? [])].map((n) => ({ id: n, via: 'nesting' })),
       ...usesOf(e).map((n) => ({ id: n, via: 'uses' })),
-      ...[...repo.entries.values()].flatMap((o) => linksOf(o).filter((l) => targetId(l.target) === cur).map((l) => ({ id: o.id, via: l.type }))),
+      ...(links ? [...repo.entries.values()].flatMap((o) => linksOf(o).filter((l) => targetId(l.target) === cur).map((l) => ({ id: o.id, via: l.type }))) : []),
     ];
     const parent = parentOf(repo, cur);
     return [
       ...(parent ? [{ id: parent, via: 'nesting' }] : []),
       ...[...repo.entries.values()].filter((o) => usesOf(o).includes(cur)).map((o) => ({ id: o.id, via: 'uses' })),
-      ...(e ? linksOf(e).filter((l) => repo.entries.has(targetId(l.target))).map((l) => ({ id: targetId(l.target), via: l.type })) : []),
+      ...(links && e ? linksOf(e).filter((l) => repo.entries.has(targetId(l.target))).map((l) => ({ id: targetId(l.target), via: l.type })) : []),
     ];
   }, seen = new Map([[id, { depth: 0, via: '' }]]);
   for (let frontier = [id], d = 0; d < depth && frontier.length; d++) {

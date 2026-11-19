@@ -21,3 +21,7 @@ One line each: date, decision, source (issue or meeting). Append only; the chief
 * 2026-11-14: Messages belong to the sending port; connection-defining parameters (pin pairs between the two ports, bus baud rate) are fields of the connection, declared e.g. by the port type. (#29)
 * 2026-11-14: Leave room for per-type check modules (bus load, label uniqueness, wire endpoints) in the `icd.yaml` format and type files; do not build them now. (#29)
 * 2026-11-14: Blast stays as it is, neither retired nor integrated. (#29)
+* 2026-11-19: #58 go, option A: `plm types` (CL-05.4), replacing the help lists of `new` and `link`. (#78)
+* 2026-11-19: #63 go, option A: extend `show` (CL-01.5) with parent, requirements and links, and `--down <n>`/`--up <n>` walks; one core walk function reused by `report coverage`; *done when* reads `plm show <ID> --down/--up`. (#78)
+* 2026-11-19: #57 go, option A: `plm apply <file> [--dry-run]` (CL-01.6) runs a YAML list of `plm` command lines, restoring every file written (and removing created files and folders) on failure, a new validation error or `--dry-run`. (#78)
+* 2026-11-19: #55 MCP server to the backlog (option C), out of 0.5: users have a shell and the CLI's JSON; build it (option A, no dependency) when a shell-less use appears. (#78)

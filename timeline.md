@@ -22,23 +22,22 @@ Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is
 
 Budget: 4 windows.
 
-Scope decided in meeting #77 (option A). Since #80 only #55 (MCP, a new interface style) needs feature review #78; #58, #63 and #57 are built with option A of the prepared review and its reviewer findings.
+Scope decided in meeting #77 (option A); feature review #78 held 2026-11-19: #58, #63, #57 go with option A and the reviewer's corrections, #55 to the backlog.
 
 ### Entry conditions
 
 - [x] #58 The effective schema (types, prefixes, fields, required fields, link types) in machine-readable form. *Done when* one command prints it as JSON, with a test.
 - [ ] #63 Trace queries, with #56 folded in. *Done when* `plm trace <ID>` walks links up or down to a given depth, depth 1 being the item's context view, text and JSON, with tests.
 - [ ] #57 Atomic changes with a dry run. *Done when* a change file is applied all or nothing, a dry run shows the result without writing, with tests.
-- [ ] #55 MCP server. *Done when* an MCP client lists and calls PLM commands as typed tools, with a test.
 - [x] #60 CI integration as documentation. *Done when* the README has a CI section with a generic script on `validate`, `impact` and `suspects`.
 
 ### Active topics
 
-* #60 merged (PR #79), #58 merged (PR #81). Next: #63, then #57. #78 waits for the owner on #55.
+* #60 merged (PR #79), #58 merged (PR #81). #63 in progress (`feat/show-walk`), then #57.
 
 ### Coming owner meetings
 
-* #78 Feature review 0.5 (only #55 still needs it): `meetings/2026-11-19-feature-review-0.5.md`.
+* None until 0.5 is released.
 
 ## Planned milestones
 
@@ -46,4 +45,4 @@ Scope decided in meeting #77 (option A). Since #80 only #55 (MCP, a new interfac
 * **0.7 Releases and change control:** #45 item revisions, #46 baselines, #59 change requests, #66 consistency of related changes and merges, #2 HTML view and generated documents.
 * **0.8 Product structure and configurations:** #40 occurrences and quantities, #42 BOM views, #43 variants and effectivity, #65 queries at scale.
 * **0.9 UI redesign** once the backend is stable: #67.
-* **Backlog, no milestone:** #61 requirements import and export (ReqIF, CSV).
+* **Backlog, no milestone:** #61 requirements import and export (ReqIF, CSV), #55 MCP server (#78).

@@ -52,3 +52,7 @@ All A: about +200 `documents/`, +500 `src/`+`test/`; 3 windows, one `feature-dev
 ## Plan
 
 For each go: its issue updated to the decided scope, naming this meeting; the approved US-12, CR-05 and CL-01 changes into `documents/` with the word limits raised; built in the order above.
+
+## Minutes (control room, 2026-11-19)
+
+Decisions: #58 go, A; #63 go, A, with the reviewer's corrections; #57 go, A, with the reviewer's corrections; #55 backlog (C). Build order #58, #63, #57; word limits raised per feature with measured numbers. Actions: #55 relabelled `type:backlog`, out of milestone 0.5.

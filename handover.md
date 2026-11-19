@@ -6,8 +6,7 @@ Latest release: 0.4.0 (2026-11-16). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* 0.4.0 released with all seven entry conditions, in 1 of 3 windows. Waiting on the release meeting #77 (`meetings/2026-11-16-release-0.4.md`): the 0.5 scope (merge #56 into #63, #60 as documentation, recommended) and budget. Next, after it: prepare the 0.5 feature review.
-* GitHub milestone 0.4 is still open: the shift guard blocks the API, so the owner closes it.
+* 0.5 Agent interface active (meeting #77: scope A, budget 4 windows). Next: the 0.5 feature review for #58, #63 (with #56), #57, #55; #60 is a README section and needs none.
 
 ## Open pull requests and blockers
 

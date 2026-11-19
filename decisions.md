@@ -12,3 +12,5 @@ One line each: date, decision, source (issue or meeting). Append only; the chief
 * 2026-11-16: Feature review 0.4: go for #54, #33, #9, #20, each option A with the reviewer's cuts. (#71)
 * 2026-11-16: The word limits are governed by the chief engineer; the owner is not asked about them. (#71)
 * 2026-11-16: Ask the owner only for key design decisions, not every small one. (#71)
+* 2026-11-17: 0.5 scope A: #58, #63 with #56 folded in (`plm trace` at depth 1 is the context view), #57, #55, and #60 as documentation (README CI section on existing commands). (#77)
+* 2026-11-17: 0.5 budget 4 windows. (#77)

@@ -5,7 +5,7 @@ import { Command, CommanderError, Option } from 'commander';
 import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, unreached, type LinkState } from './links.ts';
-import { artifacts, entry, expanded, loadRepo, named, newItem, parameterOf, Refused, targetId, UsageError, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
+import { artifacts, entry, expanded, loadRepo, named, newItem, parameterOf, parentOf, Refused, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
 import { allowedLinks, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
@@ -45,12 +45,24 @@ program.command('validate').description('check the repository').action(() => {
   exitCode = +findings.some((finding) => finding.severity === 'error');
 });
 
-program.command('show <id>').description('show an item').action((id) => {
-  const repo = openRepo(), found = entry(repo, id), versions = currentVersions(repo),
-    // CO-01.3
-    data = { ...record(repo, found), version: versions.get(id), links: linkStates(repo, versions, id), artifacts: artifacts(repo, found) };
-  output(stringify(data, { aliasDuplicateObjects: false }), data);
-});
+// CL-01.5
+program.command('show <id>').description('show an item')
+  .option('--down <n>').option('--up <n>')
+  .action((id, options) => {
+    const repo = openRepo(), found = entry(repo, id), steps = options.down ?? options.up;
+    if (steps !== undefined) {
+      const rows = walk(repo, id, options.down !== undefined, Number(steps)).filter((w) => w.depth)
+        .map((w) => ({ ...named(repo, w.id), depth: w.depth, via: w.via }));
+      return output(rows.map((w) => `${w.depth} ${w.via} ${label(w)}`).join('\n'), rows);
+    }
+    const versions = currentVersions(repo),
+      data = {
+        ...record(repo, found), version: versions.get(id), parent: parentOf(repo, id),
+        requirements: found.requirements.map((r) => ({ ...named(repo, r), links: linkStates(repo, versions, r) })),
+        links: linkStates(repo, versions, id), artifacts: artifacts(repo, found),
+      };
+    output(stringify(data, { aliasDuplicateObjects: false }), data);
+  });
 
 program.command('link <source> <type> <target>').description('add a link')
   .option('--remove')

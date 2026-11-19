@@ -1,7 +1,7 @@
 import { copyFileSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, typeOf, UsageError, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, typeOf, UsageError, walk, writeYaml, type Link, type Named, type Repo } from './repo.ts';
 import { allowedLinks, allows, disallowed } from './schemas.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
@@ -107,8 +107,8 @@ export function changeSince(repo: Repo, link: Link) {
 
 // TE-03.1, TE-06.2
 const within = (repo: Repo, root?: string) => {
-  const items = root && subtree(repo, root), selected = items && new Set([...items, ...items.flatMap((id) => entry(repo, id).requirements)]);
-  return (id: string) => !selected || selected.has(id);
+  const items = root && new Set(walk(repo, root, true, Infinity, false).map((w) => w.id));
+  return (id: string) => !items || items.has(id);
 };
 
 export const suspects = (repo: Repo, states: LinkState[], root?: string) => {

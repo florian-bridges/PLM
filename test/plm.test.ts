@@ -107,7 +107,7 @@ test('CL-01.6: apply', () => {
 
   ops('new part Rib3');
   expect(plm(root,'apply',file,'--dry-run').status).toBe(0);
-  expect(loadRepo(root).entries.has('Rib3')).toBe(false);
+  expect(existsSync(join(root,'rib3'))).toBe(false);
 
   ops('show A');
   expect(plm(root,'apply',file).status).toBe(1);

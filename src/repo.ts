@@ -33,10 +33,10 @@ export function readYaml<T>(root: string, path: string) {
 
 // CL-01.6: apply's journal of files written and folders created, for rollback
 let journal:{path:string;original?:string}[]|undefined,created:string[];
-export const journalOn=()=>{journal=[];created=[];},journalOff=()=>{journal=undefined;},journalFiles=()=>(journal??[]).map((f)=>f.path);
+export const journalOn=()=>{journal=[];created=[];},journalOff=()=>{journal=undefined;},journalFiles=()=>journal!.map((f)=>f.path);
 export function rollback(root: string) {
-  for(const file of journal??[]) file.original===undefined?rmSync(join(root,file.path),{force:true}):writeFileSync(join(root,file.path),file.original);
-  for(const dir of created??[]) rmSync(dir,{recursive:true,force:true});
+  for(const file of journal!) file.original===undefined?rmSync(join(root,file.path),{force:true}):writeFileSync(join(root,file.path),file.original);
+  for(const dir of created) rmSync(dir,{recursive:true,force:true});
 }
 
 export function writeYaml(root: string, file: Pick<YamlFile<unknown>, 'path' | 'doc'>) {

@@ -2,7 +2,6 @@
 // CL-01.1
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { resolve } from 'node:path';
 import { Command, CommanderError, Option } from 'commander';
 import { parse as parseYaml, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
@@ -149,33 +148,31 @@ program.command('new <type> <title>').description('create an item')
 });
 
 // CL-01.6
-const applyCmds=['new','set','link','confirm'],
-  splitLine=(line: string)=>[...line.matchAll(/"[^"]*"|'[^']*'|\S+/g)].map((m)=>m[0].replace(/^['"]|['"]$/g,'')),
-  errorKeys=(repo: Repo)=>validate(repo).filter((f)=>f.severity==='error').map((f)=>`${f.file}:${f.line}:${f.col}:${f.code}:${f.message}`);
+const splitLine=(line: string)=>[...line.matchAll(/"[^"]*"|'[^']*'|\S+/g)].map((m)=>m[0].replace(/^['"]|['"]$/g,'')),
+  errorKeys=(repo: Repo)=>validate(repo).filter((f)=>f.severity==='error').map((f)=>`${f.file}:${f.code}:${f.message}`);
 
 program.command('apply <file>').description('run related commands all or nothing, with a dry run').option('--dry-run').action((file,options)=>{
     const root=workingFolder(),json=program.opts().format==='json',
-      lines=parseYaml(readFileSync(resolve(file),'utf8')) as string[],before=errorKeys(openRepo()),ids:string[]=[],texts:string[]=[];
+      lines=parseYaml(readFileSync(file,'utf8')) as string[],before=errorKeys(openRepo()),ids:string[]=[],texts:string[]=[];
     journalOn();
-    let failed=false;
     for(const raw of lines) {
-      const line=raw.replace(/\$(\d+)/g,(m: string,n: string)=>ids[+n-1]??m),args=splitLine(line);
-      exitCode=0;
-      if(!applyCmds.includes(args[0])) {texts.push(`${line}\nusage error: ${args[0]}`);failed=true;break;}
+      const line=raw.replace(/\$(\d+)/g,(m: string,n: string)=>ids[+n-1]??m),args=splitLine(line),log=console.log,cerr=console.error;
       let text='';
-      const log=console.log,cerr=console.error;
       console.log=console.error=(s: string)=>{text+=`${s}\n`;};
-      try {program.parse(['-C',root,...args],{from:'user'});} catch(e) {failed=true;text+=`${String(e)}\n`;}
+      exitCode=0;
+      try {
+        if(!['new','set','link','confirm'].includes(args[0])) throw new UsageError(args[0]);
+        program.parse(['-C',root,...args],{from:'user'});
+      } catch(e) {exitCode=1;text+=`${String(e)}\n`;}
       console.log=log;console.error=cerr;
       texts.push(`${line}\n${text}`.trimEnd());
       ids.push(text.split('\n')[0]);
-      if(exitCode||failed||errorKeys(openRepo()).some((e)=>!before.includes(e))) {failed=true;break;}
+      if(exitCode||errorKeys(openRepo()).some((e)=>!before.includes(e))) {exitCode=1;break;}
     }
     const written=journalFiles();
-    if(failed||options.dryRun) rollback(root);
+    if(exitCode||options.dryRun) rollback(root);
     journalOff();
     output([...texts,`files: ${written.join(' ')}`].join('\n'),{commands:texts,files:written},json);
-    exitCode=failed?1:0;
   });
 
 // CL-03.1

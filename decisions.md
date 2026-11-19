@@ -17,3 +17,7 @@ One line each: date, decision, source (issue or meeting). Append only; the chief
 * 2026-11-19: One owner meeting per milestone: the release or next-milestone meeting decides scope, budget and go / smaller scope / no-go per feature; the shift then builds without asking again. (#80)
 * 2026-11-19: A separate feature review only for a real architecture change (new storage, a new public interface style, a breaking data format change), prepared while other entry conditions go on. (#80)
 * 2026-11-19: Meetings held in the control room while the shift waits count as held: the owner posts each decision on the meeting issue and ends with "Meeting closed". #78 is held as prepared. (#80)
+* 2026-11-14: Interface detail of a port (pins, wire list, connection parameters, messages and signal layout) lives in a structured file in the port folder (e.g. `icd.yaml`) checked by the port type's schema; the port stays the smallest item, signals and messages are not items, a signal change flags the whole connection suspect. (#29)
+* 2026-11-14: Messages belong to the sending port; connection-defining parameters (pin pairs between the two ports, bus baud rate) are fields of the connection, declared e.g. by the port type. (#29)
+* 2026-11-14: Leave room for per-type check modules (bus load, label uniqueness, wire endpoints) in the `icd.yaml` format and type files; do not build them now. (#29)
+* 2026-11-14: Blast stays as it is, neither retired nor integrated. (#29)

@@ -31,6 +31,16 @@ plm suspects; plm show $PRT                      # suspect until confirmed again
 
 PLM suits an LLM coding agent as well as a human: items are plain YAML files the agent reads and diffs like code, and the commands above script cleanly, since `plm new` prints the ID and `--format json` and the exit codes replace parsing prose. Before it commits, an agent runs `plm validate` (schema errors), `plm suspects` (links unconfirmed after a change) and `plm impact` (what a change in a range may affect).
 
+The same three commands check a pull request in any CI service; set `BASE`/`HEAD` to its range and run this in a job:
+
+```sh
+s=0
+plm validate || s=1
+plm suspects || s=1
+plm impact "$BASE..$HEAD"     # reports only
+exit $s
+```
+
 ## Configuration
 
 `plm.yaml` marks the repository root:

@@ -22,11 +22,11 @@ Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is
 
 Budget: 4 windows.
 
-Scope decided in meeting #77 (option A). Each feature adds a command or interface, so #58, #63, #57 and #55 go through the 0.5 feature review first; #60 is documentation only.
+Scope decided in meeting #77 (option A). Since #80 only #55 (MCP, a new interface style) needs feature review #78; #58, #63 and #57 are built with option A of the prepared review and its reviewer findings.
 
 ### Entry conditions
 
-- [ ] #58 The effective schema (types, prefixes, fields, required fields, link types) in machine-readable form. *Done when* one command prints it as JSON, with a test.
+- [x] #58 The effective schema (types, prefixes, fields, required fields, link types) in machine-readable form. *Done when* one command prints it as JSON, with a test.
 - [ ] #63 Trace queries, with #56 folded in. *Done when* `plm trace <ID>` walks links up or down to a given depth, depth 1 being the item's context view, text and JSON, with tests.
 - [ ] #57 Atomic changes with a dry run. *Done when* a change file is applied all or nothing, a dry run shows the result without writing, with tests.
 - [ ] #55 MCP server. *Done when* an MCP client lists and calls PLM commands as typed tools, with a test.
@@ -34,11 +34,11 @@ Scope decided in meeting #77 (option A). Each feature adds a command or interfac
 
 ### Active topics
 
-* 0.5 feature review #78 waits for the owner; #60 merged (PR #79).
+* #60 merged (PR #79), #58 merged (PR #81). Next: #63, then #57. #78 waits for the owner on #55.
 
 ### Coming owner meetings
 
-* #78 Feature review 0.5: `meetings/2026-11-19-feature-review-0.5.md`.
+* #78 Feature review 0.5 (only #55 still needs it): `meetings/2026-11-19-feature-review-0.5.md`.
 
 ## Planned milestones
 

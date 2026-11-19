@@ -36,7 +36,7 @@ The same three commands check a pull request in any CI service; set `BASE`/`HEAD
 ```sh
 plm validate; a=$?
 plm suspects; b=$?
-plm impact "$BASE..$HEAD"     # reports; does not fail the job
+plm impact "$BASE..$HEAD"     # reports only
 test $a = 0 && test $b = 0
 ```
 

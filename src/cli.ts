@@ -6,7 +6,7 @@ import { stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, unreached, type LinkState } from './links.ts';
 import { artifacts, entry, expanded, loadRepo, named, newItem, parameterOf, Refused, targetId, UsageError, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
-import { allowedLinks, linkRules, results } from './schemas.ts';
+import { allowedLinks, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
 import { currentVersions, snapshotAt } from './version.ts';
@@ -52,12 +52,20 @@ program.command('show <id>').description('show an item').action((id) => {
   output(stringify(data, { aliasDuplicateObjects: false }), data);
 });
 
-// CL-01.1: built-in links outside a repository
 program.command('link <source> <type> <target>').description('add a link')
   .option('--remove')
-  .addHelpText('after', () => { let links; try { links = allowedLinks(openRepo()); } catch { links = linkRules; }
-    return 'Links (* any type):\n' + Object.entries(links).map(([type, [from, to]]) => `${from} ${type} ${to}`).join('\n'); })
   .action((source, type, target, options) => link(openRepo(), source, type, target, options.remove));
+
+// CL-05.4
+program.command('types').description('print the type and link schema').action(() => {
+  const repo = openRepo(), types = Object.fromEntries(Object.entries(repo.types).filter(([name]) => name !== 'meta')),
+    links = allowedLinks(repo),
+    lines = [
+      ...Object.entries(types).map(([name, t]) => `${name}${t.base ? ` (${t.base})` : ''} ${t.prefix ?? ''} ${t.folder ?? ''} fields:${Object.keys(t.fields ?? {})} required:${t.required ?? ''}`),
+      ...Object.entries(links).map(([type, [from, to]]) => `${from} ${type} ${to}`),
+    ];
+  output(lines.join('\n'), { types, links });
+});
 
 // CL-01.3
 program.command('set <ref> <field> <value>').description('write a field or parameter').action((ref, field, value) => {
@@ -119,9 +127,8 @@ program.command('impact <range>').description('list a change\'s impact').action(
   output(lines.join('\n'), result);
 });
 
-// CL-01.1, CL-02.1
+// CL-02.1
 program.command('new <type> <title>').description('create an item')
-  .addHelpText('after', () => `Types: ${Object.keys(openRepo().types).filter((type) => type !== 'meta').join(' ')}`)
   .action((type, title) => {
   const created = newItem(openRepo(), type, title, workingFolder());
   output(created.id, created);

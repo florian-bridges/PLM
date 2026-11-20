@@ -7,11 +7,17 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-01.1** The core shall read `plm.yaml` (repository settings), requirements as `<name>.yaml` and other items as `<name>/item.yaml`, in their type's home folder (CO-02.8), if it has one, or its subfolders; a home folder sits in the parent item, test runs' at the root, and a top-level item has none; and `meta/<ID>.yaml`, all with the `yaml` package, keeping comments, formatting and line width when writing back. A folder with no `item.yaml` shall be transparent, hidden folders excepted: items under it belong to the nearest enclosing item, or are top-level if none.
 *Rationale:* Comment-preserving writes keep hand edits and diffs small. Nesting test cases in the tested item's folder makes changing one outdate its runs; runs stay outside so recording one doesn't change the tested item's version.
 
-**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
+**CO-01.2** `item.yaml` shall hold content: `id`, `type`, `title`, type-specific attributes, `text` (Markdown), `uses` (CO-01.5) and `links` with `type`, `target` and, for `executes`, `result`. `meta/<ID>.yaml` shall hold `owner`, `status` and `confirmed`.
 *Rationale:* Links show where the item is edited, and adding one changes its version. Separating administrative data keeps versions stable when links are confirmed or ownership or status change (TE-01.1).
 
 **CO-01.3** The core shall list as an item's artifacts the paths of files in its folder not ignored by Git, except `item.yaml`, home folders (CO-01.1) and nested item folders, marking unfetched Git LFS pointers.
 *Rationale:* Artifacts can be gigabytes; listing paths keeps loading fast and works without fetched LFS files, and the mark tells users to fetch them.
+
+**CO-01.5** A `uses` entry shall be an item ID, equal to `{item: <ID>}`, or a map with `item`, `quantity` (positive integer, default 1), `ref` (free text naming the use) and other keys; `list uses` (CO-03.3) shall list entries as maps.
+*Rationale:* A changed use changes the assembly's version, not the part's.
+
+**CO-01.6** `plm.yaml` may declare `config: {<parameter>: [<value>…] or ordered}`. A `uses` entry's `when: {<parameter>: [<value>…] or {from, to}}` shall select the entry for a configuration (`--config <parameter>=<value>,…`, a global option) when each parameter it names is unset, has a listed value or lies within `from`–`to` (inclusive, either bound open; numbers compared as numbers, other values by code point). Walks through `uses` shall follow only selected entries; versions and `validate` shall ignore `--config` and read all entries.
+*Rationale:* One tree holds every variant and range; stated inputs define one unit.
 
 **CO-02.1** The core shall validate `item.yaml` with Ajv against its JSON Schema (2020-12, CO-02.8), `meta/<ID>.yaml` against `types/meta.yaml` if present, naming enum values.
 *Rationale:* JSON Schema suits editors, Ajv and form generators.
@@ -40,6 +46,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.10** A type file may hold `files: {<name>: <JSON Schema>}`; the core shall validate each named YAML file in an item's folder against it, as CO-02.1, reporting `schema` findings with that file's line.
 *Rationale:* Checks a structured artifact, e.g. a port's `icd.yaml`, like `item.yaml`.
 
+**CO-02.12** The core shall report as error two or more `uses` entries of one item with the same `ref` that are selected together (`ambiguous-use`) or of which none is selected (`empty-use`) under some configuration (CO-01.6), and a `when` that names an undeclared parameter or value or gives a range for a listed parameter (`config`). Some configuration ranges over every combination of the declared values of listed parameters and, for ordered ones, the `from`/`to` values in `when`s, a value between each adjacent pair and one beyond each outer value. An unknown parameter or value in `--config` shall be a usage error.
+*Rationale:* CI then catches a forgotten or doubled alternative, also after a clean merge.
+
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes.
 *Rationale:* One index format serves the CLI and VS Code without a search server.
 
@@ -48,6 +57,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **CO-03.3** The core shall list the objects of a named list field, scoped to an item's subtree if given, whose keys equal all filter values (empty matches missing, `null` or empty), each as `<source ID> (<title>)` followed by its keys, with `source` added in JSON.
 *Rationale:* One mechanism covers findings and any future list field without new code.
+
+**CO-03.4** `report parts [<item>]` shall list each item reached from the item, or from the top-level items, through nesting and `uses`, with its total: the product of `quantity` along each path, nesting counting 1, summed over paths, sorted by ID, adding `quantity` to CL-05.3's output.
+*Rationale:* Views of one product are compared by diffing their totals.
 
 ## Traceability engine
 
@@ -98,7 +110,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]`, `apply <file>`, `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]`, `report connections [<item>]` and `report document [<item>]`, finding the repository by searching upward for `plm.yaml`; each command shall have a one-line description.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]`, `apply <file>`, `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]`, `report connections [<item>]`, `report parts [<item>]` and `report document [<item>]`, finding the repository by searching upward for `plm.yaml`; each command shall have a one-line description.
 *Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.

@@ -5,7 +5,7 @@ import { entry, targetId, type Entry, type Link, type Repo } from '../../src/rep
 import type { Finding } from '../../src/validate.ts';
 
 // VS-01.2
-interface Property { type?: string; enum?: string[]; items?: { type?: string } }
+interface Property { type?: string; enum?: string[]; items?: { type?: string | string[] } }
 export interface Field { name: string; kind: 'string' | 'text' | 'number' | 'enum' | 'list'; options?: string[]; meta?: boolean }
 
 export function formFields(schema: { allOf: { properties?: Record<string, Property> }[] }): Field[] {

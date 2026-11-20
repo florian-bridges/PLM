@@ -2,13 +2,13 @@
 
 What the next session needs to start. Current state only; history in git. The chief engineer keeps it current (skill `chief-engineer`, Your files).
 
-Latest release: 0.6.0 (2026-11-20). Milestones and entry conditions: `timeline.md`.
+Latest release: 0.7.0 (2026-11-20). Milestones and entry conditions: `timeline.md`.
 
 ## Active topics
 
-* 0.7 "Releases and documents" active (meeting #90, budget 1 window): #45 merged (PR #93); #2 in progress (`feat/report-document`, worktree in PLM-wt). Feature review of #40 and #43 prepared (#92, `meetings/2026-11-20-feature-review-0.8.md`); the owner holds it before 0.8 starts. If the window allows: decide dropping `detail` from `report connections` rows and #87.
+* 0.8 (budget 4 windows) active. Feature review #92 recorded (decisions in `decisions.md`, requirements in `documents/`, docs limit 5823 to be cut by the reviewers). #40 merged (PR #97; src+test limit 6334). Next: #43 on `feat/variants` (worktree `/home/tower/PLM-wt/variants`) from `develop`, one `feature-dev`, then `reviewer`. #43 adds `config`/`empty-use` to CO-02.12 (#40 did `ambiguous-use`).
+* Decisions 8 and 9 of #90 (chief engineer): 0.7's window is used, so dropping `detail` from `report connections` rows and #87 stay in the backlog.
 * Backlog from reviews: #94 (neutral test data), #87 (missing `files` file).
-* GitHub milestone 0.6 still open: the guard blocks closing it; the owner closes it.
 
 ## Open pull requests and blockers
 

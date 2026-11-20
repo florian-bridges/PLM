@@ -6,7 +6,7 @@ import { Command, CommanderError, Option } from 'commander';
 import { parse as parseYaml, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, connections, coverage, link, linkStates, recordRun, requirementsMarkdown, suspects, unreached, type LinkState } from './links.ts';
-import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, productTree, parentOf, Refused, rollback, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
+import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, partsOf, productTree, parentOf, Refused, rollback, setConfig, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
 import { allowedLinks, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
@@ -16,12 +16,14 @@ const program = new Command('plm')
     .version(createRequire(import.meta.url)('../package.json').version)
     .option('-C, --repo <dir>', '', '.')
     .option('--format <format>', '', 'text')
+    .option('--config <config>', '')
     .exitOverride(),
   workingFolder = () => program.opts().repo,
   openRepo = () => loadRepo(workingFolder());
-// TE-06.2
+// TE-06.2, CO-01.6
 const scoped = (item?: string) => {
   const repo = openRepo();
+  setConfig(repo, program.opts().config);
   return [repo, linkStates(repo, currentVersions(repo)), item && entry(repo, item).id] as const;
 };
 
@@ -45,12 +47,13 @@ program.command('validate').description('check the repository').action(() => {
   exitCode = +findings.some((finding) => finding.severity === 'error');
 });
 
-// CL-01.5
+// CL-01.5, CO-01.6
 program.command('show <id>').description('show an item')
   .option('--down <n>').option('--up <n>')
   .action((id, options) => {
     const repo = openRepo(), found = entry(repo, id), steps = options.down ?? options.up;
     if (steps !== undefined) {
+      setConfig(repo, program.opts().config);
       const rows = walk(repo, id, options.down !== undefined, Number(steps)).filter((w) => w.depth)
         .map((w) => ({ ...named(repo, w.id), depth: w.depth, via: w.via }));
       return output(rows.map((w) => `${w.depth} ${w.via} ${label(w)}`).join('\n'), rows);
@@ -229,6 +232,14 @@ report.command('connections [item]').description('report ports and connections t
     exitCode = rows.length && 1;
     output(rows.map((row) => `${row.code} ${label(row.item)}${row.detail && ' ' + row.detail}`).join('\n'), rows);
   });
+
+// CO-03.4, CO-01.6
+report.command('parts [item]').description('report item totals').action((item) => {
+  const repo = openRepo();
+  setConfig(repo, program.opts().config);
+  const rows = partsOf(repo, item && entry(repo, item).id);
+  output(rows.map((r) => `${label(r)} ${r.quantity}`).join('\n'), rows);
+});
 
 // CL-01.8
 report.command('document [item]').description('print the requirements document').action((item) => {

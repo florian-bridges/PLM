@@ -7,7 +7,7 @@ The tool shall represent the complete definition of a product, including its str
 *Rationale:* Disciplines kept in separate tools hide the dependencies between them.
 
 **CR-02 — Hierarchical composition**
-Engineering items shall be composable into an arbitrary hierarchical product structure. (US-2)
+Engineering items shall be composable into an arbitrary hierarchical product structure, an item used several times with its own data per use and in alternatives chosen by configuration parameters. (US-2)
 *Rationale:* Products are developed top-down from system to equipment; a fixed number of levels would not fit every product or program.
 
 **CR-03 — Engineering artifacts**

@@ -28,13 +28,13 @@ test('VS-03.1, VS-03.3, VS-03.4: coverage and suspects, then a section per subtr
 
 test('VS-01.2: flat form fields from the schema, written back keeping other attributes and comments', () => {
   const fields = logic.formFields({ allOf: [baseSchema, { properties: { mass_kg: { type: 'number' }, grade: { enum: ['A', 'B'] }, spec: { type: 'object' } } }] });
-  expect(fields.map((field) => `${field.name}:${field.kind}`)).toEqual(['title:string', 'text:text', 'uses:list', 'mass_kg:number', 'grade:enum', 'status:string', 'owner:string']);
+  expect(fields.map((field) => `${field.name}:${field.kind}`)).toEqual(['title:string', 'text:text', 'mass_kg:number', 'grade:enum', 'status:string', 'owner:string']);
   const html = logic.formHtml('P', fields, { title: '<Spar>' });
   expect(html).toContain('value="&#60;Spar&#62;"');
 
-  const item = parseDocument('# spar\ntitle: Old\ntext: x\nspec: { a: 1 }\n');
+  const item = parseDocument('# spar\ntitle: Old\ntext: x\nspec: { a: 1 }\nuses: [L, M]\n');
   const meta = parseDocument('');
-  logic.applyForm(item, meta, fields, { title: 'Spar', text: ' ', uses: 'L, M,', mass_kg: '1.5', status: 'released' });
+  logic.applyForm(item, meta, fields, { title: 'Spar', text: ' ', mass_kg: '1.5', status: 'released' });
   expect(item.toJS()).toEqual({ title: 'Spar', spec: { a: 1 }, uses: ['L', 'M'], mass_kg: 1.5 });
   expect(String(item)).toContain('# spar');
   expect(meta.toJS()).toEqual({ status: 'released' });

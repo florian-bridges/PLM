@@ -136,3 +136,9 @@ On go:
   * `src/`+`test/` by the measured amount, expected +200/+250. One `usesOf` mapping keeps this at the low end of the estimate.
   * `extension/` stays unchanged: it needs 0 words if `usesOf` maps.
 
+
+## Minutes (2026-11-20, control room)
+
+Decisions: 1 A, 2 A, 3 B, 4 A, 5 A, 6 A, 7 A, as recommended except 3 (B was recommended too); recorded in `decisions.md` (#92). Budget stays 4 windows.
+
+Actions: requirement changes applied to `documents/` (documents limit 5449→5823, measured, reviewers cut per feature); #40 and #43 updated to the decided scope and *done when*; entry conditions in `timeline.md`; build #40, then #43.

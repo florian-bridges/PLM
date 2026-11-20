@@ -121,13 +121,27 @@ export function parameterOf(repo: Repo, ref: string) {
 
 export const isRequirementFile = (path: string) => path.endsWith('.yaml');
 export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
-export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
+// CO-01.5
+export const useEntries = (data: any) => list<any>(data?.uses).map((u) => (typeof u === 'string' ? { item: u } : u));
+export const usesOf = (entry?: Entry) => useEntries(entry?.item.data).map((u) => u.item);
 export const childrenOf = (entry?: Entry) => [...(entry?.nested ?? []), ...usesOf(entry)];
 
 // VS-02.1, CL-01.8
 export const productTree = (repo: Repo, parent?: string): Entry[] => parent
   ? childrenOf(repo.entries.get(parent)).flatMap((id) => repo.entries.get(id) ?? [])
   : [...repo.entries.values()].filter((found) => !found.path.includes('/'));
+
+// CO-03.4
+export function partsOf(repo: Repo, root?: string) {
+  const totals = new Map<string, number>(),
+    visit = (id: string, q: number) => {
+      const e = repo.entries.get(id), add = (c: string, m: number) => (totals.set(c, (totals.get(c) ?? 0) + m), visit(c, m));
+      e?.nested.forEach((n) => add(n, q));
+      useEntries(e?.item.data).forEach((u) => add(u.item, q * (u.quantity ?? 1)));
+    };
+  (root ? [root] : productTree(repo).map((e) => e.id)).forEach((id) => visit(id, 1));
+  return [...totals].sort(([a], [b]) => a.localeCompare(b)).map(([id, quantity]) => ({ ...named(repo, id), quantity }));
+}
 
 // CO-02.7
 const cited = /\{([^{}\s]+)\}/g;

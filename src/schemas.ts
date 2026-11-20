@@ -8,7 +8,8 @@ export const baseSchema = {
   required: ['id', 'type', 'title'],
   properties: {
     id: str, type: str, title: str, text: str,
-    uses: { type: 'array', items: str },
+    // CO-01.5
+    uses: { type: 'array', items: { type: ['string', 'object'], required: ['item'], properties: { item: str, quantity: { type: 'integer', minimum: 1 }, ref: str } } },
     links: { type: 'array', items: { type: 'object', required: ['type', 'target'], properties: { type: str, target: str, result: { enum: results } }, additionalProperties: false,
       if: { required: ['result'] }, then: { properties: { type: { const: 'executes' } } } } },
     // CO-02.7

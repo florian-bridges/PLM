@@ -113,9 +113,9 @@ test('CL-01.6: apply', () => {
   expect(plm(root,'apply',file).status).toBe(1);
 });
 
-test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings', () => {
+test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, CO-02.12, TE-01.1: findings', () => {
   write(root, {
-    'wing/spar/item.yaml': 'id: P\ntype: part\ncolour: red\nuses: [A]\nlinks:\n  - type: verifies\n    target: R\n    result: invalid\n  - type: derives-from\n    target: A/x\n',
+    'wing/spar/item.yaml': 'id: P\ntype: part\ncolour: red\nuses: [A, {item: A}]\nlinks:\n  - type: verifies\n    target: R\n    result: invalid\n  - type: derives-from\n    target: A/x\n',
     'copy/item.yaml': bolt,
     'bolt/item.yaml': bolt + 'external_ids: { reqif: B1 }\n',
     'wing/requirements/structure/stringer.yaml': 'id: Q\ntype: part\ntitle: Stringer\n',
@@ -127,10 +127,20 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, TE-01.1: findings'
   expect(repo.entries.get('Z')?.path).toBe('wing/misc/panel');
   expect(repo.entries.has('H')).toBe(false);
   const findings = validate(repo);
-  expect(findings.map((f) => f.code).sort()).toEqual(['cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', ...Array(6).fill('schema'), 'unknown-target']);
+  expect(findings.map((f) => f.code).sort()).toEqual(['ambiguous-use', 'cycle', 'cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', ...Array(6).fill('schema'), 'unknown-target']);
   expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ line: 3, col: 9 });
   expect(JSON.stringify(findings)).toContain('inconclusive');
   expect(findings.filter((f) => f.severity === 'warning')).toHaveLength(1);
+});
+
+test('CO-01.5, CO-03.3–CO-03.4, CL-01.1: occurrences', () => {
+  write(root, { 'wing/item.yaml': `${wing}uses: [{item: L, quantity: 4, ref: front}, {item: L, ref: rear}]\n` });
+  expect(validate(loadRepo(root))).toEqual([]);
+  expect(json(root, 'report', 'parts', 'A')).toEqual([{ id: 'L', title: 'Bolt', quantity: 5 }, { id: 'P', title: 'Spar', quantity: 1 }]);
+  expect(plm(root, 'list', 'uses', 'A', 'ref:front').stdout).toBe('A (Wing) item:L quantity:4 ref:front\n');
+
+  write(root, { 'wing/item.yaml': `${wing}uses: [{ref: x}, {item: L, quantity: 0}]\n` });
+  expect(validate(loadRepo(root)).filter((f) => f.code === 'schema')).toHaveLength(2);
 });
 
 test('CL-01.1,CO-02.1,CO-02.8:remove',()=>{

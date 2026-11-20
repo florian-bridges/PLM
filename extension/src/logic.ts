@@ -5,7 +5,7 @@ import { entry, targetId, type Entry, type Link, type Repo } from '../../src/rep
 import type { Finding } from '../../src/validate.ts';
 
 // VS-01.2
-interface Property { type?: string; enum?: string[]; items?: { type?: string } }
+interface Property { type?: string; enum?: string[]; items?: { type?: string | string[] } }
 export interface Field { name: string; kind: 'string' | 'text' | 'number' | 'enum' | 'list'; options?: string[]; meta?: boolean }
 
 export function formFields(schema: { allOf: { properties?: Record<string, Property> }[] }): Field[] {
@@ -14,7 +14,7 @@ export function formFields(schema: { allOf: { properties?: Record<string, Proper
     if (name === 'id' || name === 'type') return [];
     if (options) return [{ name, kind: 'enum', options }];
     if (type === 'number' || type === 'integer') return [{ name, kind: 'number' }];
-    if (type === 'array' && items?.type === 'string') return [{ name, kind: 'list' }];
+    if (type === 'array' && [items?.type].flat().includes('string')) return [{ name, kind: 'list' }];
     if (type === 'string') return [{ name, kind: name === 'text' ? 'text' : 'string' }];
     return [];
   });

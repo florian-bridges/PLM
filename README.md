@@ -87,6 +87,8 @@ A `port` (built in, `PORT-`, folder `ports`) is where an item meets another; a `
 
 `plm report connections [<item>]` lists ports no `connects` link reaches (`open`), connections with fewer than two ports (`few`) and connections whose ports' `role` is not exactly one `sender` (`senders`); exit 1 if any.
 
+`plm report document [<item>]` prints the requirements document the VS Code extension shows, as Markdown, for the repository or an item's subtree.
+
 ## Revisions and baselines
 
 An item's revision is its version (`plm show`), computed from its own content, what it uses and the parameters it cites; its history is `git log -- <folder>`. A human-readable revision label, if wanted, is a type field like any other; maturity is tracked in `status`. There is no separate baseline object: a release is a Git tag, and `plm impact` fails when an item released at base (`status` in `released_states`, default `[released]`) changed its own files without its status changing.

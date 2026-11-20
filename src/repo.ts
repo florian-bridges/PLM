@@ -61,12 +61,12 @@ export const yamlIn = (root: string, folder: string) => (existsSync(join(root, f
 const loadTypes = (root: string) => {
   const types = yamlIn(root, 'types').reduce((types, file) => {
     const name = file.slice(0, -5), { data } = readYaml<TypeDef>(root, `types/${file}`);
-    return { ...types, [name]: { ...types[name], ...data, fields: { ...types[name]?.fields, ...data.fields } } };
+    return { ...types, [name]: { ...types[name], ...data, fields: { ...types[name]?.fields, ...data.fields }, files: { ...types[name]?.files, ...data.files } } };
   }, builtinTypes);
   return Object.fromEntries(Object.entries(types).map(([name, t]) => { // CO-02.8: base
     const b = types[t.base!];
     return [name, t.base && Object.hasOwn(builtinTypes, t.base) && !Object.hasOwn(builtinTypes, name)
-      ? { ...b, ...t, folder: b.folder, fields: { ...b.fields, ...t.fields }, required: [...b.required ?? [], ...t.required ?? []] } : { ...t, base: undefined }];
+      ? { ...b, ...t, folder: b.folder, fields: { ...b.fields, ...t.fields }, required: [...b.required ?? [], ...t.required ?? []], files: { ...b.files, ...t.files } } : { ...t, base: undefined }];
   }));
 };
 // CO-01.1, CO-01.3, CO-02.2

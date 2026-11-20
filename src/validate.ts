@@ -1,4 +1,5 @@
-import { dirname } from 'node:path';
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
 import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, targetId, typeOf, usesOf, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, disallowed, linkRules, type TypeDef } from './schemas.ts';
@@ -50,6 +51,12 @@ export function validate(repo: Repo) {
     else findings.push(...schemaFindings(item, validateSchema, draft));
     // CO-02.1
     if (validateMeta) findings.push(...schemaFindings(meta, validateMeta, false));
+    // CO-02.10
+    for (const [name, schema] of Object.entries(repo.types[type]?.files ?? {})) {
+      const path = `${entry.path}/${name}`, key = `${type}:${name}`;
+      if (!ajv.getSchema(key)) ajv.addSchema(schema, key);
+      if (existsSync(join(repo.root, path))) findings.push(...schemaFindings(readYaml(repo.root, path), ajv.getSchema(key)!, draft));
+    }
 
     if (misplaced) findings.push(finding(item, ['type'], 'misplaced', `outside ${home}`));
 
@@ -81,7 +88,7 @@ export function validate(repo: Repo) {
   for (const file of yamlIn(repo.root, 'meta')) if (!repo.entries.has(file.slice(0, -5))) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: file });
   // CO-02.8
   for (const file of yamlIn(repo.root, 'types').map((f) => readYaml<TypeDef>(repo.root, `types/${f}`))) {
-    for (const key of Object.keys(file.data)) if (!['base', 'prefix', 'folder', 'template', 'fields', 'required'].includes(key)) findings.push(finding(file, [key], 'type-file', key));
+    for (const key of Object.keys(file.data)) if (!['base', 'prefix', 'folder', 'template', 'fields', 'required', 'files'].includes(key)) findings.push(finding(file, [key], 'type-file', key));
     const { base } = file.data;
     if (base && (!Object.hasOwn(builtinTypes, base) || Object.hasOwn(builtinTypes, file.path.slice(6, -5)) || file.data.folder)) findings.push(finding(file, ['base'], 'type-file', base));
   }

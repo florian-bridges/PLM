@@ -16,23 +16,26 @@ export const baseSchema = {
   },
 };
 
-// CO-02.5, CO-02.8
-export interface TypeDef { base?: string; prefix?: string; folder?: string; fields?: Record<string, object>; required?: string[] }
+// CO-02.5, CO-02.8, CO-02.10
+export interface TypeDef { base?: string; prefix?: string; folder?: string; fields?: Record<string, object>; required?: string[]; files?: Record<string, object> }
 export const builtinTypes: Record<string, TypeDef> = {
   requirement: { prefix: 'REQ-', folder: 'requirements', fields: { retained: str } },
   'test-case': { prefix: 'TC-', folder: 'tests', fields: { procedure: str } },
   'test-run': { prefix: 'RUN-', folder: 'runs', fields: { date: str } },
   part: { prefix: 'PRT-', fields: { part_number: str, material: str, mass_kg: { type: 'number' } } },
   assembly: { prefix: 'ASM-', fields: { part_number: str } },
+  port: { prefix: 'PORT-', folder: 'ports' },
+  connection: { prefix: 'CON-', folder: 'connections' },
 };
 
 // CO-02.2, CO-02.6
 export const linkRules: Record<string, [string[], string[]]> = {
   satisfies: [['*'], ['requirement']],
-  implements: [['*'], ['requirement']],
+  implements: [['*'], ['requirement', 'connection']],
   verifies: [['test-case'], ['requirement']],
   executes: [['test-run'], ['test-case']],
   tests: [['test-run'], ['*']],
+  connects: [['connection'], ['port']],
   'derives-from': [['*'], ['*']],
 };
 // CO-02.9

@@ -63,8 +63,8 @@ export function validate(repo: Repo) {
     const seen = new Set<string>();
     useEntries(item.data).forEach((used, index) => {
       if (!repo.entries.has(used.item)) findings.push(finding(item, ['uses', index], 'unknown-use', used.item));
-      const key = `${used.item}\0${used.ref ?? ''}`;
-      if (seen.has(key)) findings.push(finding(item, ['uses', index], 'ambiguous-use', `${used.item} ${used.ref ?? ''}`.trim()));
+      const key = `${used.item} ${used.ref ?? ''}`.trim();
+      if (seen.has(key)) findings.push(finding(item, ['uses', index], 'ambiguous-use', key));
       seen.add(key);
     });
 

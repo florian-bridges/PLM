@@ -31,7 +31,7 @@ function configsOf(repo:Repo,whens:any[]){
   const params=[...new Set(whens.flatMap((w)=>Object.keys(w??{})))];
   return params.reduce((configs:any[],p)=>{
     const d=repo.settings.config?.[p],
-      values=Array.isArray(d)?d:[...new Set(whens.flatMap((w)=>{const c=w?.[p];return Array.isArray(c)?c:c?[c.from,c.to]:[];}).filter((v)=>v!==undefined))].map(String);
+      values=Array.isArray(d)?d:[...new Set(whens.flatMap((w)=>Array.isArray(w?.[p])?w[p]:w?.[p]?[w[p].from,w[p].to]:[]).filter((v)=>v!==undefined))].map(String);
     return configs.flatMap((c)=>values.map((v)=>({...c,[p]:v})));
   },[{}]);
 }
@@ -73,19 +73,18 @@ export function validate(repo: Repo) {
     const groups:Record<string,{used:any;index:number}[]>={};
     useEntries(item.data).forEach((used,index)=>{
       if(!repo.entries.has(used.item))findings.push(finding(item,['uses',index],'unknown-use',used.item));
-      for(const [p,c] of Object.entries(used.when??{})){
+      Object.entries(used.when??{}).forEach(([p,c]:[string,any])=>{
         const d=repo.settings.config?.[p];
         if(d===undefined||(Array.isArray(d)&&!(Array.isArray(c)?c:[c]).every((v:any)=>d.includes(v))))findings.push(finding(item,['uses',index,'when',p],'config',p));
-      }
+      });
       (groups[used.ref??used.item]??=[]).push({used,index});
     });
-    for(const key in groups){
-      const members=groups[key];
-      if(members.length<2)continue;
-      const counts=configsOf(repo,members.map((m)=>m.used.when)).map((c)=>members.filter((m)=>selected(m.used.when,c)).length);
+    Object.values(groups).forEach((members)=>{
+      if(members.length<2)return;
+      const key=members[0].used.ref??members[0].used.item,counts=configsOf(repo,members.map((m)=>m.used.when)).map((c)=>members.filter((m)=>selected(m.used.when,c)).length);
       if(counts.some((n)=>n>1))findings.push(finding(item,['uses',members[0].index],'ambiguous-use',key));
       if(counts.some((n)=>!n))findings.push(finding(item,['uses',members[0].index],'empty-use',key));
-    }
+    });
 
     // CO-02.7
     list<Parameter>(item.data.parameters).forEach((p, index) => {

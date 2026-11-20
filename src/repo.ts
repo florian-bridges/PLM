@@ -125,14 +125,13 @@ export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : 
 export const useEntries = (data: any) => list<any>(data?.uses).map((u) => (typeof u === 'string' ? { item: u } : u));
 
 // CO-01.6
-let activeConfig:Record<string,string>|undefined;
-export const setConfig=(config?:Record<string,string>)=>{activeConfig=config;};
+export let activeConfig:Record<string,string>|undefined,setConfig=(config?:Record<string,string>)=>{activeConfig=config;};
 export function parseConfig(repo:Repo,text?:string){
-  return text?.split(',').reduce((config:Record<string,string>,pair)=>{
+  return text?.split(',').reduce<Record<string,string>>((config,pair)=>{
     const [p,v]=pair.split('='),d=repo.settings.config?.[p];
-    if(d===undefined||(Array.isArray(d)&&!d.includes(v)))throw new UsageError(`--config ${pair}`);
+    if(d===undefined||(Array.isArray(d)&&!d.includes(v)))throw new UsageError(`--config:${pair}`);
     return {...config,[p]:v};
-  },{} as Record<string,string>);
+  },{});
 }
 const cmp=(a:string,b:string)=>isNaN(+a)||isNaN(+b)?a.localeCompare(b):+a-+b;
 export const selected=(when:any,config=activeConfig):boolean=>!when||!config||Object.entries(when).every(([p,c]:[string,any])=>config[p]===undefined||(Array.isArray(c)?c.map(String).includes(config[p]):(c.from===undefined||cmp(config[p],String(c.from))>=0)&&(c.to===undefined||cmp(config[p],String(c.to))<=0)));

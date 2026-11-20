@@ -144,10 +144,10 @@ test('CO-01.5, CO-03.3–CO-03.4, CL-01.1: occurrences', () => {
 });
 
 test('CO-01.6, CO-02.12, CL-05.1: config', () => {
-  write(root, {'plm.yaml':'config: {v:[s,e]}\n','wing/item.yaml':`${wing}uses: [{item: L,ref: r,when:{v:[s]}},{item: P,ref: r,when:{v:[s]}},{item: P,ref: r2,when:{z:[e]}}]\n`});
+  write(root, {'plm.yaml':'config: {v:[s,e]}\n','wing/item.yaml':`${wing}uses: [{item: L,ref: r,when:{v:[s]}},{item: P,ref: r,when:{v:[s],z:[e]}}]\n`});
   expect(validate(loadRepo(root)).map((f)=>f.code)).toEqual(['config','ambiguous-use','empty-use']);
   expect(plm(root,'show','A','--down','1','--config','v=e').stdout).not.toContain('L (Bolt)');
-  expect(json(root,'report','parts','A','--config','v=s')).toEqual([{id:'L',title:'Bolt',quantity:1},{id:'P',title:'Spar',quantity:3}]);
+  expect(json(root,'report','parts','A','--config','v=s')).toEqual([{id:'L',title:'Bolt',quantity:1},{id:'P',title:'Spar',quantity:2}]);
   expect(plm(root,'report','parts','A','--config','v=x').status).toBe(2);
 });
 

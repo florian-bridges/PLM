@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, selected, targetId, typeOf, undeclared, useEntries, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, citations, cmp, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, selected, targetId, typeOf, undeclared, useEntries, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, disallowed, linkRules, type TypeDef } from './schemas.ts';
 
 // CO-02.4
@@ -27,11 +27,21 @@ const newAjv = () => new Ajv2020({ allErrors: true, strictTypes: false });
 export const itemSchema = (repo: Repo, type: string) => schemaFor(newAjv(), repo.types, type, baseSchema);
 
 // CO-02.12
-function configsOf(repo:Repo,whens:any[]){
-  return [...new Set(whens.flatMap((w)=>Object.keys(w??{})))].reduce((configs:any[],p)=>{
-    const d=repo.settings.config?.[p],values=Array.isArray(d)?d:[...new Set(whens.flatMap((w)=>Array.isArray(w?.[p])?w[p]:w?.[p]?[w[p].from,w[p].to]:[]).filter((v)=>v!==undefined))].map(String);
-    return configs.flatMap((c)=>values.map((v)=>({...c,[p]:v})));
-  },[{}]);
+function configsOf(repo: Repo, whens: any[]) {
+  return [...new Set(whens.flatMap((w) => Object.keys(w ?? {})))].reduce((configs: any[], p) => {
+    const d = repo.settings.config?.[p],
+      bounds = whens.flatMap((w) => (Array.isArray(w?.[p]) ? w[p] : w?.[p] ? [w[p].from, w[p].to] : [])).filter((v) => v !== undefined).map(String),
+      values = Array.isArray(d) ? d : spread(bounds);
+    return configs.flatMap((c) => values.map((v) => ({ ...c, [p]: v })));
+  }, [{}]);
+}
+
+// CO-02.12: a value between each adjacent pair of bounds and one beyond each outer bound, to catch a gap (#92)
+function spread(bounds: string[]) {
+  const sorted = [...new Set(bounds)].sort(cmp),
+    between = (a: string, b: string) => (isNaN(+a) || isNaN(+b) ? a : String((+a + +b) / 2)),
+    beyond = (a: string, by: number) => (isNaN(+a) ? a : String(+a + by));
+  return sorted.length ? [...sorted, ...sorted.slice(1).map((b, i) => between(sorted[i], b)), beyond(sorted[0], -1), beyond(sorted[sorted.length - 1], 1)] : sorted;
 }
 
 // CO-02.1, CO-02.4
@@ -68,19 +78,19 @@ export function validate(repo: Repo) {
     if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', id));
 
     // CO-02.2, CO-02.12
-    const groups:Record<string,{used:any;index:number}[]>={};
-    useEntries(item.data).forEach((used,index)=>{
-      if(!repo.entries.has(used.item))findings.push(finding(item,['uses',index],'unknown-use',used.item));
-      Object.entries(used.when??{}).forEach(([p,c]:[string,any])=>{
-        if(undeclared(repo,p,Array.isArray(c)?c:[c]))findings.push(finding(item,['uses',index,'when',p],'config',p));
+    const groups: Record<string, { used: any; index: number }[]> = {};
+    useEntries(item.data).forEach((used, index) => {
+      if (!repo.entries.has(used.item)) findings.push(finding(item, ['uses', index], 'unknown-use', used.item));
+      Object.entries(used.when ?? {}).forEach(([p, c]: [string, any]) => {
+        if (undeclared(repo, p, Array.isArray(c) ? c : [c])) findings.push(finding(item, ['uses', index, 'when', p], 'config', p));
       });
-      (groups[used.ref??used.item]??=[]).push({used,index});
+      (groups[used.ref ?? used.item] ??= []).push({ used, index });
     });
-    Object.entries(groups).forEach(([key,members])=>{
-      if(members.length<2)return;
-      const counts=configsOf(repo,members.map((m)=>m.used.when)).map((c)=>members.filter((m)=>selected(m.used.when,c)).length);
-      if(counts.some((n)=>n>1))findings.push(finding(item,['uses',members[0].index],'ambiguous-use',key));
-      if(counts.some((n)=>!n))findings.push(finding(item,['uses',members[0].index],'empty-use',key));
+    Object.entries(groups).forEach(([key, members]) => {
+      if (members.length < 2) return;
+      const counts = configsOf(repo, members.map((m) => m.used.when)).map((c) => members.filter((m) => selected(m.used.when, c)).length);
+      if (counts.some((n) => n > 1)) findings.push(finding(item, ['uses', members[0].index], 'ambiguous-use', key));
+      if (counts.some((n) => !n)) findings.push(finding(item, ['uses', members[0].index], 'empty-use', key));
     });
 
     // CO-02.7

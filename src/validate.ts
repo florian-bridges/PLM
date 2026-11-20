@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, targetId, typeOf, usesOf, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, targetId, typeOf, useEntries, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, disallowed, linkRules, type TypeDef } from './schemas.ts';
 
 // CO-02.4
@@ -59,8 +59,13 @@ export function validate(repo: Repo) {
 
     if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', id));
 
-    usesOf(entry).forEach((used, index) => {
-      if (!repo.entries.has(used)) findings.push(finding(item, ['uses', index], 'unknown-use', used));
+    // CO-02.2, CO-02.12
+    const seen = new Set<string>();
+    useEntries(item.data).forEach((used, index) => {
+      if (!repo.entries.has(used.item)) findings.push(finding(item, ['uses', index], 'unknown-use', used.item));
+      const key = `${used.item} ${used.ref ?? ''}`.trim();
+      if (seen.has(key)) findings.push(finding(item, ['uses', index], 'ambiguous-use', key));
+      seen.add(key);
     });
 
     // CO-02.7

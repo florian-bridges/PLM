@@ -1,6 +1,6 @@
 // CO-03
 import MiniSearch from 'minisearch';
-import { entry, list as values, named, subtree, UsageError, writeYaml, type Entry, type Repo } from './repo.ts';
+import { entry, list as values, named, subtree, UsageError, useEntries, writeYaml, type Entry, type Repo } from './repo.ts';
 
 // CO-03.2
 export function search(repo: Repo, query: string) {
@@ -23,7 +23,8 @@ export function list(repo: Repo, field: string, item: string | undefined, filter
   const scope = item && new Set(subtree(repo, entry(repo, item).id)),
     matches = (v: unknown, want: string) => (want ? String(v) === want : v == null || v === '');
   return [...repo.entries.values()].filter((source) => !scope || scope.has(source.id))
-    .flatMap((source) => values<Record<string, unknown>>(source.item.data[field])
+    // CO-01.5
+    .flatMap((source) => (field === 'uses' ? useEntries(source.item.data) : values<Record<string, unknown>>(source.item.data[field]))
       .filter((data) => filters.every(([k, v]) => matches(data[k], v)))
       .map((data) => ({ source: source.id, ...data })));
 }

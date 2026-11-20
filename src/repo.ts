@@ -31,7 +31,7 @@ export function readYaml<T>(root: string, path: string) {
   return { path, doc, lines, data: (doc.toJS() ?? {}) as T };
 }
 
-// CL-01.6: apply's journal of files written and folders created, for rollback
+// CL-01.6: rollback journal
 let journal:{path:string;original?:string}[]|undefined,created:string[];
 export const journalOn=()=>{journal=[];created=[];},journalOff=()=>{journal=undefined;},journalFiles=()=>journal!.map((f)=>f.path);
 export function rollback(root: string) {
@@ -121,13 +121,30 @@ export function parameterOf(repo: Repo, ref: string) {
 
 export const isRequirementFile = (path: string) => path.endsWith('.yaml');
 export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
-export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
-export const childrenOf = (entry?: Entry) => [...(entry?.nested ?? []), ...usesOf(entry)];
+// CO-01.5
+export const useEntries = (data: any) => list<any>(data?.uses).map((u) => (typeof u === 'string' ? { item: u } : u));
+export const usesOf = (data: any) => useEntries(data).map((u) => u.item);
+export const childrenOf = (entry?: Entry) => [...(entry?.nested ?? []), ...usesOf(entry?.item.data)];
 
 // VS-02.1, CL-01.8
 export const productTree = (repo: Repo, parent?: string): Entry[] => parent
   ? childrenOf(repo.entries.get(parent)).flatMap((id) => repo.entries.get(id) ?? [])
   : [...repo.entries.values()].filter((found) => !found.path.includes('/'));
+
+// CO-03.4
+export function partsOf(repo: Repo, root?: string) {
+  const totals = new Map<string, number>(), path = new Set<string>(),
+    visit = (id: string, q: number) => {
+      if (path.has(id)) return;
+      path.add(id);
+      const e = repo.entries.get(id), add = (c: string, m: number) => (totals.set(c, (totals.get(c) ?? 0) + m), visit(c, m));
+      e?.nested.forEach((n) => add(n, q));
+      useEntries(e?.item.data).forEach((u) => add(u.item, q * (u.quantity ?? 1)));
+      path.delete(id);
+    };
+  (root ? [root] : productTree(repo).map((e) => e.id)).forEach((id) => visit(id, 1));
+  return [...totals].sort(([a], [b]) => a.localeCompare(b)).map(([id, quantity]) => ({ ...named(repo, id), quantity }));
+}
 
 // CO-02.7
 const cited = /\{([^{}\s]+)\}/g;
@@ -213,13 +230,13 @@ export function walk(repo: Repo, id: string, down: boolean, depth = Infinity, li
     const e = repo.entries.get(cur);
     if (down) return [
       ...[...(e?.nested ?? []), ...(e?.requirements ?? [])].map((n) => ({ id: n, via: 'nesting' })),
-      ...usesOf(e).map((n) => ({ id: n, via: 'uses' })),
+      ...usesOf(e?.item.data).map((n) => ({ id: n, via: 'uses' })),
       ...(links ? [...repo.entries.values()].flatMap((o) => linksOf(o).filter((l) => targetId(l.target) === cur).map((l) => ({ id: o.id, via: l.type }))) : []),
     ];
     const parent = parentOf(repo, cur);
     return [
       ...(parent ? [{ id: parent, via: 'nesting' }] : []),
-      ...[...repo.entries.values()].filter((o) => usesOf(o).includes(cur)).map((o) => ({ id: o.id, via: 'uses' })),
+      ...[...repo.entries.values()].filter((o) => usesOf(o.item.data).includes(cur)).map((o) => ({ id: o.id, via: 'uses' })),
       ...(links && e ? linksOf(e).filter((l) => repo.entries.has(targetId(l.target))).map((l) => ({ id: targetId(l.target), via: l.type })) : []),
     ];
   }, seen = new Map([[id, { depth: 0, via: '' }]]);

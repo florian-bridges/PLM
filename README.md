@@ -89,6 +89,10 @@ A `port` (built in, `PORT-`, folder `ports`) is where an item meets another; a `
 
 `plm report document [<item>]` prints the requirements document the VS Code extension shows, as Markdown, for the repository or an item's subtree.
 
+## Occurrences and BOM views
+
+A `uses` entry is an item ID, used once, or `{item, quantity, ref}` for a repeated or distinguished occurrence; `plm list uses <item>` lists the entries. `plm report parts [<item>]` totals each item reached through nesting and `uses` below it, or below the top-level items. A BOM view is a root of its own type using the same parts; views are compared by diffing their `report parts --format json` output.
+
 ## Revisions and baselines
 
 An item's revision is its version (`plm show`), computed from its own content, what it uses and the parameters it cites; its history is `git log -- <folder>`. A human-readable revision label, if wanted, is a type field like any other; maturity is tracked in `status`. There is no separate baseline object: a release is a Git tag, and `plm impact` fails when an item released at base (`status` in `released_states`, default `[released]`) changed its own files without its status changing.

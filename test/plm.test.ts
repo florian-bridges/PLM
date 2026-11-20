@@ -143,7 +143,7 @@ test('CO-01.5, CO-03.3–CO-03.4, CL-01.1: occurrences', () => {
   expect(validate(loadRepo(root)).filter((f) => f.code === 'schema')).toHaveLength(2);
 });
 
-test('CO-01.6, CO-02.12, CL-05.1: config', () => {
+test('CO-01.6, CO-02.12: config', () => {
   write(root, {'plm.yaml':'config: {v:[s,e]}\n','wing/item.yaml':`${wing}uses: [{item: L,ref: r,when:{v:[s]}},{item: P,ref: r,when:{v:[s],z:[e]}}]\n`});
   expect(validate(loadRepo(root)).map((f)=>f.code)).toEqual(['config','ambiguous-use','empty-use']);
   expect(plm(root,'show','A','--down','1','--config','v=e').stdout).not.toContain('L (Bolt)');

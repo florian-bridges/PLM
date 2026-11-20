@@ -6,7 +6,7 @@ Latest release: 0.6.0 (2026-11-20). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* 0.7 "Releases and documents" active (meeting #90, budget 1 window): #45 (`feat/released-items`) in progress, then #2. During 0.7: prepare the feature review of #40 and #43 (0.8, budget 4 windows). If the window allows: decide dropping `detail` from `report connections` rows and #87.
+* 0.7 "Releases and documents" active (meeting #90, budget 1 window): #45 (`feat/released-items`) in progress, then #2. Feature review of #40 and #43 prepared (#92, `meetings/2026-11-20-feature-review-0.8.md`); the owner holds it before 0.8 starts. If the window allows: decide dropping `detail` from `report connections` rows and #87.
 * GitHub milestone 0.6 still open: the guard blocks closing it; the owner closes it.
 
 ## Open pull requests and blockers

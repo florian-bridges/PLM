@@ -31,11 +31,11 @@ Scope decided in release meeting #90 (2026-11-20): #45 option B, #2 option B; #4
 
 ### Active topics
 
-* #45 next. Then #2. Feature review of #40 and #43 prepared during 0.7.
+* #45 next. Then #2. Feature review of #40 and #43 prepared (#92).
 
 ### Coming owner meetings
 
-* Feature review of #40 and #43 (0.8), prepared during 0.7.
+* #92 Feature review of #40 and #43 (0.8): `meetings/2026-11-20-feature-review-0.8.md`; needed before 0.8 starts.
 
 ## Planned milestones
 

@@ -223,7 +223,7 @@ report.command('coverage [item]').description('report verification coverage')
 // TE-06.6
 report.command('connections [item]').description('report ports and connections that do not fit')
   .action((item) => {
-    const state = scoped(item), rows = connections(...state);
+    const rows = connections(...scoped(item));
     exitCode = rows.length && 1;
     output(rows.map((row) => `${row.code} ${label(row.item)}${row.detail && ' ' + row.detail}`).join('\n'), rows);
   });

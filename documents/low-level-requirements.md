@@ -90,8 +90,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-06.5** With `--link <type>`, coverage shall list the items of the link type's target types, in the repository or subtree, that no link of that type reaches (any state), and exit 1 if any.
 *Rationale:* Declared link types need the same gap check as unallocated requirements (TE-06.4).
 
-**TE-06.6** For the repository or a subtree, `report connections` shall list `open` (TE-06.5 for `connects`), `few` (a connection with fewer than two `connects` links) and `senders` (a connection whose ports' `role` is not exactly one `sender`), each as `{code, item, detail}`, and exit 1 if any; `senders` relies only on a directed port type's required `role` (`sender`/`receiver`), no new key.
-*Rationale:* Reuses TE-06.5; CO-02.8's required enum field already gives direction, no schema addition.
+**TE-06.6** `report connections` shall list, for the repository or a subtree, `open` ports (TE-06.5 for `connects`), connections with fewer than two `connects` links (`few`) and connections whose ports have a `role` but not exactly one `sender` (`senders`), each as `{code, item, detail}` with `detail` the number of ports or senders, and exit 1 if any.
+*Rationale:* A directed port type's required `role` (`sender`/`receiver`, CO-02.8) gives direction without a new key.
 
 ## CLI
 
@@ -134,7 +134,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-05.2** Exit codes shall be 0 for success, 1 for findings, 2 for usage errors and 3 for internal errors; only the exit-3 message includes Git's error output.
 *Rationale:* Separating findings from failures lets CI tell rejected changes from broken tooling; Git's messages on handled failures mislead.
 
-**CL-05.3** `suspects`, `impact`, `report coverage` and `report connections` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`. `show` and JSON `search` shall give `text` with each citation (CO-02.7) replaced by the parameter's value and unit, or `TBD`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
+**CL-05.3** `suspects`, `impact` and `report` commands shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`. `show` and JSON `search` shall give `text` with each citation (CO-02.7) replaced by the parameter's value and unit, or `TBD`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
 *Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up. Reusing `show`'s fields for `search` answers many items in one call.
 
 **CL-05.4** `plm types` shall print each type (CO-02.8) with its base, prefix, home folder, fields and required fields, and each link type (CO-02.9) with its source and target types.

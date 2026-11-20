@@ -424,9 +424,7 @@ test('TE-05.1–TE-05.3: impact', () => {
   write(root, { 'meta/P.yaml': 'status: released\n' });
   commit(root);
   write(root, { 'wing/spar/item.yaml': spar + 'x: 1\n' });
-  const r = plm(root, 'impact', 'HEAD');
-  expect(r.status).toBe(1);
-  expect(r.stdout).toContain('released P');
+  expect(plm(root, 'impact', 'HEAD')).toMatchObject({ status: 1, stdout: expect.stringContaining('released P') });
 });
 
 test('TE-01.1–TE-01.2: commit', () => {

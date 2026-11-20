@@ -6,7 +6,7 @@ Latest release: 0.6.0 (2026-11-20). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* 0.6 released as v0.6.0 (PR #89; #29 PR #86, #31 with #30 PR #88). The GitHub milestone 0.6 is still open: the shift guard blocks closing it through the API, so the owner closes it. Next: release meeting on 0.7 (#45, #46, #59, #66, #2), scope and budget.
+* 0.6 released as v0.6.0 (PR #89; #29 PR #86, #31 with #30 PR #88). The GitHub milestone 0.6 is still open: the shift guard blocks closing it through the API, so the owner closes it. Release meeting #90 prepared (`meetings/2026-11-20-release-0.6.md`): the owner decides the 0.7 scope and budget; nothing to build until then.
 * Backlog from reviews: #87 (a missing `files` file is skipped silently).
 
 ## Open pull requests and blockers

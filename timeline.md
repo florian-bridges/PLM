@@ -36,7 +36,7 @@ Scope decided in release meeting #85 (2026-11-20): #29 option A, #30 folded into
 
 ### Coming owner meetings
 
-* None.
+* #90 Release meeting 0.6 / next milestone 0.7: `meetings/2026-11-20-release-0.6.md`.
 
 ## Planned milestones
 

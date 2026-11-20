@@ -27,7 +27,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **TE-05** The engine shall list the items, links and verification evidence affected by a change. (CR-13; US-10)
 *Rationale:* Impact must be known before approving a change, both locally and in CI, so the analysis belongs in the engine.
 
-**TE-06** The engine shall report requirements without verifying tests, suspect test evidence, unallocated requirements, and items that no link of a given type reaches. (CR-09, CR-10; US-5, US-11)
+**TE-06** The engine shall report requirements without verifying tests, suspect test evidence, unallocated requirements, items that no link of a given type reaches, and connections whose ports do not fit together. (CR-09, CR-10; US-2, US-5, US-11)
 *Rationale:* Coverage gaps and stale evidence are what reviews look for first.
 
 ## CLI (CL)

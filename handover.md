@@ -6,7 +6,7 @@ Latest release: 0.5.0 (2026-11-19). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* 0.5 released as v0.5.0 (PR #84; #58, #63, #57, #60). The GitHub milestone 0.5 is still open: the shift guard blocks closing it through the API, so the owner closes it. Release meeting #85 prepared (`meetings/2026-11-19-release-0.5.md`): the owner decides the 0.6 scope and budget; nothing to build until then.
+* 0.6 active (meeting #85 recorded): #29 being built on `feat/ports`, then #31 (with #30 and the README section). GitHub milestone 0.5 still open: the shift guard blocks closing it, so the owner closes it.
 
 ## Open pull requests and blockers
 

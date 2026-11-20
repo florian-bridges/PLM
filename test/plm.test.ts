@@ -146,21 +146,15 @@ test('CO-01.5, CO-03.3–CO-03.4, CL-01.1: occurrences', () => {
 test('CO-01.6, CO-02.12: config', () => {
   write(root, {
     'plm.yaml': 'config: {v: [s, e], serial: ordered}\n',
-    'wing/item.yaml': `${wing}uses: [{item: L, ref: r, when: {v: [s]}}, {item: P, ref: r, when: {v: [s], z: [e]}}, {item: O, ref: o, when: {v: [e]}}]\n`,
-    'other/item.yaml': 'id: O\ntype: part\ntitle: Other\n',
-    'other/requirements/x.yaml': 'id: X\ntype: requirement\ntitle: Extra\n',
-    // CO-02.12: a gap at serial 53, between the two bounds, selects neither (#92)
-    'g0/item.yaml': 'id: G0\ntype: part\ntitle: G0\nuses: [{item: GA, ref: g, when: {serial: {to: 50}}}, {item: GB, ref: g, when: {serial: {from: 57}}}]\n',
-    'ga/item.yaml': 'id: GA\ntype: part\ntitle: GA\n',
-    'gb/item.yaml': 'id: GB\ntype: part\ntitle: GB\n',
+    'wing/item.yaml': `${wing}uses: [{item: L, ref: r, when: {v: [s]}}, {item: P, ref: r, when: {v: [s], z: [e]}}, {item: L, ref: g, when: {serial: {to: 50}}}, {item: P, ref: g, when: {serial: {from: 57}}}]\n`,
+    'bolt/requirements/x.yaml': 'id: X\ntype: requirement\ntitle: Extra\n',
   });
   expect(validate(loadRepo(root)).map((f) => f.code).sort()).toEqual(['ambiguous-use', 'config', 'empty-use', 'empty-use']);
-  expect(plm(root, 'show', 'A', '--down', '1', '--config', 'v=e').stdout).not.toContain('L (Bolt)');
-  expect(json(root, 'report', 'parts', 'A', '--config', 'v=s')).toEqual([{ id: 'L', title: 'Bolt', quantity: 1 }, { id: 'P', title: 'Spar', quantity: 2 }]);
-  // CO-01.6: a range, compared as numbers (serial 9 is below both bounds, not above them as text)
-  expect(json(root, 'report', 'parts', 'G0', '--config', 'serial=9')).toEqual([{ id: 'GA', title: 'GA', quantity: 1 }]);
-  expect(plm(root, 'report', 'coverage', 'A', '--config', 'v=s').stdout).not.toContain('X (Extra)');
-  expect(plm(root, 'report', 'coverage', 'A', '--config', 'v=e').stdout).toContain('X (Extra)');
+  // as text, serial 9 would lie above 57
+  expect(json(root, 'report', 'parts', 'A', '--config', 'v=s,serial=9')).toEqual([{ id: 'L', title: 'Bolt', quantity: 2 }, { id: 'P', title: 'Spar', quantity: 2 }]);
+  expect(plm(root, 'show', 'A', '--down', '1', '--config', 'v=e,serial=53').stdout).not.toContain('L (Bolt)');
+  expect(plm(root, 'report', 'coverage', 'A', '--config', 'v=e,serial=53').stdout).not.toContain('X (Extra)');
+  expect(plm(root, 'report', 'coverage', 'A', '--config', 'v=s').stdout).toContain('X (Extra)');
   expect(plm(root, 'report', 'parts', 'A', '--config', 'v=x').status).toBe(2);
   expect(plm(root, 'report', 'parts', 'A', '--config', 'bogus=1').status).toBe(2);
 });

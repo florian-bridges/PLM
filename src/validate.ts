@@ -30,18 +30,11 @@ export const itemSchema = (repo: Repo, type: string) => schemaFor(newAjv(), repo
 function configsOf(repo: Repo, whens: any[]) {
   return [...new Set(whens.flatMap((w) => Object.keys(w ?? {})))].reduce((configs: any[], p) => {
     const d = repo.settings.config?.[p],
-      bounds = whens.flatMap((w) => (Array.isArray(w?.[p]) ? w[p] : w?.[p] ? [w[p].from, w[p].to] : [])).filter((v) => v !== undefined).map(String),
-      values = Array.isArray(d) ? d : spread(bounds);
+      s = [...new Set(whens.flatMap((w) => (Array.isArray(w?.[p]) ? w[p] : w?.[p] ? [w[p].from, w[p].to] : [])).filter((v) => v !== undefined).map(String))].sort(cmp),
+      num = (a: string, b: number) => (isNaN(+a) || isNaN(b) ? a : String(b)),
+      values = Array.isArray(d) ? d : s.length ? [...s, ...s.slice(1).map((b, i) => num(s[i], (+s[i] + +b) / 2)), num(s[0], +s[0] - 1), num(s.at(-1)!, +s.at(-1)! + 1)] : s;
     return configs.flatMap((c) => values.map((v) => ({ ...c, [p]: v })));
   }, [{}]);
-}
-
-// CO-02.12: a value between each adjacent pair of bounds and one beyond each outer bound, to catch a gap (#92)
-function spread(bounds: string[]) {
-  const sorted = [...new Set(bounds)].sort(cmp),
-    between = (a: string, b: string) => (isNaN(+a) || isNaN(+b) ? a : String((+a + +b) / 2)),
-    beyond = (a: string, by: number) => (isNaN(+a) ? a : String(+a + by));
-  return sorted.length ? [...sorted, ...sorted.slice(1).map((b, i) => between(sorted[i], b)), beyond(sorted[0], -1), beyond(sorted[sorted.length - 1], 1)] : sorted;
 }
 
 // CO-02.1, CO-02.4
@@ -82,7 +75,7 @@ export function validate(repo: Repo) {
     useEntries(item.data).forEach((used, index) => {
       if (!repo.entries.has(used.item)) findings.push(finding(item, ['uses', index], 'unknown-use', used.item));
       Object.entries(used.when ?? {}).forEach(([p, c]: [string, any]) => {
-        if (undeclared(repo, p, Array.isArray(c) ? c : [c])) findings.push(finding(item, ['uses', index, 'when', p], 'config', p));
+        if (undeclared(repo, p, [c].flat())) findings.push(finding(item, ['uses', index, 'when', p], 'config', p));
       });
       (groups[used.ref ?? used.item] ??= []).push({ used, index });
     });

@@ -19,7 +19,7 @@ interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>>; stat
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 export interface Entry { id: string; path: string; nested: string[]; requirements: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
 // CO-02.9, CO-01.6
-interface Settings { informative?: string[]; parameter_states?: string[]; released_states?: string[]; links?: Record<string, { from: string[]; to: string[] }>;config?:Record<string,string[]|'ordered'> }
+interface Settings { informative?: string[]; parameter_states?: string[]; released_states?: string[]; links?: Record<string, { from: string[]; to: string[] }>; config?: Record<string, string[] | 'ordered'> }
 export interface Repo { root: string; settings: Settings; types: Record<string, TypeDef>; entries: Map<string, Entry>; duplicates: Entry[] }
 
 export class UsageError extends Error {}
@@ -125,7 +125,7 @@ export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : 
 export const useEntries = (data: any) => list<any>(data?.uses).map((u) => (typeof u === 'string' ? { item: u } : u));
 
 // CO-01.6
-export let activeConfig: Record<string, string> | undefined;
+let activeConfig: Record<string, string> | undefined;
 export const setConfig = (repo: Repo, text?: string) => {
   activeConfig = text?.split(',').reduce<Record<string, string>>((config, pair) => {
     const [p, v] = pair.split('=');
@@ -134,7 +134,6 @@ export const setConfig = (repo: Repo, text?: string) => {
   }, {});
 };
 export const undeclared = (repo: Repo, p: string, values: any[], d = repo.settings.config?.[p]) => d === undefined || (Array.isArray(d) && !values.every((v) => d.includes(v)));
-// CO-01.6: by code point (#66), not locale
 export const cmp = (a: string, b: string) => (isNaN(+a) || isNaN(+b) ? (a < b ? -1 : a > b ? 1 : 0) : +a - +b);
 export const selected = (when: any, config = activeConfig): boolean => !when || !config || Object.entries(when).every(([p, c]: [string, any]) =>
   config[p] === undefined || (Array.isArray(c) ? c.map(String).includes(config[p]) : (c.from === undefined || cmp(config[p], String(c.from)) >= 0) && (c.to === undefined || cmp(config[p], String(c.to)) <= 0)));

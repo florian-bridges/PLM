@@ -52,8 +52,7 @@ program.command('show <id>').description('show an item')
   .action((id, options) => {
     const repo = openRepo(), found = entry(repo, id), steps = options.down ?? options.up;
     if (steps !== undefined) {
-      const rows = (setConfig(parseConfig(repo,program.opts().config)),walk(repo, id, options.down !== undefined, Number(steps)).filter((w) => w.depth)
-        .map((w) => ({ ...named(repo, w.id), depth: w.depth, via: w.via })));
+      const rows = (setConfig(parseConfig(repo,program.opts().config)),walk(repo, id, options.down !== undefined, Number(steps)).filter((w) => w.depth).map((w) => ({ ...named(repo, w.id), depth: w.depth, via: w.via })));
       return output(rows.map((w) => `${w.depth} ${w.via} ${label(w)}`).join('\n'), rows);
     }
     const versions = currentVersions(repo),

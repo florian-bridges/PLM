@@ -95,7 +95,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]`, `apply <file>`, `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]` and `report connections [<item>]`, finding the repository by searching upward for `plm.yaml`; each command shall have a one-line description.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]`, `apply <file>`, `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]`, `report connections [<item>]` and `report document [<item>]`, finding the repository by searching upward for `plm.yaml`; each command shall have a one-line description.
 *Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
@@ -112,6 +112,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **CL-01.6** `plm apply <file> [--dry-run]` shall run a YAML list of `plm` command lines (`new`, `set`, `link`, `confirm`), `$n` standing for the ID the n-th command printed; if a command fails, validation finds an error the run did not start with, or run with `--dry-run`, it shall restore every file written, remove every file and folder created, and exit 1 (0 for a clean dry run), printing each command's output and the files written.
 *Rationale:* A failed command leaves a half-applied change; a dry run previews it safely.
+
+**CL-01.8** `report document [<item>]` shall print the VS-03.1 document as Markdown, IDs linking to their files, without VS-03.3's "Review link".
+*Rationale:* VS Code is not always available.
 
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8) in block style, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters outside `a-z0-9` replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
 *Rationale:* Templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.
@@ -157,7 +160,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-02.1** A tree view shall show composition, nested and used items, from the top-level items, with type icons and status badges; selecting an item opens its `item.yaml`.
 *Rationale:* Badges show maturity. Used items appear under each item using them, as they count toward its version.
 
-**VS-03.1** A product tree command shall show a read-only webview of an item with a section per item of its subtree (TE-06.2), each item once, numbered and headed by depth (1, 1.1, 1.1.1), each listing the item's requirements with title in bold, ID, status, coverage state and rendered Markdown text; clicking an ID opens its file.
+**VS-03.1** A product tree command shall show a read-only webview of an item with a section per item of its subtree (TE-06.2), each item once, numbered and headed by depth (1, 1.1, 1.1.1), each listing the item's requirements with title in bold, ID, status, coverage state and rendered Markdown text; clicking an ID opens its file (CL-01.8).
 *Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements top to bottom in the product's structure.
 
 **VS-03.3** Each requirement shall list its links and the links to it with their state per TE-03.1 and, if not current, "Review link" (VS-04.3), and each verifying test case its latest run per TE-06.1.

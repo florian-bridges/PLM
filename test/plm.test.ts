@@ -203,6 +203,14 @@ test('CO-02.5, CO-02.6, CO-02.8, CO-02.10, TE-06.6: ports', () => {
   expect(plm(root, 'report', 'connections')).toMatchObject({ status: 1, stdout: 'open PE (E)\nfew CA (C) 1\nsenders CF (F) 2\n' });
 });
 
+test('CL-01.8, VS-03.1: document', () => {
+  const doc = plm(root,'report','document','A').stdout;
+  expect(doc).toContain('## 1 [A](wing/item.yaml) Wing\n\n**Load** [R](wing/requirements/load.yaml) unverified');
+  expect(doc).toContain('### 1.1 [P](wing/spar/item.yaml) Spar');
+  expect(doc).not.toContain('Review link');
+  expect(plm(root,'report','document').stdout).toContain('[L](bolt/item.yaml) Bolt');
+});
+
 test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
   let repo = loadRepo(root);
   confirm(repo, currentVersions(repo), [], 'P');

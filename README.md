@@ -86,6 +86,8 @@ A `port` (built in, `PORT-`, folder `ports`) is where an item meets another; a `
 
 `plm report connections [<item>]` lists ports no `connects` link reaches (`open`), connections with fewer than two ports (`few`) and connections whose ports' `role` is not exactly one `sender` (`senders`); exit 1 if any.
 
+`plm report document [<item>]` prints the requirements document the VS Code extension shows, as Markdown, for the repository or an item's subtree.
+
 ## Documentation
 
 [`documents/`](documents/) holds the user scenarios, requirements, architecture, and component and low-level requirements. A VS Code extension is in [`extension/`](extension/) (`npm run build:ext`, run from source).

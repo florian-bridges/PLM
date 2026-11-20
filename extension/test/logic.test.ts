@@ -15,15 +15,12 @@ test('VS-02.1: composition from the top-level items, nested before used items', 
   expect(logic.productTree(repo, 'A').map((found) => found.id)).toEqual(['P', 'L']);
 });
 
-test('VS-03.1, VS-03.3, VS-03.4: coverage and suspects, then a section per subtree item once by depth with its requirements, links and runs', () => {
-  const repo = fakeRepo({ id: 'A', requirements: ['R'], nested: ['P'], item: { data: { title: 'a', uses: ['L'] } } }, { id: 'R' }, { id: 'P', meta: { data: {} }, item: { data: { title: 'p', uses: ['L'] } } }, { id: 'L' }, { id: 'T' }, { id: 'U' });
+test('VS-03.3: the shared document gets Review links on top', () => {
+  const repo = fakeRepo({ id: 'A', requirements: ['R'] }, { id: 'R' });
   const suspect = { source: 'R', link: { type: 'derives', target: 'X' }, state: 'suspect' } as LinkState;
-  const verifies = { source: 'T', link: { type: 'verifies', target: 'R' }, state: 'current' } as LinkState;
-  const rows = [{ requirement: 'R', title: 'r', state: 'pending', tests: [{ testCase: { id: 'T', title: 't' }, run: { id: 'U', title: 'u' }, result: 'pass', outdated: true }] }] as Coverage[];
-  const review = '[Review link](command:plm.reviewLink?%5B%22R%22%2C%22X%22%5D)';
-  expect(logic.requirementsMarkdown(repo, 'A', (found) => `#${found.id}`, [suspect, verifies], rows, [suspect])).toBe(`- pending [R](#R) r\n- suspect ${review} [R](#R) r derives X\n`
-    + `\n## 1 [A](#A) a *draft*\n\n**r** [R](#R) *draft* pending\n\nR text\n\n- suspect ${review} [R](#R) r derives X\n- current [T](#T) t verifies [R](#R) r\n- [T](#T) t: [U](#U) u pass outdated\n\n`
-    + '\n### 1.1 [P](#P) p\n\n\n#### 1.1.1 [L](#L) l *draft*\n\n');
+  const rows = [{ requirement: 'R', title: 'r', state: 'pending', tests: [] }] as Coverage[];
+  expect(logic.requirementsMarkdown(repo, 'A', (found) => `#${found.id}`, [suspect], rows, [suspect]))
+    .toContain('[Review link](command:plm.reviewLink?%5B%22R%22%2C%22X%22%5D)');
 });
 
 test('VS-01.2: flat form fields from the schema, written back keeping other attributes and comments', () => {

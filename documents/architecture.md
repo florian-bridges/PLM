@@ -34,7 +34,7 @@ meta/<ID>.yaml           owner, status, confirmations
 
 ## Change and verification
 
-* **Change requests** use the host's issues and merge requests, which also carry reviews and permissions (CR-13, CR-14).
+* **Change requests** use the host's issues and merge requests, which also carry reviews and permissions (CR-14).
 * **Tests** execute externally (CI, HIL rigs) and report via the CLI; manual results are entered in VS Code.
 
 ## Components

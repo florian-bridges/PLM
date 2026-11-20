@@ -10,37 +10,37 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | 0.4 | 3 | 1 | done (v0.4.0, meeting #77) |
 | 0.5 | 4 | 2 | done (v0.5.0, meeting #85) |
 | 0.6 | 3 | 1 | done (v0.6.0) |
-| 0.7 | — | — | planned |
-| 0.8 | — | — | planned |
+| 0.7 | 1 | 0 | active (meeting #90) |
+| 0.8 | 4 | 0 | decided (meeting #90) |
 | 0.9 | — | — | planned |
 
 Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is a GitHub milestone holding its issues. Standing directions for every feature: PLM holds product data only, no project management (#64); use by LLM agents is a strength to keep and document (#54).
 
 ## Active milestone
 
-**Next milestone: 0.6.** Interfaces between subsystems.
+**Next milestone: 0.7.** Releases and documents.
 
-Budget: 3 windows.
+Budget: 1 window.
 
-Scope decided in release meeting #85 (2026-11-20): #29 option A, #30 folded into #31, #31 option A without `mixed`. Order: #29, then #31.
+Scope decided in release meeting #90 (2026-11-20): #45 option B, #2 option B; #46, #59, #66, #65 no-go. Order: #45, then #2. Dropping `detail` from `report connections` rows and #87: the chief engineer decides, only within this window.
 
 ### Entry conditions
 
-- [x] #29 Ports and connections. *Done when* built-in `port` and `connection` types, `connects`, `implements` to a connection, and `files` schemas checked by `validate`, with tests.
-- [x] #31 `plm report connections` with #30. *Done when* `plm report connections [<item>]` lists `open`, `few` and `senders`, text and JSON, exit 1 if any, with tests.
-- [x] README section "Ports and connections" (#31). *Done when* the README covers port and connection types, `connects`, `files` schemas, `role` and the report.
+- [ ] #45 Released items stay as released. *Done when* `plm impact` lists `released` items whose own files changed without a status change, exit 1 if any (TE-05.3), with tests; README paragraph "Revisions and baselines".
+- [ ] #2 `plm report document`. *Done when* `plm report document [<item>]` prints the VS-03.1 document as Markdown without the Review link (CL-01.8), the function shared with the extension, with tests.
 
 ### Active topics
 
-* #29 merged (PR #86). #31 merged (PR #88). Released as v0.6.0 (PR #89). Next milestone and budget: release meeting (owner). Backlog from the review: #87 (missing `files` file).
+* #45 next. Then #2. Feature review of #40 and #43 prepared during 0.7.
 
 ### Coming owner meetings
 
-* #90 Release meeting 0.6 / milestones 0.7 and 0.8 (re-prepared per #91): `meetings/2026-11-20-release-0.6.md`.
+* Feature review of #40 and #43 (0.8), prepared during 0.7.
 
 ## Planned milestones
 
-* **0.7 Releases and change control:** #45 item revisions, #46 baselines, #59 change requests, #66 consistency of related changes and merges, #2 HTML view and generated documents.
-* **0.8 Product structure and configurations:** #40 occurrences and quantities, #42 BOM views, #43 variants and effectivity, #65 queries at scale.
-* **0.9 UI redesign** once the backend is stable: #67.
-* **Backlog, no milestone:** #61 requirements import and export (ReqIF, CSV), #55 MCP server (#78).
+* **0.8 Product structure and configurations**, decided (meeting #90), budget 4 windows including the feature review:
+  - [ ] #40 Occurrences and quantities (with #42's README paragraph on BOM views). *Done when* set in the feature review: a `uses` entry may be `{item, quantity, ref, …}` besides an ID; #66's rules for occurrences.
+  - [ ] #43 Variants and effectivity. *Done when* set in the feature review: `uses` entries gain applicability conditions on parameters declared in `plm.yaml`, `--config <param>=<value>` for show and report, validate reports ambiguous or empty selections; #66's rules for configurations.
+* **0.9 UI redesign**, not planned: #67.
+* **Backlog, no milestone:** #61 requirements import and export (ReqIF, CSV), #55 MCP server (#78), #87.

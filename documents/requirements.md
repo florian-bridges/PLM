@@ -43,7 +43,7 @@ The tool shall release changes by merging them into a protected branch, track it
 *Rationale:* Each merge is a reviewed, immutable reference for partners, without freezing items while the rest of the product evolves. Maturity tells users whether an item may be relied upon.
 
 **CR-13 — Change management**
-The tool shall support issues and change requests and identify affected items, artifacts, requirements and verification evidence. (US-10)
+The tool shall identify affected items, artifacts, requirements and verification evidence. (US-10)
 *Rationale:* Uncontrolled change is a main source of configuration errors. Knowing the affected items and evidence lets changes be assessed.
 
 **CR-14 — Reviews and findings**

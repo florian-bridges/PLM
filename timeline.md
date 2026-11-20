@@ -26,12 +26,12 @@ Scope decided in release meeting #90 (2026-11-20); details in feature review #92
 
 ### Entry conditions
 
-- [ ] #40 Occurrences and quantities. *Done when:* `uses` entries may be `{item, quantity, ref, …}` besides IDs, plain-ID repositories keep their versions; `validate` reports bad entries and `ambiguous-use` (CO-02.12), also after a merge (#66); changing an entry changes the assembly's version, not the part's; `plm report parts [<item>]` (CO-03.4) totals quantities; README paragraph on BOM views (#42); `scripts/check.sh` passes.
+- [x] #40 Occurrences and quantities. *Done when:* `uses` entries may be `{item, quantity, ref, …}` besides IDs, plain-ID repositories keep their versions; `validate` reports bad entries and `ambiguous-use` (CO-02.12), also after a merge (#66); changing an entry changes the assembly's version, not the part's; `plm report parts [<item>]` (CO-03.4) totals quantities; README paragraph on BOM views (#42); `scripts/check.sh` passes.
 - [ ] #43 Variants and effectivity. *Done when:* `config` in `plm.yaml` (lists or `ordered`), `when` on `uses` entries and the global `--config` make every walk through `uses` follow only selected entries (CO-01.6); `validate` reports `config` and, under every configuration, `ambiguous-use` and `empty-use`, also after a merge (#66); versions read every entry; README paragraph on configurations; `scripts/check.sh` passes.
 
 ### Active topics
 
-* #40 in progress: `feature-dev` on `feat/occurrences`, then `reviewer`. Then #43 on `feat/variants`.
+* #40 merged (PR #97). Next: #43 on `feat/variants` from `develop`, `feature-dev` then `reviewer`.
 
 ### Coming owner meetings
 

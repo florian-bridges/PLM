@@ -6,7 +6,7 @@ Latest release: 0.7.0 (2026-11-20). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* 0.8 (budget 4 windows) active. Feature review #92 recorded (decisions in `decisions.md`, requirements in `documents/`, docs limit 5823 to be cut by the reviewers). #40 in progress on `feat/occurrences` (worktree `/home/tower/PLM-wt/occurrences`); next #43 on `feat/variants` from `develop` after #40 merges.
+* 0.8 (budget 4 windows) active. Feature review #92 recorded (decisions in `decisions.md`, requirements in `documents/`, docs limit 5823 to be cut by the reviewers). #40 merged (PR #97; src+test limit 6334). Next: #43 on `feat/variants` (worktree `/home/tower/PLM-wt/variants`) from `develop`, one `feature-dev`, then `reviewer`. #43 adds `config`/`empty-use` to CO-02.12 (#40 did `ambiguous-use`).
 * Decisions 8 and 9 of #90 (chief engineer): 0.7's window is used, so dropping `detail` from `report connections` rows and #87 stay in the backlog.
 * Backlog from reviews: #94 (neutral test data), #87 (missing `files` file).
 

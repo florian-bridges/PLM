@@ -2,13 +2,14 @@
 
 What the next session needs to start. Current state only; history in git. The chief engineer keeps it current (skill `chief-engineer`, Your files).
 
-Latest release: 0.7.0 (2026-11-20). Milestones and entry conditions: `timeline.md`.
+Latest release: 0.8.0 (2026-11-20). Milestones and entry conditions: `timeline.md`.
 
 ## Active topics
 
-* 0.8 (budget 4 windows) active. Feature review #92 recorded (decisions in `decisions.md`, requirements in `documents/`, docs limit 5823 to be cut by the reviewers). #40 merged (PR #97; src+test limit 6334). Next: #43 on `feat/variants` (worktree `/home/tower/PLM-wt/variants`) from `develop`, one `feature-dev`, then `reviewer`. #43 adds `config`/`empty-use` to CO-02.12 (#40 did `ambiguous-use`).
-* Decisions 8 and 9 of #90 (chief engineer): 0.7's window is used, so dropping `detail` from `report connections` rows and #87 stay in the backlog.
-* Backlog from reviews: #94 (neutral test data), #87 (missing `files` file).
+* 0.8 done: #40 (PR #97), #43 (PR #98), v0.8.0 (PR #99). Limits now src+test 6673, documents 5830 (all full; extension 1544/1545).
+* Release meeting #100 prepared (`meetings/2026-11-20-release-0.8.md`): no milestone decided after 0.8. Next: record its decisions (skill `meeting`, section 3), make 0.9 active.
+* Decisions 8 and 9 of #90: dropping `detail` from `report connections` rows and #87 stay in the backlog unless #100 takes them.
+* Backlog from reviews: #94 (neutral test data), #87 (missing `files` file); both proposed for 0.9 in #100.
 
 ## Open pull requests and blockers
 

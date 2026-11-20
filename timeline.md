@@ -35,7 +35,7 @@ Scope decided in release meeting #90 (2026-11-20); details in feature review #92
 
 ### Coming owner meetings
 
-* None until 0.8's entry conditions are ticked (release meeting: 0.9 is not planned).
+* #100 release meeting (`meetings/2026-11-20-release-0.8.md`): 0.9 scope and budget, #61, #55.
 
 ## Planned milestones
 

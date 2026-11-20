@@ -48,8 +48,8 @@ A release closes a milestone; you make it yourself when every entry condition is
 3. `git fetch origin main`, `git tag v<version> origin/main`, `git push origin v<version>`.
 4. `npm pack`, then `gh release create v<version> plm-<version>.tgz --title "plm <version>" --notes "<the CHANGELOG entry>"`; remove the `.tgz`.
 5. Close the GitHub milestone; mark the milestone `done (v<version>)` in `timeline.md`.
-6. The next milestone and its budget are the owner's: if `timeline.md` names none, prepare a release meeting (skill `meeting`) on what was released and what comes next.
+6. The next milestone and its budget are the owner's. If *Planned milestones* holds one marked `decided (meeting #n)`, make it active without a meeting: its entry conditions and the budget the owner set (Overview) into *Active milestone*, its `type:feature` issues as decided; note the release in `handover.md`; continue. Only when none is decided, prepare a release meeting (skill `meeting`) on what was released and the next milestones.
 
 ## Owner meetings
 
-The owner decides only in meetings and on `needs-owner` issues (skill `meeting`), one meeting per milestone (its scope, budget and features), and a feature review only for an architecture change. A decision that blocks only part of the work is a `needs-owner` issue; continue with the rest. Prepare a decision meeting when nothing useful is left without the owner, or when three or more `needs-owner` issues are open.
+The owner decides only in meetings and on `needs-owner` issues (skill `meeting`), a release or kickoff meeting that decides several milestones ahead (scope, budget and features of each), and a feature review only for an architecture change. A release alone is no reason for a meeting. A decision that blocks only part of the work is a `needs-owner` issue; continue with the rest. Prepare a decision meeting when nothing useful is left without the owner, or when three or more `needs-owner` issues are open.

@@ -95,7 +95,7 @@ A `uses` entry is an item ID, used once, or `{item, quantity, ref}` for a repeat
 
 ## Configurations
 
-`plm.yaml`'s `config: {variant: [standard, extended], serial: ordered}` declares parameters; a `uses` entry's `when: {variant: [extended], serial: {from: 57}}` selects it for a configuration given as `--config variant=extended,serial=57` (unnamed parameters always match). `plm show --down`/`--up` and `plm report parts`/`coverage` follow only entries selected by `--config`; without it, and for versions and `plm validate`, every entry counts. `plm validate` reports an undeclared parameter or value, or a range on a listed one (`config`), and, ranging over every declared or used value, two or more entries of one item sharing a `ref` selected together (`ambiguous-use`) or none selected (`empty-use`). An unknown parameter or value in `--config` is a usage error.
+`plm.yaml`'s `config: {variant: [standard, extended], serial: ordered}` declares parameters; a `uses` entry's `when: {variant: [extended], serial: {from: 57}}` selects it for a configuration given as `--config variant=extended,serial=57` (unnamed parameters always match). `plm show --down`/`--up` and `plm report parts`/`coverage` follow only entries selected by `--config`; without it, and for versions and `plm validate`, every entry counts. `plm validate` reports an undeclared parameter or value, or a range on a listed one (`config`), and two or more entries of one item sharing a `ref` that, under some configuration, are selected together (`ambiguous-use`) or none selected (`empty-use`), also in the gaps between ranges. An unknown parameter or value in `--config` is a usage error.
 
 ## Revisions and baselines
 

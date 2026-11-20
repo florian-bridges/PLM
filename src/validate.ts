@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, targetId, typeOf, useEntries, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, selected, targetId, typeOf, useEntries, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, disallowed, linkRules, type TypeDef } from './schemas.ts';
 
 // CO-02.4
@@ -25,6 +25,16 @@ const newAjv = () => new Ajv2020({ allErrors: true, strictTypes: false });
 
 // VS-01.2
 export const itemSchema = (repo: Repo, type: string) => schemaFor(newAjv(), repo.types, type, baseSchema);
+
+// CO-02.12
+function configsOf(repo:Repo,whens:any[]){
+  const params=[...new Set(whens.flatMap((w)=>Object.keys(w??{})))];
+  return params.reduce((configs:any[],p)=>{
+    const d=repo.settings.config?.[p],
+      values=Array.isArray(d)?d:[...new Set(whens.flatMap((w)=>{const c=w?.[p];return Array.isArray(c)?c:c?[c.from,c.to]:[];}).filter((v)=>v!==undefined))].map(String);
+    return configs.flatMap((c)=>values.map((v)=>({...c,[p]:v})));
+  },[{}]);
+}
 
 // CO-02.1, CO-02.4
 function schemaFindings(file: YamlFile<unknown>, check: ValidateFunction, draft: boolean): Finding[] {
@@ -60,13 +70,22 @@ export function validate(repo: Repo) {
     if (repo.duplicates.includes(entry)) findings.push(finding(item, ['id'], 'id-clash', id));
 
     // CO-02.2, CO-02.12
-    const seen = new Set<string>();
-    useEntries(item.data).forEach((used, index) => {
-      if (!repo.entries.has(used.item)) findings.push(finding(item, ['uses', index], 'unknown-use', used.item));
-      const key = `${used.item} ${used.ref ?? ''}`.trim();
-      if (seen.has(key)) findings.push(finding(item, ['uses', index], 'ambiguous-use', key));
-      seen.add(key);
+    const groups:Record<string,{used:any;index:number}[]>={};
+    useEntries(item.data).forEach((used,index)=>{
+      if(!repo.entries.has(used.item))findings.push(finding(item,['uses',index],'unknown-use',used.item));
+      for(const [p,c] of Object.entries(used.when??{})){
+        const d=repo.settings.config?.[p];
+        if(d===undefined||(Array.isArray(d)&&!(Array.isArray(c)?c:[c]).every((v:any)=>d.includes(v))))findings.push(finding(item,['uses',index,'when',p],'config',p));
+      }
+      (groups[used.ref??used.item]??=[]).push({used,index});
     });
+    for(const key in groups){
+      const members=groups[key];
+      if(members.length<2)continue;
+      const counts=configsOf(repo,members.map((m)=>m.used.when)).map((c)=>members.filter((m)=>selected(m.used.when,c)).length);
+      if(counts.some((n)=>n>1))findings.push(finding(item,['uses',members[0].index],'ambiguous-use',key));
+      if(counts.some((n)=>!n))findings.push(finding(item,['uses',members[0].index],'empty-use',key));
+    }
 
     // CO-02.7
     list<Parameter>(item.data.parameters).forEach((p, index) => {

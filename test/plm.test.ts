@@ -416,7 +416,7 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-02.2, 
   expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 });
 
-test('TE-05.1–TE-05.2: impact', () => {
+test('TE-05.1–TE-05.3: impact', () => {
   write(root, {
     'runs/X/item.yaml': 'id: X\ntype: test-run\ntitle: Run\nlinks:\n  - type: tests\n    target: A\n',
     'meta/P.yaml': 'confirmed:\n  R:\n    version: outdated\n',
@@ -429,6 +429,10 @@ test('TE-05.1–TE-05.2: impact', () => {
   commit(root);
   expect(json(root, 'impact', 'HEAD~1..HEAD')).toMatchObject(expected);
   expect(plm(root, 'impact', 'nonsense').status).toBe(2);
+  write(root, { 'meta/P.yaml': 'status: released\n' });
+  commit(root);
+  write(root, { 'wing/spar/item.yaml': spar + 'x: 1\n' });
+  expect(plm(root, 'impact', 'HEAD')).toMatchObject({ status: 1, stdout: expect.stringContaining('released P') });
 });
 
 test('TE-01.1–TE-01.2: commit', () => {

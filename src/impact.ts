@@ -15,10 +15,14 @@ export function impact(base: Snapshot, head: Snapshot, files: string[]) {
     changedIds = [...ids].filter((id) => base.versions.get(id) !== head.versions.get(id)),
     // TE-05.2
     becameSuspects = linkStates(head.repo, head.versions).filter((state) => state.state === 'suspect' && state.link.version === base.versions.get(state.link.target)),
+    changed = changedIds.filter((id) => ownersOfChangedFiles.has(id)),
+    status = (snapshot: Snapshot, id: string) => snapshot.repo.entries.get(id)?.meta.data.status ?? '',
     name = (id: string) => named(head.repo.entries.has(id) ? head.repo : base.repo, id);
   return {
-    changed: changedIds.filter((id) => ownersOfChangedFiles.has(id)).map(name),
+    changed: changed.map(name),
     propagated: changedIds.filter((id) => !ownersOfChangedFiles.has(id)).map(name),
+    // TE-05.3
+    released: changed.filter((id) => (base.repo.settings.released_states ?? ['released']).includes(status(base, id)) && status(head, id) === status(base, id)).map(name),
     suspects: becameSuspects.filter((state) => !fromRun(head.repo, state)),
     runs: [...new Set(becameSuspects.filter((state) => fromRun(head.repo, state)).map((state) => state.source))].map(name),
   };

@@ -26,12 +26,12 @@ Scope decided in release meeting #90 (2026-11-20): #45 option B, #2 option B; #4
 
 ### Entry conditions
 
-- [ ] #45 Released items stay as released. *Done when* `plm impact` lists `released` items whose own files changed without a status change, exit 1 if any (TE-05.3), with tests; README paragraph "Revisions and baselines".
+- [x] #45 Released items stay as released. *Done when* `plm impact` lists `released` items whose own files changed without a status change, exit 1 if any (TE-05.3), with tests; README paragraph "Revisions and baselines".
 - [ ] #2 `plm report document`. *Done when* `plm report document [<item>]` prints the VS-03.1 document as Markdown without the Review link (CL-01.8), the function shared with the extension, with tests.
 
 ### Active topics
 
-* #45 next. Then #2. Feature review of #40 and #43 prepared (#92).
+* #45 merged (PR #93). #2 in progress (`feat/report-document`). Backlog from review: #94 (neutral test data). Feature review of #40 and #43 prepared (#92).
 
 ### Coming owner meetings
 

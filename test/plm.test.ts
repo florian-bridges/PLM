@@ -188,6 +188,17 @@ test('CO-01.1, CO-02.1, CO-02.8, CL-02.1–CL-02.2, CL-05.4: types', () => {
   ]);
 });
 
+test('CO-02.5, CO-02.6, CO-02.8, CO-02.10: ports', () => {
+  write(root, {
+    'types/port.yaml': 'files:\n  icd.yaml: {required: [pins]}\n',
+    'types/bus.yaml': 'base: port\n',
+    'wing/ports/a/item.yaml': 'id: PA\ntype: bus\ntitle: A\nlinks: [{type: implements, target: CA}]\n',
+    'wing/ports/a/icd.yaml': 'x: 1\n',
+    'wing/connections/c/item.yaml': 'id: CA\ntype: connection\ntitle: C\nlinks: [{type: connects, target: PA}]\n',
+  });
+  expect(validate(loadRepo(root))).toMatchObject([{ code: 'schema', file: 'wing/ports/a/icd.yaml', line: 1 }]);
+});
+
 test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
   let repo = loadRepo(root);
   confirm(repo, currentVersions(repo), [], 'P');

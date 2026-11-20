@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+* Breaking: `ports` and `connections` are reserved home folders (built-in `port` and `connection` types); an existing artifact subfolder of either name is no longer listed as an artifact.
+* Built-in `port` (`PORT-`) and `connection` (`CON-`) types; `connects` links a connection to its ports, `implements` also targets a connection. A type file's `files: {<name>: <JSON Schema>}` has `validate` check a named YAML file in an item's folder, e.g. a port's `icd.yaml` (#29).
+
 ## 0.5.0 (2026-11-19)
 
 * `plm types` prints the effective schema (types, prefixes, fields, required fields, link types) as JSON; `new --help` and `link --help` no longer list them (#58).

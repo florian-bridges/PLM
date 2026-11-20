@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
-import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, selected, targetId, typeOf, useEntries, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
+import { childrenOf, citations, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, selected, targetId, typeOf, undeclared, useEntries, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
 import { baseSchema, builtinTypes, disallowed, linkRules, type TypeDef } from './schemas.ts';
 
 // CO-02.4
@@ -72,13 +72,13 @@ export function validate(repo: Repo) {
     useEntries(item.data).forEach((used,index)=>{
       if(!repo.entries.has(used.item))findings.push(finding(item,['uses',index],'unknown-use',used.item));
       Object.entries(used.when??{}).forEach(([p,c]:[string,any])=>{
-        if(repo.settings.config?.[p]===undefined||(Array.isArray(repo.settings.config?.[p])&&!(Array.isArray(c)?c:[c]).every((v:any)=>repo.settings.config?.[p].includes(v))))findings.push(finding(item,['uses',index,'when',p],'config',p));
+        if(undeclared(repo,p,Array.isArray(c)?c:[c]))findings.push(finding(item,['uses',index,'when',p],'config',p));
       });
       (groups[used.ref??used.item]??=[]).push({used,index});
     });
-    Object.values(groups).forEach((members)=>{
+    Object.entries(groups).forEach(([key,members])=>{
       if(members.length<2)return;
-      const key=members[0].used.ref??members[0].used.item,counts=configsOf(repo,members.map((m)=>m.used.when)).map((c)=>members.filter((m)=>selected(m.used.when,c)).length);
+      const counts=configsOf(repo,members.map((m)=>m.used.when)).map((c)=>members.filter((m)=>selected(m.used.when,c)).length);
       if(counts.some((n)=>n>1))findings.push(finding(item,['uses',members[0].index],'ambiguous-use',key));
       if(counts.some((n)=>!n))findings.push(finding(item,['uses',members[0].index],'empty-use',key));
     });

@@ -6,7 +6,7 @@ import { Command, CommanderError, Option } from 'commander';
 import { parse as parseYaml, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, connections, coverage, link, linkStates, recordRun, requirementsMarkdown, suspects, unreached, type LinkState } from './links.ts';
-import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, parseConfig, partsOf, productTree, parentOf, Refused, rollback, setConfig, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
+import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, partsOf, productTree, parentOf, Refused, rollback, setConfig, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
 import { allowedLinks, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
@@ -21,9 +21,10 @@ const program = new Command('plm')
   workingFolder = () => program.opts().repo,
   openRepo = () => loadRepo(workingFolder());
 // TE-06.2, CO-01.6
-const scoped=(item?:string)=>{
-  const repo=openRepo(),versions=currentVersions(repo);
-  return [repo,(setConfig(parseConfig(repo,program.opts().config)),linkStates(repo,versions)),item&&entry(repo,item).id] as const;
+const scoped = (item?: string) => {
+  const repo = openRepo();
+  setConfig(repo, program.opts().config);
+  return [repo, linkStates(repo, currentVersions(repo)), item && entry(repo, item).id] as const;
 };
 
 // CL-05.1
@@ -52,7 +53,7 @@ program.command('show <id>').description('show an item')
   .action((id, options) => {
     const repo = openRepo(), found = entry(repo, id), steps = options.down ?? options.up;
     if (steps !== undefined) {
-      const rows = (setConfig(parseConfig(repo,program.opts().config)),walk(repo, id, options.down !== undefined, Number(steps)).filter((w) => w.depth).map((w) => ({ ...named(repo, w.id), depth: w.depth, via: w.via })));
+      const rows = (setConfig(repo,program.opts().config),walk(repo, id, options.down !== undefined, Number(steps)).filter((w) => w.depth).map((w) => ({ ...named(repo, w.id), depth: w.depth, via: w.via })));
       return output(rows.map((w) => `${w.depth} ${w.via} ${label(w)}`).join('\n'), rows);
     }
     const versions = currentVersions(repo),
@@ -232,7 +233,7 @@ report.command('connections [item]').description('report ports and connections t
 
 // CO-03.4, CO-01.6
 report.command('parts [item]').description('report item totals').action((item) => {
-  const repo = openRepo(), rows = (setConfig(parseConfig(repo,program.opts().config)),partsOf(repo, item && entry(repo, item).id));
+  const repo = openRepo(), rows = (setConfig(repo,program.opts().config),partsOf(repo, item && entry(repo, item).id));
   output(rows.map((r) => `${label(r)} ${r.quantity}`).join('\n'), rows);
 });
 

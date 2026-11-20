@@ -27,12 +27,12 @@ Scope decided in release meeting #85 (2026-11-20): #29 option A, #30 folded into
 ### Entry conditions
 
 - [x] #29 Ports and connections. *Done when* built-in `port` and `connection` types, `connects`, `implements` to a connection, and `files` schemas checked by `validate`, with tests.
-- [ ] #31 `plm report connections` with #30. *Done when* `plm report connections [<item>]` lists `open`, `few` and `senders`, text and JSON, exit 1 if any, with tests.
-- [ ] README section "Ports and connections" (#31). *Done when* the README covers port and connection types, `connects`, `files` schemas, `role` and the report.
+- [x] #31 `plm report connections` with #30. *Done when* `plm report connections [<item>]` lists `open`, `few` and `senders`, text and JSON, exit 1 if any, with tests.
+- [x] README section "Ports and connections" (#31). *Done when* the README covers port and connection types, `connects`, `files` schemas, `role` and the report.
 
 ### Active topics
 
-* #29 merged (PR #86). #31 in progress: `feature-dev` on `feat/connections-report`. Backlog from the review: #87 (missing `files` file).
+* #29 merged (PR #86). #31 merged (PR #88). Release 0.6.0. Backlog from the review: #87 (missing `files` file).
 
 ### Coming owner meetings
 

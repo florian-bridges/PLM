@@ -1,9 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 (2026-11-20)
 
 * Breaking: `ports` and `connections` are reserved home folders (built-in `port` and `connection` types); an existing artifact subfolder of either name is no longer listed as an artifact.
 * Built-in `port` (`PORT-`) and `connection` (`CON-`) types; `connects` links a connection to its ports, `implements` also targets a connection. A type file's `files: {<name>: <JSON Schema>}` has `validate` check a named YAML file in an item's folder, e.g. a port's `icd.yaml` (#29).
+* `plm report connections [<item>]` lists open ports, connections with fewer than two ports and directed connections (ports with a `role`) without exactly one `sender`, text and JSON, exit 1 if any; README section "Ports and connections" (#31, #30).
 
 ## 0.5.0 (2026-11-19)
 

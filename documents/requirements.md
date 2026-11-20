@@ -35,7 +35,7 @@ The tool shall associate verification evidence with the item versions it verifie
 *Rationale:* Evidence is only valid for the version it was produced against; later changes must be detected to decide on re-verification.
 
 **CR-10 — Reporting**
-The tool shall report traceability, verification coverage and compliance status for the product or any item in it. (US-11)
+The tool shall report traceability, verification coverage, interface completeness and compliance status for the product or any item in it. (US-2, US-11)
 *Rationale:* Reviews assess status for the product and its parts: what is traced, verified and shown compliant.
 
 **CR-12 — Release**

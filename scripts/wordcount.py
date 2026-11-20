@@ -70,12 +70,15 @@ def main():
     parser.add_argument("--ext-dir", default="extension")
     # The limits are kept by the chief engineer (owner, #71); 0.4 raise: feature review #71.
     # 0.5 raise (#58), measured after cuts: feature review #78.
+    # 0.6 raise: US-2, CR-10, TE-06 for ports and connections, meeting #85.
     # #63 (show walk), measured after review cuts: feature review #78.
     # #63 narrow fix (walk scope), reviewer-directed: measured after cuts.
     # #57 (apply), measured after review cuts (-10 src).
     # #57 narrow fix (apply rollback in finally), reviewer-directed: measured after cuts.
-    parser.add_argument("--max-docs", type=int, default=5213, help="word limit for the documents directory")
-    parser.add_argument("--max-src", type=int, default=5715, help="word limit for the source and test directories")
+    # #29 (ports, connections, type-file files), meeting #85 estimate +90/+110: measured after review cuts (-11 src, -2 docs).
+    # #31 (report connections, role), meeting #85 estimate +80/+130: +73/+114 measured after review cuts (-5 docs, -62 src).
+    parser.add_argument("--max-docs", type=int, default=5375, help="word limit for the documents directory")
+    parser.add_argument("--max-src", type=int, default=5913, help="word limit for the source and test directories")
     parser.add_argument("--max-ext", type=int, default=1635, help="word limit for the extension directory")
     parser.add_argument("-u", "--include-untracked", action="store_true",
                         help="also count untracked files that are not git-ignored")

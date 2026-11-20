@@ -2,11 +2,11 @@
 
 What the next session needs to start. Current state only; history in git. The chief engineer keeps it current (skill `chief-engineer`, Your files).
 
-Latest release: 0.4.0 (2026-11-16). Milestones and entry conditions: `timeline.md`.
+Latest release: 0.5.0 (2026-11-19). Milestones and entry conditions: `timeline.md`.
 
 ## Active topics
 
-* 0.5 Agent interface active (meeting #77: scope A, budget 4 windows; feature review #78 held, #55 to backlog). #60, #58, #63 (PR #82) merged. #57 in progress on `feat/apply` (worktree `/home/tower/PLM-wt/apply`): next step reviewer, merge, then release 0.5.0.
+* 0.6 active (meeting #85 recorded): #29 merged (PR #86); #31 being built on `feat/connections-report` (with #30 and the README section). GitHub milestone 0.5 still open: the shift guard blocks closing it, so the owner closes it.
 
 ## Open pull requests and blockers
 

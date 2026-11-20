@@ -106,14 +106,14 @@ export function changeSince(repo: Repo, link: Link) {
 }
 
 // TE-03.1, TE-06.2
-const within = (repo: Repo, root?: string) => {
+const within = (repo: Repo, root?: string, type?: string) => {
   const items = root && new Set(walk(repo, root, true, Infinity, false).map((w) => w.id));
-  return (id: string) => !items || items.has(id);
+  return [...repo.entries.values()].filter((e) => (!items || items.has(e.id)) && (!type || typeOf(repo, e.item.data.type) === type));
 };
 
 export const suspects = (repo: Repo, states: LinkState[], root?: string) => {
-  const inScope = within(repo, root);
-  return states.filter((state) => state.state !== 'current' && !fromRun(repo, state) && inScope(state.source));
+  const ids = within(repo, root).map((e) => e.id);
+  return states.filter((state) => state.state !== 'current' && !fromRun(repo, state) && ids.includes(state.source));
 };
 
 export interface Coverage {
@@ -133,10 +133,7 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
     latestRun = latest(runs),
     latestCurrentRun = latest(runs.filter((executes) => !outdatedRuns.has(executes.source)));
 
-  const inScope = within(repo, root),
-    requirements = [...repo.entries.values()].filter((candidate) => typeOf(repo, candidate.item.data.type) === 'requirement' && inScope(candidate.id));
-
-  return requirements.map((requirement) => {
+  return within(repo, root, 'requirement').map((requirement) => {
     const verifies = linksOfType('verifies').filter((state) => state.link.target === requirement.id),
       passingRun = verifies.filter(isCurrent).map((state) => latestCurrentRun.get(state.source)).find((executes) => executes?.link.result === 'pass'),
       tests = verifies.map(({ source }) => {
@@ -149,25 +146,34 @@ export function coverage(repo: Repo, states: LinkState[], root?: string): Covera
 
 // TE-06.4
 export function allocation(repo: Repo, states: LinkState[], root?: string): Coverage[] {
-  const inScope = within(repo, root), satisfiesLinks = states.filter((s) => s.link.type === 'satisfies');
-  return [...repo.entries.values()].filter((i) => inScope(i.id))
-    .flatMap((i) => {
-      const items = subtree(repo, i.id).slice(1),
-        below = new Set([...items, ...items.flatMap((id) => entry(repo, id).requirements)]);
-      return !below.size ? [] : i.requirements.map((id) => {
-        const allocated = satisfiesLinks.some((s) => s.link.target === id && below.has(s.source)),
-          retained = entry(repo, id).item.data.retained;
-        return { requirement: id, title: named(repo, id).title, tests: [], state: allocated ? 'allocated' : retained ? 'retained' : 'unallocated' } as Coverage;
-      });
+  const satisfiesLinks = states.filter((s) => s.link.type === 'satisfies');
+  return within(repo, root).flatMap((i) => {
+    const items = subtree(repo, i.id).slice(1),
+      below = new Set([...items, ...items.flatMap((id) => entry(repo, id).requirements)]);
+    return !below.size ? [] : i.requirements.map((id) => {
+      const allocated = satisfiesLinks.some((s) => s.link.target === id && below.has(s.source)),
+        retained = entry(repo, id).item.data.retained;
+      return { requirement: id, title: named(repo, id).title, tests: [], state: allocated ? 'allocated' : retained ? 'retained' : 'unallocated' } as Coverage;
     });
+  });
 }
 
 // TE-06.5
 export function unreached(repo: Repo, states: LinkState[], type: string, root?: string): Named[] {
   const to = allowedLinks(repo)[type]?.[1];
   if (!to) throw new UsageError(type);
-  const reached = new Set(states.filter((s) => s.link.type === type).map((s) => targetId(s.link.target))),
-    inScope = within(repo, root);
-  return [...repo.entries.values()].filter((e) => inScope(e.id) && !reached.has(e.id) && allows(repo, to, String(e.item.data.type)))
+  const reached = new Set(states.filter((s) => s.link.type === type).map((s) => targetId(s.link.target)));
+  return within(repo, root).filter((e) => !reached.has(e.id) && allows(repo, to, String(e.item.data.type)))
     .map((e) => named(repo, e.id));
+}
+
+// TE-06.6
+export function connections(repo: Repo, states: LinkState[], root?: string) {
+  return [...unreached(repo, states, 'connects', root).map((item) => ({ code: 'open', item, detail: '' })),
+    ...within(repo, root, 'connection').flatMap((c) => {
+      const roles = linksOf(c).filter((l) => l.type === 'connects').map((l) => entry(repo, targetId(l.target)).item.data.role),
+        senders = roles.filter((r) => r === 'sender').length,
+        [code, n] = roles.length < 2 ? ['few', roles.length] : roles.some(Boolean) && senders !== 1 ? ['senders', senders] : [];
+      return code ? [{ code, item: named(repo, c.id), detail: String(n) }] : [];
+    })];
 }

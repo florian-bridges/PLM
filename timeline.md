@@ -8,8 +8,8 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 |---|---|---|---|
 | 0.3.0 | — | — | done (released 2026-11-11) |
 | 0.4 | 3 | 1 | done (v0.4.0, meeting #77) |
-| 0.5 | 4 | 0 | active |
-| 0.6 | — | — | planned |
+| 0.5 | 4 | 2 | done (v0.5.0, meeting #85) |
+| 0.6 | 3 | 0 | active |
 | 0.7 | — | — | planned |
 | 0.8 | — | — | planned |
 | 0.9 | — | — | planned |
@@ -18,30 +18,28 @@ Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is
 
 ## Active milestone
 
-**Next milestone: 0.5.** Agent interface.
+**Next milestone: 0.6.** Interfaces between subsystems.
 
-Budget: 4 windows.
+Budget: 3 windows.
 
-Scope decided in meeting #77 (option A); feature review #78 held 2026-11-19: #58, #63, #57 go with option A and the reviewer's corrections, #55 to the backlog.
+Scope decided in release meeting #85 (2026-11-20): #29 option A, #30 folded into #31, #31 option A without `mixed`. Order: #29, then #31.
 
 ### Entry conditions
 
-- [x] #58 The effective schema (types, prefixes, fields, required fields, link types) in machine-readable form. *Done when* one command prints it as JSON, with a test.
-- [x] #63 Trace queries, with #56 folded in. *Done when* `plm trace <ID>` walks links up or down to a given depth, depth 1 being the item's context view, text and JSON, with tests.
-- [ ] #57 Atomic changes with a dry run. *Done when* a change file is applied all or nothing, a dry run shows the result without writing, with tests.
-- [x] #60 CI integration as documentation. *Done when* the README has a CI section with a generic script on `validate`, `impact` and `suspects`.
+- [x] #29 Ports and connections. *Done when* built-in `port` and `connection` types, `connects`, `implements` to a connection, and `files` schemas checked by `validate`, with tests.
+- [x] #31 `plm report connections` with #30. *Done when* `plm report connections [<item>]` lists `open`, `few` and `senders`, text and JSON, exit 1 if any, with tests.
+- [x] README section "Ports and connections" (#31). *Done when* the README covers port and connection types, `connects`, `files` schemas, `role` and the report.
 
 ### Active topics
 
-* #60 merged (PR #79), #58 merged (PR #81). #63 merged (PR #82). #57 in progress (`feat/apply`).
+* #29 merged (PR #86). #31 merged (PR #88). Release 0.6.0. Backlog from the review: #87 (missing `files` file).
 
 ### Coming owner meetings
 
-* None until 0.5 is released.
+* None.
 
 ## Planned milestones
 
-* **0.6 Interfaces between subsystems:** #29 ports and connections, #30 directed port types, #31 connections report.
 * **0.7 Releases and change control:** #45 item revisions, #46 baselines, #59 change requests, #66 consistency of related changes and merges, #2 HTML view and generated documents.
 * **0.8 Product structure and configurations:** #40 occurrences and quantities, #42 BOM views, #43 variants and effectivity, #65 queries at scale.
 * **0.9 UI redesign** once the backend is stable: #67.

@@ -50,7 +50,7 @@ informative: [rationale, links] # fields whose change leaves links current
 parameter_states: [provisional, final]
 ```
 
-Built-in types, with ID prefix and home folder, are `requirement` (`REQ-`, `requirements`), `test-case` (`TC-`, `tests`), `test-run` (`RUN-`, `runs`), `assembly` (`ASM-`) and `part` (`PRT-`). An item holds only the fields its type declares. A project type is defined by a file `types/<type>.yaml`; all its keys are optional, but `plm new` needs a `prefix`:
+Built-in types, with ID prefix and home folder, are `requirement` (`REQ-`, `requirements`), `test-case` (`TC-`, `tests`), `test-run` (`RUN-`, `runs`), `assembly` (`ASM-`), `part` (`PRT-`), `port` (`PORT-`, `ports`) and `connection` (`CON-`, `connections`, `connects` to its ports, `implements` like a requirement). An item holds only the fields its type declares. A project type is defined by a file `types/<type>.yaml`; all its keys are optional, but `plm new` needs a `prefix`:
 
 ```yaml
 # types/analysis.yaml
@@ -62,9 +62,11 @@ fields:              # JSON Schema properties, written in YAML
   method: {enum: [simulation, test, review]}
   tool: {type: string}
 required: [method]
+files:               # <name>: JSON Schema checking that YAML file in an item's folder
+  icd.yaml: {type: object, required: [pins]}
 ```
 
-A file named after a built-in type extends or overrides it, e.g. `types/requirement.yaml` with `fields: {rationale: {type: string}}`. `types/meta.yaml` gives the fields of `meta/<ID>.yaml`. With `base: test-case`, e.g. in `types/inspection.yaml`, a type behaves as a test case and has its fields, home folder and, unless set, prefix; `folder` is then not allowed. `plm validate` reports any other key in a type file as error `type-file`.
+A file named after a built-in type extends or overrides it, e.g. `types/requirement.yaml` with `fields: {rationale: {type: string}}`. `types/meta.yaml` gives the fields of `meta/<ID>.yaml`. With `base: test-case`, e.g. in `types/inspection.yaml`, a type behaves as a test case and has its fields, required, files, home folder and, unless set, prefix; `folder` is then not allowed. `plm validate` reports any other key in a type file as error `type-file`.
 
 `schemas/`, `templates/` and `plm.yaml`'s `prefixes` and `folders` are no longer read; convert them by hand:
 
@@ -77,6 +79,12 @@ A file named after a built-in type extends or overrides it, e.g. `types/requirem
 | `folders: {analysis: analyses}` in `plm.yaml` | `folder: analyses` in `types/analysis.yaml` |
 
 A schema that uses keywords other than `properties` and `required` cannot be carried over.
+
+## Ports and connections
+
+A `port` (built in, `PORT-`, folder `ports`) is where an item meets another; a `connection` (`CON-`, folder `connections`) joins ports with a `connects` link and may `implement` a requirement like any item. A port's interface data is a YAML artifact, e.g. `icd.yaml`, checked against the type's `files` schema (Configuration). A directed port type adds `required: [role]` and `fields: {role: {enum: [sender, receiver]}}`; no new key.
+
+`plm report connections [<item>]` lists ports no `connects` link reaches (`open`), connections with fewer than two ports (`few`) and connections whose ports' `role` is not exactly one `sender` (`senders`); exit 1 if any.
 
 ## Documentation
 

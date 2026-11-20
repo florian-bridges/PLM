@@ -22,20 +22,23 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.4** Each finding shall carry file, line, column, severity and a stable code, with severity `warning` for a missing required attribute (schema `required`) of a `draft` item, otherwise `error`.
 *Rationale:* Positions let editors and CI point to the problem; stable codes allow filtering and suppression; a draft is expected to be incomplete.
 
-**CO-02.5** Built-in types shall be, with ID prefix and home folder: `requirement` `REQ-` `requirements`, `test-case` `TC-` `tests`, `test-run` `RUN-` `runs`, `part` `PRT-` and `assembly` `ASM-`.
+**CO-02.5** Built-in types shall be, with ID prefix and home folder: `requirement` `REQ-` `requirements`, `test-case` `TC-` `tests`, `test-run` `RUN-` `runs`, `part` `PRT-`, `assembly` `ASM-`, `port` `PORT-` `ports` and `connection` `CON-` `connections`.
 *Rationale:* Others come by CO-02.8; defaults let a new repository work without type files.
 
-**CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, `tests` from `test-run` to any type, and `derives-from` from any type to any type.
+**CO-02.6** Links shall be allowed as `satisfies` and `implements` from any type to `requirement`, `implements` also to `connection`, `verifies` from `test-case` to `requirement`, `executes` from `test-run` to `test-case`, `tests` from `test-run` to any type, `connects` from `connection` to `port`, and `derives-from` from any type to any type.
 *Rationale:* Fixed semantics keep reports comparable.
 
 **CO-02.7** Any item's `item.yaml` may hold a `parameters` list field, entries `{name, value, unit, state}`, `state` from `plm.yaml`'s `parameter_states` (default `[provisional, final]`; missing or `null` value: TBD, not a state). The core shall report as error a non-number `value`, an unlisted `state`, or `stale-value` (vs its `derives-from` target), and as warning `tbd-source` (target TBD). An item's `text` may cite a parameter as `{<ID>:<name>}` or, of the same item, `{<name>}`: the former shall be a `derives-from` link to it even if not listed under `links`, the latter an error if the item has no such parameter.
 *Rationale:* Replaces copies, also in text; flags stale or TBD drift.
 
-**CO-02.8** A type shall be built in (CO-02.5) or defined by `types/<type>.yaml` with optional `base` (a built-in type), `prefix`, `folder` (home folder), `template`, `fields` (JSON Schema properties) and `required`; a file named after a built-in type extends or overrides it, and `types/meta.yaml` instead gives the fields of `meta/<ID>.yaml`. A type with `base` adds its `fields` and `required` to the base's and has the base's home folder and, unless it sets one, prefix; a core or CLI requirement naming a built-in type applies to types based on it. The core shall report as error an item of any other type (`unknown-type`) and a type file with any other key, a `base` that is not a built-in type or is in a built-in type's file, or `folder` with `base` (`type-file`).
+**CO-02.8** A type shall be built in (CO-02.5) or defined by `types/<type>.yaml` with optional `base` (a built-in type), `prefix`, `folder` (home folder), `template`, `fields` (JSON Schema properties), `required` and `files` (CO-02.10); a file named after a built-in type extends or overrides it, and `types/meta.yaml` instead gives the fields of `meta/<ID>.yaml`. A type with `base` adds its `fields`, `required` and `files` to the base's and has the base's home folder and, unless it sets one, prefix; a core or CLI requirement naming a built-in type applies to types based on it. The core shall report as error an item of any other type (`unknown-type`) and a type file with any other key, a `base` that is not a built-in type or is in a built-in type's file, or `folder` with `base` (`type-file`).
 *Rationale:* One YAML file per type defines it in one place and lets programs add types and attributes without mixing JSON and YAML, and `base` lets a variant keep a built-in type's behaviour.
 
 **CO-02.9** `plm.yaml` may declare `links: {<name>: {from: [<type>…], to: [<type>…]}}` (`*` any type); declared link types shall be checked as built-in ones (CO-02.2), matching an item's base, and naming a built-in link type shall be an error.
 *Rationale:* Projects link items in ways PLM does not build in.
+
+**CO-02.10** A type file may hold `files: {<name>: <JSON Schema>}`; the core shall validate each named YAML file in an item's folder against it, as CO-02.1, reporting `schema` findings with that file's line.
+*Rationale:* Checks a structured artifact, e.g. a port's `icd.yaml`, like `item.yaml`.
 
 **CO-03.1** The core shall build a full-text index (MiniSearch) over ID, title, text and attributes.
 *Rationale:* One index format serves the CLI and VS Code without a search server.
@@ -87,9 +90,12 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-06.5** With `--link <type>`, coverage shall list the items of the link type's target types, in the repository or subtree, that no link of that type reaches (any state), and exit 1 if any.
 *Rationale:* Declared link types need the same gap check as unallocated requirements (TE-06.4).
 
+**TE-06.6** `report connections` shall list, for the repository or a subtree, `open` ports (TE-06.5 for `connects`), connections with fewer than two `connects` links (`few`) and connections whose ports have a `role` but not exactly one `sender` (`senders`), each as `{code, item, detail}` with `detail` the number of ports or senders, and exit 1 if any.
+*Rationale:* A directed port type's required `role` (`sender`/`receiver`, CO-02.8) gives direction without a new key.
+
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]`, `apply <file>` and `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]`, finding the repository by searching upward for `plm.yaml`; each command shall have a one-line description.
+**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]`, `apply <file>`, `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]` and `report connections [<item>]`, finding the repository by searching upward for `plm.yaml`; each command shall have a one-line description.
 *Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
@@ -128,7 +134,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-05.2** Exit codes shall be 0 for success, 1 for findings, 2 for usage errors and 3 for internal errors; only the exit-3 message includes Git's error output.
 *Rationale:* Separating findings from failures lets CI tell rejected changes from broken tooling; Git's messages on handled failures mislead.
 
-**CL-05.3** `suspects`, `impact` and `report coverage` shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`. `show` and JSON `search` shall give `text` with each citation (CO-02.7) replaced by the parameter's value and unit, or `TBD`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
+**CL-05.3** `suspects`, `impact` and `report` commands shall show each reported item as `<ID> (<title>)` in text output. JSON shall give listed IDs as `{id, title}` and add `title` to link states and coverage rows and `targetTitle` to link states. `show`'s JSON shall add `path`. `show` and JSON `search` shall give `text` with each citation (CO-02.7) replaced by the parameter's value and unit, or `TBD`. JSON for `search` shall give each match's item fields, `links` and `meta`: the record `show` gives without version, link states or artifacts.
 *Rationale:* IDs are stable but meaningless to readers; titles make reports readable without looking items up. Reusing `show`'s fields for `search` answers many items in one call.
 
 **CL-05.4** `plm types` shall print each type (CO-02.8) with its base, prefix, home folder, fields and required fields, and each link type (CO-02.9) with its source and target types.

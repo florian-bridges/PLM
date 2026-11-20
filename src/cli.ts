@@ -125,7 +125,7 @@ program.command('suspects [item]').description('list suspect links').action((ite
   exitCode = states.length && 1;
 });
 
-// TE-05.1
+// TE-05.1, TE-05.3
 program.command('impact <range>').description('list a change\'s impact').action((range) => {
   const repo = openRepo(), [base, head] = range.split('..'),
     headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) },
@@ -133,10 +133,12 @@ program.command('impact <range>').description('list a change\'s impact').action(
     lines = [
       ...result.changed.map((item) => `changed ${label(item)}`),
       ...result.propagated.map((item) => `propagated ${label(item)}`),
+      ...result.released.map((item) => `released ${label(item)}`),
       ...result.suspects.map((state) => `suspect ${linkLabel(state)}`),
       ...result.runs.map((run) => `outdated run ${label(run)}`),
     ];
   output(lines.join('\n'), result);
+  exitCode = result.released.length && 1;
 });
 
 // CL-02.1

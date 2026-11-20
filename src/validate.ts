@@ -52,11 +52,8 @@ export function validate(repo: Repo) {
     // CO-02.1
     if (validateMeta) findings.push(...schemaFindings(meta, validateMeta, false));
     // CO-02.10
-    for (const [name, schema] of Object.entries(repo.types[type]?.files ?? {})) {
-      const path = `${entry.path}/${name}`, key = `${type}:${name}`;
-      if (!ajv.getSchema(key)) ajv.addSchema(schema, key);
-      if (existsSync(join(repo.root, path))) findings.push(...schemaFindings(readYaml(repo.root, path), ajv.getSchema(key)!, draft));
-    }
+    for (const [name, schema] of Object.entries(repo.types[type]?.files ?? {}))
+      if (existsSync(join(repo.root, entry.path, name))) findings.push(...schemaFindings(readYaml(repo.root, `${entry.path}/${name}`), ajv.compile(schema), draft));
 
     if (misplaced) findings.push(finding(item, ['type'], 'misplaced', `outside ${home}`));
 

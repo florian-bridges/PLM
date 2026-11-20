@@ -61,7 +61,7 @@ export const yamlIn = (root: string, folder: string) => (existsSync(join(root, f
 const loadTypes = (root: string) => {
   const types = yamlIn(root, 'types').reduce((types, file) => {
     const name = file.slice(0, -5), { data } = readYaml<TypeDef>(root, `types/${file}`);
-    return { ...types, [name]: { ...types[name], ...data, fields: { ...types[name]?.fields, ...data.fields }, files: { ...types[name]?.files, ...data.files } } };
+    return { ...types, [name]: { ...types[name], ...data, fields: { ...types[name]?.fields, ...data.fields } } };
   }, builtinTypes);
   return Object.fromEntries(Object.entries(types).map(([name, t]) => { // CO-02.8: base
     const b = types[t.base!];

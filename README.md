@@ -80,6 +80,12 @@ A file named after a built-in type extends or overrides it, e.g. `types/requirem
 
 A schema that uses keywords other than `properties` and `required` cannot be carried over.
 
+## Ports and connections
+
+A `port` (built in, `PORT-`, folder `ports`) is where an item meets another; a `connection` (`CON-`, folder `connections`) joins ports with a `connects` link and may `implement` a requirement like any item. A port's interface data is a YAML artifact, e.g. `icd.yaml`, checked against the type's `files` schema (Configuration). A directed port type adds `required: [role]` and `fields: {role: {enum: [sender, receiver]}}`; no new key.
+
+`plm report connections [<item>]` lists ports no `connects` link reaches (`open`), connections with fewer than two ports (`few`) and connections whose ports' `role` is not exactly one `sender` (`senders`); exit 1 if any.
+
 ## Documentation
 
 [`documents/`](documents/) holds the user scenarios, requirements, architecture, and component and low-level requirements. A VS Code extension is in [`extension/`](extension/) (`npm run build:ext`, run from source).

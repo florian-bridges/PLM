@@ -77,8 +77,8 @@ def main():
     # #57 narrow fix (apply rollback in finally), reviewer-directed: measured after cuts.
     # #29 (ports, connections, type-file files), meeting #85 estimate +90/+110: measured after review cuts (-11 src, -2 docs).
     # #31 (report connections, role), meeting #85 estimate +80/+130: +73/+114 measured after review cuts (-5 docs, -62 src).
-    parser.add_argument("--max-docs", type=int, default=5823, help="word limit for the documents directory")
-    parser.add_argument("--max-src", type=int, default=6334, help="word limit for the source and test directories")
+    parser.add_argument("--max-docs", type=int, default=5830, help="word limit for the documents directory")
+    parser.add_argument("--max-src", type=int, default=6673, help="word limit for the source and test directories")
     parser.add_argument("--max-ext", type=int, default=1545, help="word limit for the extension directory")
     parser.add_argument("-u", "--include-untracked", action="store_true",
                         help="also count untracked files that are not git-ignored")

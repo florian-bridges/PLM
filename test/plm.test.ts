@@ -143,6 +143,22 @@ test('CO-01.5, CO-03.3–CO-03.4, CL-01.1: occurrences', () => {
   expect(validate(loadRepo(root)).filter((f) => f.code === 'schema')).toHaveLength(2);
 });
 
+test('CO-01.6, CO-02.12: config', () => {
+  write(root, {
+    'plm.yaml': 'config: {v: [s, e], serial: ordered}\n',
+    'wing/item.yaml': `${wing}uses: [{item: L, ref: r, when: {v: [s]}}, {item: P, ref: r, when: {v: [s], z: [e]}}, {item: L, ref: g, when: {serial: {to: 50}}}, {item: P, ref: g, when: {serial: {from: 57}}}]\n`,
+    'bolt/requirements/x.yaml': 'id: X\ntype: requirement\ntitle: Extra\n',
+  });
+  expect(validate(loadRepo(root)).map((f) => f.code).sort()).toEqual(['ambiguous-use', 'config', 'empty-use', 'empty-use']);
+  // as text, serial 9 would lie above 57
+  expect(json(root, 'report', 'parts', 'A', '--config', 'v=s,serial=9')).toEqual([{ id: 'L', title: 'Bolt', quantity: 2 }, { id: 'P', title: 'Spar', quantity: 2 }]);
+  expect(plm(root, 'show', 'A', '--down', '1', '--config', 'v=e,serial=53').stdout).not.toContain('L (Bolt)');
+  expect(plm(root, 'report', 'coverage', 'A', '--config', 'v=e,serial=53').stdout).not.toContain('X (Extra)');
+  expect(plm(root, 'report', 'coverage', 'A', '--config', 'v=s').stdout).toContain('X (Extra)');
+  expect(plm(root, 'report', 'parts', 'A', '--config', 'v=x').status).toBe(2);
+  expect(plm(root, 'report', 'parts', 'A', '--config', 'bogus=1').status).toBe(2);
+});
+
 test('CL-01.1,CO-02.1,CO-02.8:remove',()=>{
   write(root,{'types/meta.yaml':'required: [owner]'});
   expect(validate(loadRepo(root)).some((f)=>f.file==='meta/P.yaml'&&f.code==='schema')).toBe(true);

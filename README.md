@@ -93,6 +93,10 @@ A `port` (built in, `PORT-`, folder `ports`) is where an item meets another; a `
 
 A `uses` entry is an item ID, used once, or `{item, quantity, ref}` for a repeated or distinguished occurrence; `plm list uses <item>` lists the entries. `plm report parts [<item>]` totals each item reached through nesting and `uses` below it, or below the top-level items. A BOM view is a root of its own type using the same parts; views are compared by diffing their `report parts --format json` output.
 
+## Configurations
+
+`plm.yaml`'s `config: {variant: [standard, extended], serial: ordered}` declares parameters; a `uses` entry's `when: {variant: [extended], serial: {from: 57}}` selects it for a configuration given as `--config variant=extended,serial=57` (unnamed parameters always match). `plm show --down`/`--up` and `plm report parts`/`coverage` follow only entries selected by `--config`; without it, and for versions and `plm validate`, every entry counts. `plm validate` reports an undeclared parameter or value, or a range on a listed one (`config`), and two or more entries of one item sharing a `ref` that, under some configuration, are selected together (`ambiguous-use`) or none selected (`empty-use`), also in the gaps between ranges. An unknown parameter or value in `--config` is a usage error.
+
 ## Revisions and baselines
 
 An item's revision is its version (`plm show`), computed from its own content, what it uses and the parameters it cites; its history is `git log -- <folder>`. A human-readable revision label, if wanted, is a type field like any other; maturity is tracked in `status`. There is no separate baseline object: a release is a Git tag, and `plm impact` fails when an item released at base (`status` in `released_states`, default `[released]`) changed its own files without its status changing.

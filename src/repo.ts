@@ -18,8 +18,8 @@ interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>>; stat
 
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 export interface Entry { id: string; path: string; nested: string[]; requirements: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
-// CO-02.9
-interface Settings { informative?: string[]; parameter_states?: string[]; released_states?: string[]; links?: Record<string, { from: string[]; to: string[] }> }
+// CO-02.9, CO-01.6
+interface Settings { informative?: string[]; parameter_states?: string[]; released_states?: string[]; links?: Record<string, { from: string[]; to: string[] }>; config?: Record<string, string[] | 'ordered'> }
 export interface Repo { root: string; settings: Settings; types: Record<string, TypeDef>; entries: Map<string, Entry>; duplicates: Entry[] }
 
 export class UsageError extends Error {}
@@ -123,7 +123,21 @@ export const isRequirementFile = (path: string) => path.endsWith('.yaml');
 export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
 // CO-01.5
 export const useEntries = (data: any) => list<any>(data?.uses).map((u) => (typeof u === 'string' ? { item: u } : u));
-export const usesOf = (data: any) => useEntries(data).map((u) => u.item);
+
+// CO-01.6
+let activeConfig: Record<string, string> | undefined;
+export const setConfig = (repo: Repo, text?: string) => {
+  activeConfig = text?.split(',').reduce<Record<string, string>>((config, pair) => {
+    const [p, v] = pair.split('=');
+    if (undeclared(repo, p, [v])) throw new UsageError(`--config:${pair}`);
+    return { ...config, [p]: v };
+  }, {});
+};
+export const undeclared = (repo: Repo, p: string, values: any[], d = repo.settings.config?.[p]) => d === undefined || (Array.isArray(d) && !values.every((v) => d.includes(v)));
+export const cmp = (a: string, b: string) => (isNaN(+a) || isNaN(+b) ? (a < b ? -1 : a > b ? 1 : 0) : +a - +b);
+export const selected = (when: any, config = activeConfig): boolean => !when || !config || Object.entries(when).every(([p, c]: [string, any]) =>
+  config[p] === undefined || (Array.isArray(c) ? c.map(String).includes(config[p]) : (c.from === undefined || cmp(config[p], String(c.from)) >= 0) && (c.to === undefined || cmp(config[p], String(c.to)) <= 0)));
+export const usesOf = (data: any, config = activeConfig) => useEntries(data).filter((u) => selected(u.when, config)).map((u) => u.item);
 export const childrenOf = (entry?: Entry) => [...(entry?.nested ?? []), ...usesOf(entry?.item.data)];
 
 // VS-02.1, CL-01.8
@@ -139,11 +153,11 @@ export function partsOf(repo: Repo, root?: string) {
       path.add(id);
       const e = repo.entries.get(id), add = (c: string, m: number) => (totals.set(c, (totals.get(c) ?? 0) + m), visit(c, m));
       e?.nested.forEach((n) => add(n, q));
-      useEntries(e?.item.data).forEach((u) => add(u.item, q * (u.quantity ?? 1)));
+      useEntries(e?.item.data).filter((u) => selected(u.when)).forEach((u) => add(u.item, q * (u.quantity ?? 1)));
       path.delete(id);
     };
   (root ? [root] : productTree(repo).map((e) => e.id)).forEach((id) => visit(id, 1));
-  return [...totals].sort(([a], [b]) => a.localeCompare(b)).map(([id, quantity]) => ({ ...named(repo, id), quantity }));
+  return [...totals].sort(([a], [b]) => cmp(a, b)).map(([id, quantity]) => ({ ...named(repo, id), quantity }));
 }
 
 // CO-02.7

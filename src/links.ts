@@ -171,3 +171,17 @@ export function unreached(repo: Repo, states: LinkState[], type: string, root?: 
   return [...repo.entries.values()].filter((e) => inScope(e.id) && !reached.has(e.id) && allows(repo, to, String(e.item.data.type)))
     .map((e) => named(repo, e.id));
 }
+
+// TE-06.6
+export function connections(repo: Repo, states: LinkState[], root?: string) {
+  const inScope = within(repo, root),
+    open = unreached(repo, states, 'connects', root).map((item) => ({ code: 'open', item, detail: '' })),
+    byConnection = [...repo.entries.values()].filter((e) => inScope(e.id) && typeOf(repo, e.item.data.type) === 'connection');
+  return byConnection.reduce((rows, c) => {
+    const ports = states.filter((s) => s.source === c.id && s.link.type === 'connects').map((s) => entry(repo, targetId(s.link.target))),
+      roles = ports.map((p) => p.item.data.role).filter(Boolean), senders = roles.filter((r) => r === 'sender').length;
+    if (ports.length < 2) rows.push({ code: 'few', item: named(repo, c.id), detail: String(ports.length) });
+    else if (roles.length && senders !== 1) rows.push({ code: 'senders', item: named(repo, c.id), detail: String(senders) });
+    return rows;
+  }, open);
+}

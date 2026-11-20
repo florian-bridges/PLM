@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { Command, CommanderError, Option } from 'commander';
 import { parse as parseYaml, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { allocation, confirm, coverage, link, linkStates, recordRun, suspects, unreached, type LinkState } from './links.ts';
+import { allocation, confirm, connections, coverage, link, linkStates, recordRun, suspects, unreached, type LinkState } from './links.ts';
 import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, parentOf, Refused, rollback, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
 import { allowedLinks, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
@@ -189,7 +189,8 @@ program.command('test').command('record <test-case...>').description('record a t
   });
 
 // TE-06.2, TE-06.4, TE-06.5
-program.command('report').command('coverage [item]').description('report verification coverage')
+const report = program.command('report');
+report.command('coverage [item]').description('report verification coverage')
   .option('--by <field>')
   .option('--allocation')
   .option('--link <type>')
@@ -217,6 +218,14 @@ program.command('report').command('coverage [item]').description('report verific
     const lines = rows.flatMap((row) => [[row.state, label(named(state[0], row.requirement))],
       ...row.tests.map((test) => ['  ' + label(test.testCase), test.run && label(test.run), test.result, test.outdated && 'outdated'])]);
     output(lines.map((line) => line.filter(Boolean).join(' ')).join('\n'), rows);
+  });
+
+// TE-06.6
+report.command('connections [item]').description('report ports and connections that do not fit')
+  .action((item) => {
+    const state = scoped(item), rows = connections(...state);
+    exitCode = rows.length && 1;
+    output(rows.map((row) => `${row.code} ${label(row.item)}${row.detail && ' ' + row.detail}`).join('\n'), rows);
   });
 
 try {

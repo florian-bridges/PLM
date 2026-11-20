@@ -188,15 +188,26 @@ test('CO-01.1, CO-02.1, CO-02.8, CL-02.1–CL-02.2, CL-05.4: types', () => {
   ]);
 });
 
-test('CO-02.5, CO-02.6, CO-02.8, CO-02.10: ports', () => {
+test('CO-02.5, CO-02.6, CO-02.8, CO-02.10, TE-06.6: ports', () => {
   write(root, {
     'types/port.yaml': 'files:\n  icd.yaml: {required: [pins]}\n',
-    'types/bus.yaml': 'base: port\n',
-    'wing/ports/a/item.yaml': 'id: PA\ntype: bus\ntitle: A\nlinks: [{type: implements, target: CA}]\n',
+    'types/bus.yaml': 'base: port\nfields:\n  role: {enum: [sender, receiver]}\nrequired: [role]\n',
+    'wing/ports/a/item.yaml': 'id: PA\ntype: bus\ntitle: A\nrole: sender\nlinks: [{type: implements, target: CA}]\n',
     'wing/ports/a/icd.yaml': 'x: 1\n',
     'wing/connections/c/item.yaml': 'id: CA\ntype: connection\ntitle: C\nlinks: [{type: connects, target: PA}]\n',
+    'wing/ports/b/item.yaml': 'id: PB\ntype: bus\ntitle: B\nrole: sender\n',
+    'wing/ports/d/item.yaml': 'id: PD\ntype: bus\ntitle: D\nrole: sender\n',
+    'wing/ports/e/item.yaml': 'id: PE\ntype: port\ntitle: E\n',
+    'wing/connections/f/item.yaml': 'id: CF\ntype: connection\ntitle: F\nlinks: [{type: connects, target: PB}, {type: connects, target: PD}]\n',
   });
   expect(validate(loadRepo(root))).toMatchObject([{ code: 'schema', file: 'wing/ports/a/icd.yaml', line: 1 }]);
+  const rows = json(root, 'report', 'connections').sort((a, b) => a.item.id.localeCompare(b.item.id));
+  expect(rows).toEqual([
+    { code: 'few', item: { id: 'CA', title: 'C' }, detail: '1' },
+    { code: 'senders', item: { id: 'CF', title: 'F' }, detail: '2' },
+    { code: 'open', item: { id: 'PE', title: 'E' }, detail: '' },
+  ]);
+  expect(plm(root, 'report', 'connections').status).toBe(1);
 });
 
 test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {

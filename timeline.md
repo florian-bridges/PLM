@@ -11,7 +11,7 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | 0.5 | 4 | 2 | done (v0.5.0, meeting #85) |
 | 0.6 | 3 | 1 | done (v0.6.0, meeting #85) |
 | 0.7 | 1 | 1 | done (v0.7.0, meeting #90) |
-| 0.8 | 4 | 0 | active (meetings #90, #92) |
+| 0.8 | 4 | 2 | done (v0.8.0, meetings #90, #92) |
 | 0.9 | — | — | planned |
 
 Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is a GitHub milestone holding its issues. Standing directions for every feature: PLM holds product data only, no project management (#64); use by LLM agents is a strength to keep and document (#54).
@@ -27,11 +27,11 @@ Scope decided in release meeting #90 (2026-11-20); details in feature review #92
 ### Entry conditions
 
 - [x] #40 Occurrences and quantities. *Done when:* `uses` entries may be `{item, quantity, ref, …}` besides IDs, plain-ID repositories keep their versions; `validate` reports bad entries and `ambiguous-use` (CO-02.12), also after a merge (#66); changing an entry changes the assembly's version, not the part's; `plm report parts [<item>]` (CO-03.4) totals quantities; README paragraph on BOM views (#42); `scripts/check.sh` passes.
-- [ ] #43 Variants and effectivity. *Done when:* `config` in `plm.yaml` (lists or `ordered`), `when` on `uses` entries and the global `--config` make every walk through `uses` follow only selected entries (CO-01.6); `validate` reports `config` and, under every configuration, `ambiguous-use` and `empty-use`, also after a merge (#66); versions read every entry; README paragraph on configurations; `scripts/check.sh` passes.
+- [x] #43 Variants and effectivity. *Done when:* `config` in `plm.yaml` (lists or `ordered`), `when` on `uses` entries and the global `--config` make every walk through `uses` follow only selected entries (CO-01.6); `validate` reports `config` and, under every configuration, `ambiguous-use` and `empty-use`, also after a merge (#66); versions read every entry; README paragraph on configurations; `scripts/check.sh` passes.
 
 ### Active topics
 
-* #40 merged (PR #97). Next: #43 on `feat/variants` from `develop`, `feature-dev` then `reviewer`.
+* #40 (PR #97) and #43 (PR #98) merged; released as v0.8.0 (PR #99).
 
 ### Coming owner meetings
 

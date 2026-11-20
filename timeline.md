@@ -9,7 +9,7 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | 0.3.0 | — | — | done (released 2026-11-11) |
 | 0.4 | 3 | 1 | done (v0.4.0, meeting #77) |
 | 0.5 | 4 | 2 | done (v0.5.0, meeting #85) |
-| 0.6 | 3 | 0 | active |
+| 0.6 | 3 | 1 | done (v0.6.0) |
 | 0.7 | — | — | planned |
 | 0.8 | — | — | planned |
 | 0.9 | — | — | planned |
@@ -32,7 +32,7 @@ Scope decided in release meeting #85 (2026-11-20): #29 option A, #30 folded into
 
 ### Active topics
 
-* #29 merged (PR #86). #31 merged (PR #88). Release 0.6.0. Backlog from the review: #87 (missing `files` file).
+* #29 merged (PR #86). #31 merged (PR #88). Released as v0.6.0 (PR #89). Next milestone and budget: release meeting (owner). Backlog from the review: #87 (missing `files` file).
 
 ### Coming owner meetings
 

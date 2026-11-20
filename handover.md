@@ -6,7 +6,7 @@ Latest release: 0.5.0 (2026-11-19). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* 0.6 active (meeting #85 recorded): #29 being built on `feat/ports`, then #31 (with #30 and the README section). GitHub milestone 0.5 still open: the shift guard blocks closing it, so the owner closes it.
+* 0.6 active (meeting #85 recorded): #29 merged (PR #86); #31 being built on `feat/connections-report` (with #30 and the README section). GitHub milestone 0.5 still open: the shift guard blocks closing it, so the owner closes it.
 
 ## Open pull requests and blockers
 

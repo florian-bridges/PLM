@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0 (2026-11-20)
+
+* `uses` entries may be `{item, quantity, ref, …}` besides IDs; changing an entry changes the assembly's version; `validate` reports bad entries and `ambiguous-use`; `plm report parts [<item>]` totals quantities; README paragraph on BOM views (#40, #42).
+* `config` in `plm.yaml`, `when` on `uses` entries and the global `--config` make every walk through `uses` follow only selected entries; `validate` reports `config`, `ambiguous-use` and `empty-use` under every configuration; text compared by code point (#43, #66).
+
 ## 0.7.0 (2026-11-20)
 
 * `plm impact` lists as `released` each item released at base (`status` in `plm.yaml`'s `released_states`, default `[released]`) whose own files changed while its status did not, and exits 1 if any; README section "Revisions and baselines" (#45).

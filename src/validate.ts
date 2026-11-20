@@ -38,7 +38,7 @@ function schemaFindings(file: YamlFile<unknown>, check: ValidateFunction, draft:
 export function validate(repo: Repo) {
   const ajv = newAjv(), findings: Finding[] = [],
     // CO-02.7
-    states = (repo.settings as any).parameter_states ?? ['provisional', 'final'];
+    states = repo.settings.parameter_states ?? ['provisional', 'final'];
   for (const entry of [...repo.entries.values(), ...repo.duplicates]) {
     const { id, item, meta } = entry, type = String(item.data.type), draft = meta.data.status === 'draft',
       validateSchema = schemaFor(ajv, repo.types, type, baseSchema), validateMeta = schemaFor(ajv, repo.types, 'meta'),

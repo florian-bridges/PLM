@@ -37,7 +37,7 @@ The same three commands check a pull request in any CI service; set `BASE`/`HEAD
 s=0
 plm validate || s=1
 plm suspects || s=1
-plm impact "$BASE..$HEAD"     # reports only
+plm impact "$BASE..$HEAD"     # also fails on a released item changed without a status change
 exit $s
 ```
 
@@ -48,6 +48,7 @@ exit $s
 ```yaml
 informative: [rationale, links] # fields whose change leaves links current
 parameter_states: [provisional, final]
+released_states: [released]     # plm impact fails on a changed item in one of these
 ```
 
 Built-in types, with ID prefix and home folder, are `requirement` (`REQ-`, `requirements`), `test-case` (`TC-`, `tests`), `test-run` (`RUN-`, `runs`), `assembly` (`ASM-`), `part` (`PRT-`), `port` (`PORT-`, `ports`) and `connection` (`CON-`, `connections`, `connects` to its ports, `implements` like a requirement). An item holds only the fields its type declares. A project type is defined by a file `types/<type>.yaml`; all its keys are optional, but `plm new` needs a `prefix`:
@@ -85,6 +86,12 @@ A schema that uses keywords other than `properties` and `required` cannot be car
 A `port` (built in, `PORT-`, folder `ports`) is where an item meets another; a `connection` (`CON-`, folder `connections`) joins ports with a `connects` link and may `implement` a requirement like any item. A port's interface data is a YAML artifact, e.g. `icd.yaml`, checked against the type's `files` schema (Configuration). A directed port type adds `required: [role]` and `fields: {role: {enum: [sender, receiver]}}`; no new key.
 
 `plm report connections [<item>]` lists ports no `connects` link reaches (`open`), connections with fewer than two ports (`few`) and connections whose ports' `role` is not exactly one `sender` (`senders`); exit 1 if any.
+
+`plm report document [<item>]` prints the requirements document the VS Code extension shows, as Markdown, for the repository or an item's subtree.
+
+## Revisions and baselines
+
+An item's revision is its version (`plm show`), computed from its own content, what it uses and the parameters it cites; its history is `git log -- <folder>`. A human-readable revision label, if wanted, is a type field like any other; maturity is tracked in `status`. There is no separate baseline object: a release is a Git tag, and `plm impact` fails when an item released at base (`status` in `released_states`, default `[released]`) changed its own files without its status changing.
 
 ## Documentation
 

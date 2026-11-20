@@ -19,7 +19,7 @@ interface Meta { confirmed?: Record<string, Omit<Link, 'type' | 'target'>>; stat
 export interface YamlFile<T> { path: string; doc: Document; lines: LineCounter; data: T }
 export interface Entry { id: string; path: string; nested: string[]; requirements: string[]; item: YamlFile<Item>; meta: YamlFile<Meta> }
 // CO-02.9
-interface Settings { informative?: string[]; links?: Record<string, { from: string[]; to: string[] }> }
+interface Settings { informative?: string[]; parameter_states?: string[]; released_states?: string[]; links?: Record<string, { from: string[]; to: string[] }> }
 export interface Repo { root: string; settings: Settings; types: Record<string, TypeDef>; entries: Map<string, Entry>; duplicates: Entry[] }
 
 export class UsageError extends Error {}
@@ -123,6 +123,11 @@ export const isRequirementFile = (path: string) => path.endsWith('.yaml');
 export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
 export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
 export const childrenOf = (entry?: Entry) => [...(entry?.nested ?? []), ...usesOf(entry)];
+
+// VS-02.1, CL-01.8
+export const productTree = (repo: Repo, parent?: string): Entry[] => parent
+  ? childrenOf(repo.entries.get(parent)).flatMap((id) => repo.entries.get(id) ?? [])
+  : [...repo.entries.values()].filter((found) => !found.path.includes('/'));
 
 // CO-02.7
 const cited = /\{([^{}\s]+)\}/g;

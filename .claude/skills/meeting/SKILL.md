@@ -11,14 +11,14 @@ The chief engineer chairs and presents; agents answer detail questions on reques
 |---|---|
 | `kickoff` | no milestone defined |
 | `feature` | before an architecture change is built (`kinds/feature.md`, When) |
-| `release` | after a release, or every entry condition ticked and no next milestone |
+| `release` | no decided milestone left: the next one has no scope and budget from the owner (after a release, or every entry condition ticked) |
 | `decision` | a `needs-owner` question blocks all remaining work, or three or more are open |
 | `replan` | a milestone over budget or stalled |
 | `status` | the owner asks where the work stands |
 
 ## 1. Prepare (chief engineer, usually on shift)
 
-1. Write `meetings/<yyyy-mm-dd>-<topic>.md`, at most about a page, following the kind's agenda: a one-paragraph summary of what the owner must decide; per agenda point the facts (`scripts/check.sh`, `python3 scripts/wordcount.py -v`, `python3 scripts/trace.py <ID>`, issues and pull requests), generated, never hand-counted; per decision the question, the options with their consequences, the recommendation and why.
+1. Write `meetings/<yyyy-mm-dd>-<topic>.md`, at most about a page, following the kind's agenda: a one-paragraph summary of what the owner must decide; per agenda point the facts (`scripts/check.sh`, `python3 scripts/wordcount.py -v`, `python3 scripts/trace.py <ID>`, issues and pull requests), generated, never hand-counted; per decision the question, its context in plain words (what it is about, what exists today, why it comes up now), the options with their consequences, the recommendation and why.
 2. `gh issue create --label meeting --title "Meeting: <topic> ready"` with the decisions needed and the path of the file.
 3. Add it to *Coming owner meetings* in `timeline.md`, commit, push. If other entry conditions can go on without the meeting, continue with them; otherwise end the shift cycle with state `meeting` and the issue in `for_owner`.
 
@@ -27,7 +27,7 @@ The chief engineer chairs and presents; agents answer detail questions on reques
 1. Check that the shift is not running. Hold the meeting only then. Or the owner holds it in the control room while the shift waits: each decision as a comment on the meeting issue, ending with "Meeting closed"; the shift records it (section 3).
 2. Open with the summary in a few lines; go through the agenda, each point in at most ten lines, then wait for questions.
 3. Answer from the repository; never invent an answer: what it cannot answer becomes an action.
-4. Present each decision with AskUserQuestion, the recommended option first. Note the option chosen and the owner's reason.
+4. Before each decision, explain it in plain words, in a few lines, and wait for questions: what the question is about and why it comes up now, the background the owner needs (what exists today, terms explained), what each option means in practice and costs, and the recommendation and why. Only then ask it with AskUserQuestion, the recommended option first. Note the option chosen and the owner's reason.
 5. Read back all decisions and actions; the owner confirms or corrects them.
 
 ## 3. Record (right after the meeting, same session)
@@ -40,5 +40,6 @@ The chief engineer chairs and presents; agents answer detail questions on reques
 
 ## Rules
 
-* The owner's time is scarce: short file, short answers, one question per decision.
+* The owner's time is scarce: short file, short answers, one question per decision, but never a question without its context.
+* Few meetings: a release or kickoff meeting decides several milestones ahead; between them the shift releases and goes on without one (skill `chief-engineer`, Releases).
 * Nothing is recorded as decided that the owner did not say.

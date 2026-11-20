@@ -1,7 +1,7 @@
 import { copyFileSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { entry, git, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, typeOf, UsageError, walk, writeYaml, type Link, type Named, type Repo } from './repo.ts';
+import { childrenOf, entry, git, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, typeOf, UsageError, walk, writeYaml, type Entry, type Link, type Named, type Repo } from './repo.ts';
 import { allowedLinks, allows, disallowed } from './schemas.ts';
 import type { Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
@@ -165,6 +165,27 @@ export function unreached(repo: Repo, states: LinkState[], type: string, root?: 
   const reached = new Set(states.filter((s) => s.link.type === type).map((s) => targetId(s.link.target)));
   return within(repo, root).filter((e) => !reached.has(e.id) && allows(repo, to, String(e.item.data.type)))
     .map((e) => named(repo, e.id));
+}
+
+// CL-01.8, VS-03.1, VS-03.3, VS-03.4
+export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry) => string, states: LinkState[], rows: Coverage[], suspects: LinkState[], stateText: (state: LinkState) => string = (state) => state.state): string {
+  const ref = (id: string) => { const found = repo.entries.get(id); return found ? `[${id}](${link(found)}) ${found.item.data.title}` : id; };
+  const status = (found: Entry) => (found.meta.data.status ? ` *${found.meta.data.status}*` : '');
+  const linkLine = (state: LinkState) => `- ${stateText(state)} ${ref(state.source)} ${state.link.type} ${ref(state.link.target)}\n`;
+  const summary = rows.map((row) => `- ${row.state} ${ref(row.requirement)}\n`).join('') + suspects.map(linkLine).join('');
+  const seen = new Set<string>();
+  const section = (itemId: string, number: string): string => {
+    seen.add(itemId);
+    const found = entry(repo, itemId);
+    let n = 0;
+    return `\n${'#'.repeat(Math.min(number.split('.').length + 1, 6))} ${number} ${ref(itemId)}${status(found)}\n\n` + rows.filter((row) => found.requirements.includes(row.requirement)).map((row) => {
+      const child = row.requirement, requirement = entry(repo, child);
+      return `**${requirement.item.data.title}** [${child}](${link(requirement)})${status(requirement)} ${row.state}\n\n${requirement.item.data.text ?? ''}\n\n`
+        + states.filter((state) => state.source === child || state.link.target === child).map(linkLine).join('')
+        + row.tests.map((test) => `- ${ref(test.testCase.id)}: ${test.run ? `${ref(test.run.id)} ${test.result}${test.outdated ? ' outdated' : ''}` : 'no run'}\n`).join('') + '\n';
+    }).join('') + childrenOf(found).map((child) => seen.has(child) || !repo.entries.has(child) ? '' : section(child, `${number}.${++n}`)).join('');
+  };
+  return summary + section(id, '1');
 }
 
 // TE-06.6

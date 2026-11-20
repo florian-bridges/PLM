@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0 (2026-11-20)
+
+* `plm impact` lists as `released` each item released at base (`status` in `plm.yaml`'s `released_states`, default `[released]`) whose own files changed while its status did not, and exits 1 if any; README section "Revisions and baselines" (#45).
+* `plm report document [<item>]` prints the requirements document the VS Code extension shows as Markdown, for the repository or an item's subtree; the extension shares its renderer (#2).
+
 ## 0.6.0 (2026-11-20)
 
 * Breaking: `ports` and `connections` are reserved home folders (built-in `port` and `connection` types); an existing artifact subfolder of either name is no longer listed as an artifact.

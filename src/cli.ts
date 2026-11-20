@@ -5,8 +5,8 @@ import { createRequire } from 'node:module';
 import { Command, CommanderError, Option } from 'commander';
 import { parse as parseYaml, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
-import { allocation, confirm, connections, coverage, link, linkStates, recordRun, suspects, unreached, type LinkState } from './links.ts';
-import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, parentOf, Refused, rollback, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
+import { allocation, confirm, connections, coverage, link, linkStates, recordRun, requirementsMarkdown, suspects, unreached, type LinkState } from './links.ts';
+import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, productTree, parentOf, Refused, rollback, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
 import { allowedLinks, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
@@ -125,7 +125,7 @@ program.command('suspects [item]').description('list suspect links').action((ite
   exitCode = states.length && 1;
 });
 
-// TE-05.1
+// TE-05.1, TE-05.3
 program.command('impact <range>').description('list a change\'s impact').action((range) => {
   const repo = openRepo(), [base, head] = range.split('..'),
     headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) },
@@ -133,10 +133,12 @@ program.command('impact <range>').description('list a change\'s impact').action(
     lines = [
       ...result.changed.map((item) => `changed ${label(item)}`),
       ...result.propagated.map((item) => `propagated ${label(item)}`),
+      ...result.released.map((item) => `released ${label(item)}`),
       ...result.suspects.map((state) => `suspect ${linkLabel(state)}`),
       ...result.runs.map((run) => `outdated run ${label(run)}`),
     ];
   output(lines.join('\n'), result);
+  exitCode = result.released.length && 1;
 });
 
 // CL-02.1
@@ -227,6 +229,14 @@ report.command('connections [item]').description('report ports and connections t
     exitCode = rows.length && 1;
     output(rows.map((row) => `${row.code} ${label(row.item)}${row.detail && ' ' + row.detail}`).join('\n'), rows);
   });
+
+// CL-01.8
+report.command('document [item]').description('print the requirements document').action((item) => {
+  const [repo, states, id] = scoped(item);
+  const text = (id ? [id] : productTree(repo).map((found) => found.id))
+    .map((root) => requirementsMarkdown(repo, root, (found) => found.item.path, states, coverage(repo, states, root), suspects(repo, states, root))).join('\n');
+  output(text, text);
+});
 
 try {
   program.parse();

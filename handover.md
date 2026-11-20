@@ -6,8 +6,8 @@ Latest release: 0.6.0 (2026-11-20). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* 0.6 released as v0.6.0 (PR #89; #29 PR #86, #31 with #30 PR #88). The GitHub milestone 0.6 is still open: the shift guard blocks closing it through the API, so the owner closes it. Release meeting #90 re-prepared per #91 (`meetings/2026-11-20-release-0.6.md`): the owner decides 0.7 and 0.8 (scope, features, budgets; #40 and #43 as architecture changes with a feature review prepared during 0.7; #61, #55 parked or not); nothing to build until then.
-* Backlog from reviews: #87 (a missing `files` file is skipped silently).
+* 0.7 "Releases and documents" active (meeting #90, budget 1 window): #45 (`feat/released-items`) in progress, then #2. During 0.7: prepare the feature review of #40 and #43 (0.8, budget 4 windows). If the window allows: decide dropping `detail` from `report connections` rows and #87.
+* GitHub milestone 0.6 still open: the guard blocks closing it; the owner closes it.
 
 ## Open pull requests and blockers
 

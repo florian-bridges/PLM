@@ -4,7 +4,7 @@
 Writes an item's requirements, derives each lower one from its parent, cites the item its value comes from, marks an unknown value TBD, and checks that every requirement is allocated to a lower item.
 
 **US-2 — Design engineer**
-Breaks the product into nested subsystems, attaches design artifacts to an item, and links each design to the requirements it satisfies; declares the ports through which an item meets others and joins its items' ports into connections.
+Breaks the product into nested subsystems, attaches design artifacts to an item, and links each design to the requirements it satisfies; declares the ports through which an item meets others and joins its items' ports into connections; uses a part several times, each use with its own quantity and reference, and states which uses apply to which variant or serial range.
 
 **US-5 — Verification engineer**
 Defines test cases that verify requirements by a stated method, records test runs with their system under test, test environment, results and logs, and sees coverage per method.

@@ -6,7 +6,7 @@ Latest release: 0.7.0 (2026-11-20). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* 0.7 released as v0.7.0 (PR #96; #45 PR #93, #2 PR #95); GitHub milestones 0.6 and 0.7 closed. 0.8 (budget 4 windows) active; #40 and #43 are architecture changes and wait for feature review #92 (`meetings/2026-11-20-feature-review-0.8.md`). After it: record (skill `meeting`), requirement changes, then #40, then #43.
+* 0.8 (budget 4 windows) active. Feature review #92 recorded (decisions in `decisions.md`, requirements in `documents/`, docs limit 5823 to be cut by the reviewers). #40 in progress on `feat/occurrences` (worktree `/home/tower/PLM-wt/occurrences`); next #43 on `feat/variants` from `develop` after #40 merges.
 * Decisions 8 and 9 of #90 (chief engineer): 0.7's window is used, so dropping `detail` from `report connections` rows and #87 stay in the backlog.
 * Backlog from reviews: #94 (neutral test data), #87 (missing `files` file).
 

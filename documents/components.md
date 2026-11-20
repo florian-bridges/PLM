@@ -4,13 +4,13 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 ## Core library (CO)
 
-**CO-01** The core shall load items, artifacts and links from a repository. (CR-01–CR-03; US-2)
+**CO-01** The core shall load items, artifacts and links from a repository, selecting used items by configuration if given. (CR-01–CR-03; US-2)
 *Rationale:* All components need the same view of the repository; one loader avoids inconsistent interpretations.
 
-**CO-02** The core shall validate items against their type's schema and report broken links and composition cycles. (CR-04; US-1, US-2, US-5)
+**CO-02** The core shall validate items against their type's schema and report broken links, composition cycles and ambiguous or empty selections. (CR-04; US-1, US-2, US-5)
 *Rationale:* Errors in plain-text files are easy to make; early validation keeps the definition consistent before review.
 
-**CO-03** The core shall search items by ID, type, attribute and text, and list a named list field such as findings or items by owner. (CR-05, CR-14, CR-18; US-2, US-9, US-11)
+**CO-03** The core shall search items by ID, type, attribute and text, and list a named list field such as findings or items by owner, and total the items below one. (CR-02, CR-05, CR-14, CR-18; US-2, US-9, US-11)
 *Rationale:* Search and listing are the entry point to a large product for all users and components.
 
 ## Traceability engine (TE)

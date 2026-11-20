@@ -124,6 +124,11 @@ export const list = <T>(value: unknown): T[] => (Array.isArray(value) ? value : 
 export const usesOf = (entry?: Entry): string[] => list(entry?.item.data.uses);
 export const childrenOf = (entry?: Entry) => [...(entry?.nested ?? []), ...usesOf(entry)];
 
+// VS-02.1, CL-01.8
+export const productTree = (repo: Repo, parent?: string): Entry[] => parent
+  ? childrenOf(repo.entries.get(parent)).flatMap((id) => repo.entries.get(id) ?? [])
+  : [...repo.entries.values()].filter((found) => !found.path.includes('/'));
+
 // CO-02.7
 const cited = /\{([^{}\s]+)\}/g;
 export const citations = (data: any, local = false) => [...new Set([...String(data?.text ?? '').matchAll(cited)].map((match) => match[1]))].filter((ref) => ref.includes(':') !== local);

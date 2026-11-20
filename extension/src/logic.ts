@@ -1,7 +1,7 @@
 // VS-01–VS-04: editor logic without the vscode API, for tests.
 import type { Document } from 'yaml';
 import { requirementsMarkdown as render, type Coverage, type LinkState } from '../../src/links.ts';
-import { childrenOf, entry, targetId, type Entry, type Link, type Repo } from '../../src/repo.ts';
+import { entry, targetId, type Entry, type Link, type Repo } from '../../src/repo.ts';
 import type { Finding } from '../../src/validate.ts';
 
 // VS-01.2
@@ -52,18 +52,15 @@ export function applyForm(item: Document, meta: Document, fields: Field[], raw: 
   }
 }
 
-// VS-02.1
-export const productTree = (repo: Repo, parent?: string): Entry[] => parent
-  ? childrenOf(repo.entries.get(parent)).flatMap((id) => repo.entries.get(id) ?? [])
-  : [...repo.entries.values()].filter((found) => !found.path.includes('/'));
+export { productTree } from '../../src/repo.ts';
 
 // VS-03.3, VS-04.3
 export const linkState = (state: LinkState, review = state.state !== 'current') =>
   state.state + (review ? ` [Review link](command:plm.reviewLink?${encodeURIComponent(JSON.stringify([state.source, state.link.target]))})` : '');
 
-// VS-03.1, VS-03.3, VS-03.4: shares rendering with `report document` (CL-01.8), adding Review links.
+// VS-03.3: the shared document with Review links.
 export const requirementsMarkdown = (repo: Repo, id: string, link: (found: Entry) => string, states: LinkState[], rows: Coverage[], suspects: LinkState[]) =>
-  render(repo, id, link, states, rows, suspects, (state) => linkState(state).slice(state.state.length));
+  render(repo, id, link, states, rows, suspects, linkState);
 
 // VS-04.3
 export function hoverMarkdown(repo: Repo, states: LinkState[], id: string, source?: string) {

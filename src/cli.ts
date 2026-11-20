@@ -6,7 +6,7 @@ import { Command, CommanderError, Option } from 'commander';
 import { parse as parseYaml, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, connections, coverage, link, linkStates, recordRun, requirementsMarkdown, suspects, unreached, type LinkState } from './links.ts';
-import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, parentOf, Refused, rollback, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
+import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, productTree, parentOf, Refused, rollback, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
 import { allowedLinks, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
@@ -232,9 +232,10 @@ report.command('connections [item]').description('report ports and connections t
 
 // CL-01.8
 report.command('document [item]').description('print the requirements document').action((item) => {
-  const [repo,states,id]=scoped(item),roots=id?[id]:[...repo.entries.values()].filter((e)=>!e.path.includes('/')).map((e)=>e.id),
-    text=roots.map((root)=>requirementsMarkdown(repo,root,(found)=>found.item.path,states,coverage(repo,states,root),suspects(repo,states,root))).join('\n');
-  output(text,text);
+  const [repo, states, id] = scoped(item);
+  const text = (id ? [id] : productTree(repo).map((found) => found.id))
+    .map((root) => requirementsMarkdown(repo, root, (found) => found.item.path, states, coverage(repo, states, root), suspects(repo, states, root))).join('\n');
+  output(text, text);
 });
 
 try {

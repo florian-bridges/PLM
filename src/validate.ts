@@ -28,8 +28,7 @@ export const itemSchema = (repo: Repo, type: string) => schemaFor(newAjv(), repo
 
 // CO-02.12
 function configsOf(repo:Repo,whens:any[]){
-  const params=[...new Set(whens.flatMap((w)=>Object.keys(w??{})))];
-  return params.reduce((configs:any[],p)=>{
+  return [...new Set(whens.flatMap((w)=>Object.keys(w??{})))].reduce((configs:any[],p)=>{
     const d=repo.settings.config?.[p],
       values=Array.isArray(d)?d:[...new Set(whens.flatMap((w)=>Array.isArray(w?.[p])?w[p]:w?.[p]?[w[p].from,w[p].to]:[]).filter((v)=>v!==undefined))].map(String);
     return configs.flatMap((c)=>values.map((v)=>({...c,[p]:v})));

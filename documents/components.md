@@ -24,7 +24,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **TE-03** The engine shall flag a link as suspect when its target's version differs from the confirmed one, and show what changed. (CR-07, CR-09; US-10, US-11)
 *Rationale:* Suspect links are the tool's core signal; showing the change lets users quickly judge whether it matters.
 
-**TE-05** The engine shall list the items, links and verification evidence affected by a change. (CR-13; US-10)
+**TE-05** The engine shall list the items, links and verification evidence affected by a change. (CR-12, CR-13; US-10, US-11)
 *Rationale:* Impact must be known before approving a change, both locally and in CI, so the analysis belongs in the engine.
 
 **TE-06** The engine shall report requirements without verifying tests, suspect test evidence, unallocated requirements, items that no link of a given type reaches, and connections whose ports do not fit together. (CR-09, CR-10; US-2, US-5, US-11)

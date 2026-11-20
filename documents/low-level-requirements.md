@@ -75,6 +75,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-05.2** A link shall have become suspect when its confirmed version equals the target's version at base but not at head.
 *Rationale:* Links already suspect at base are not caused by the change.
 
+**TE-05.3** `impact` shall also list as `released` each item whose `status` at base is in `plm.yaml`'s `released_states` (default `[released]`) and whose own files (TE-05.1) changed while its status did not; exit 1 if any.
+*Rationale:* A released item is a reference others rely on; its own content must not drift without a status change announcing it.
+
 **TE-06.1** A requirement shall count as verified when a test case `verifies` it through a current link and that test case's latest run, by date, with current `executes` and `tests` links records `pass` for it; coverage shall list each verifying test case with its latest run, that run's result for it and whether it is outdated.
 *Rationale:* Evidence counts only for the versions tested and the latest result; reusing the suspect mechanism avoids a second staleness check.
 

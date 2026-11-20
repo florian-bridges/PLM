@@ -8,7 +8,7 @@ export function changedFiles(root: string, base: string, head?: string) {
   return git(root, ['diff', '--name-only', '--relative', base, ...(head ? [head] : [])]).split('\n').filter(Boolean);
 }
 
-// TE-05.1, CL-05.3
+// TE-05.1, CL-05.3, TE-05.3
 export function impact(base: Snapshot, head: Snapshot, files: string[]) {
   const ownersOfChangedFiles = new Set(files.flatMap((file) => [innermostItem(base.repo, file), innermostItem(head.repo, file)])),
     ids = new Set([...base.repo.entries.keys(), ...head.repo.entries.keys()]),
@@ -19,6 +19,7 @@ export function impact(base: Snapshot, head: Snapshot, files: string[]) {
   return {
     changed: changedIds.filter((id) => ownersOfChangedFiles.has(id)).map(name),
     propagated: changedIds.filter((id) => !ownersOfChangedFiles.has(id)).map(name),
+    released: [...ownersOfChangedFiles].filter((id): id is string => !!id && head.repo.entries.get(id)?.meta.data.status === base.repo.entries.get(id)?.meta.data.status && ((base.repo.settings as any).released_states ?? ['released']).includes(base.repo.entries.get(id)?.meta.data.status)).map(name),
     suspects: becameSuspects.filter((state) => !fromRun(head.repo, state)),
     runs: [...new Set(becameSuspects.filter((state) => fromRun(head.repo, state)).map((state) => state.source))].map(name),
   };

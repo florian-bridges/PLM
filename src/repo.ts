@@ -31,7 +31,7 @@ export function readYaml<T>(root: string, path: string) {
   return { path, doc, lines, data: (doc.toJS() ?? {}) as T };
 }
 
-// CL-01.6: apply's journal of files written and folders created, for rollback
+// CL-01.6: rollback journal
 let journal:{path:string;original?:string}[]|undefined,created:string[];
 export const journalOn=()=>{journal=[];created=[];},journalOff=()=>{journal=undefined;},journalFiles=()=>journal!.map((f)=>f.path);
 export function rollback(root: string) {
@@ -133,11 +133,14 @@ export const productTree = (repo: Repo, parent?: string): Entry[] => parent
 
 // CO-03.4
 export function partsOf(repo: Repo, root?: string) {
-  const totals = new Map<string, number>(),
+  const totals = new Map<string, number>(), path = new Set<string>(),
     visit = (id: string, q: number) => {
+      if (path.has(id)) return;
+      path.add(id);
       const e = repo.entries.get(id), add = (c: string, m: number) => (totals.set(c, (totals.get(c) ?? 0) + m), visit(c, m));
       e?.nested.forEach((n) => add(n, q));
       useEntries(e?.item.data).forEach((u) => add(u.item, q * (u.quantity ?? 1)));
+      path.delete(id);
     };
   (root ? [root] : productTree(repo).map((e) => e.id)).forEach((id) => visit(id, 1));
   return [...totals].sort(([a], [b]) => a.localeCompare(b)).map(([id, quantity]) => ({ ...named(repo, id), quantity }));

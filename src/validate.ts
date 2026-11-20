@@ -73,8 +73,7 @@ export function validate(repo: Repo) {
     useEntries(item.data).forEach((used,index)=>{
       if(!repo.entries.has(used.item))findings.push(finding(item,['uses',index],'unknown-use',used.item));
       Object.entries(used.when??{}).forEach(([p,c]:[string,any])=>{
-        const d=repo.settings.config?.[p];
-        if(d===undefined||(Array.isArray(d)&&!(Array.isArray(c)?c:[c]).every((v:any)=>d.includes(v))))findings.push(finding(item,['uses',index,'when',p],'config',p));
+        if(repo.settings.config?.[p]===undefined||(Array.isArray(repo.settings.config?.[p])&&!(Array.isArray(c)?c:[c]).every((v:any)=>repo.settings.config?.[p].includes(v))))findings.push(finding(item,['uses',index,'when',p],'config',p));
       });
       (groups[used.ref??used.item]??=[]).push({used,index});
     });

@@ -1,58 +1,39 @@
 // VS-01–VS-04: editor logic without the vscode API, for tests.
-import type { Document } from 'yaml';
 import { requirementsMarkdown as render, type Coverage, type LinkState } from '../../src/links.ts';
-import { entry, targetId, type Entry, type Link, type Repo } from '../../src/repo.ts';
+import { entry, innermostItem, list, parentOf, useEntries, type Entry, type Link, type Repo } from '../../src/repo.ts';
+import { itemSchema } from '../../src/validate.ts';
 import type { Finding } from '../../src/validate.ts';
 
-// VS-01.2
-interface Property { type?: string; enum?: string[]; items?: { type?: string | string[] } }
-export interface Field { name: string; kind: 'string' | 'text' | 'number' | 'enum' | 'list'; options?: string[]; meta?: boolean }
-
-export function formFields(schema: { allOf: { properties?: Record<string, Property> }[] }): Field[] {
-  const properties: Record<string, Property> = Object.assign({}, ...schema.allOf.map((part) => part.properties));
-  const fields = Object.entries(properties).flatMap(([name, { type, enum: options, items }]): Field[] => {
-    if (name === 'id' || name === 'type') return [];
-    if (options) return [{ name, kind: 'enum', options }];
-    if (type === 'number' || type === 'integer') return [{ name, kind: 'number' }];
-    if (type === 'array' && items?.type === 'string') return [{ name, kind: 'list' }];
-    if (type === 'string') return [{ name, kind: name === 'text' ? 'text' : 'string' }];
-    return [];
-  });
-  return [...fields, { name: 'status', kind: 'string', meta: true }, { name: 'owner', kind: 'string', meta: true }];
-}
-
-const escape = (value: unknown) => String(value ?? '').replace(/[&<>"]/g, (character) => `&#${character.charCodeAt(0)};`);
-
-// VS-01.2
-export function formHtml(heading: string, fields: Field[], values: Record<string, unknown>): string {
-  const input = ({ name, kind, options = [] }: Field) => {
-    const value = values[name];
-    const text = escape(Array.isArray(value) ? value.join(', ') : value);
-    if (kind === 'enum') return `<select name="${escape(name)}"><option></option>${options.map((option) => `<option${option === value ? ' selected' : ''}>${escape(option)}</option>`).join('')}</select>`;
-    if (kind === 'text') return `<textarea name="${escape(name)}" rows="8" cols="80">${text}</textarea>`;
-    return `<input name="${escape(name)}" value="${text}"${kind === 'number' ? ' type="number" step="any"' : ''}>`;
-  };
-  return `<h2>${escape(heading)}</h2><form>${fields.map((field) => `<p><label>${escape(field.name)}<br>${input(field)}</label></p>`).join('')}<button>Save</button></form><pre id="errors"></pre>
-<script>
-const vscode = acquireVsCodeApi(), form = document.forms[0];
-const post = (save) => vscode.postMessage({ save, values: Object.fromEntries(new FormData(form)) });
-form.oninput = () => post(false);
-form.onsubmit = (event) => { event.preventDefault(); post(true); };
-window.onmessage = (event) => { document.getElementById('errors').textContent = event.data; };
-</script>`;
-}
-
-// VS-01.2: empty fields are removed.
-export function applyForm(item: Document, meta: Document, fields: Field[], raw: Record<string, string>): void {
-  for (const { name, kind, meta: inMeta } of fields) {
-    const doc = inMeta ? meta : item;
-    const value = raw[name]?.trim();
-    if (!value) doc.deleteIn([name]);
-    else doc.setIn([name], kind === 'number' ? Number(value) : kind === 'list' ? value.split(',').map((part) => part.trim()).filter(Boolean) : value);
-  }
-}
-
 export { productTree } from '../../src/repo.ts';
+
+// VS-01.2
+export const schemaIdFor = (repo: Repo, file: string) => {
+  const id = innermostItem(repo, file);
+  return id && repo.entries.get(id)!.item.path === file ? id : undefined;
+};
+export const schemaOf = (repo: Repo, id: string) => JSON.stringify(itemSchema(repo, repo.entries.get(id)!.item.data.type)?.schema);
+
+// VS-01.3
+export const diagnosticsOf = (findings: Finding[]) => Map.groupBy(findings, (finding) => finding.file);
+
+// VS-01.5
+export const itemTypes = (repo: Repo) => Object.keys(repo.types).filter((type) => type !== 'meta');
+
+// VS-02.3
+export const withQuantities = (parent: Entry | undefined, children: Entry[]) => {
+  const uses = useEntries(parent?.item.data);
+  return children.map((found) => Object.assign(found, { quantity: uses.find((u) => u.item === found.id)?.quantity }));
+};
+
+// VS-02.4
+export const configLabel = (text: string) => `$(settings-gear) ${text || 'config'}`;
+
+// VS-02.6
+export const breadcrumbChain = (repo: Repo, id?: string): string[] => {
+  const chain: string[] = [];
+  for (; id; id = parentOf(repo, id)) chain.unshift(id);
+  return chain;
+};
 
 // VS-03.3, VS-04.3
 export const linkState = (state: LinkState, review = state.state !== 'current') =>
@@ -69,10 +50,15 @@ export function hoverMarkdown(repo: Repo, states: LinkState[], id: string, sourc
   return `**${item.data.title}**\n\n${[item.data.type, meta.data.status].filter(Boolean).join(', ')}${link ? `\n\n${linkState(link, true)}` : ''}`;
 }
 
-// VS-04.2
-export function reviewHtml(repo: Repo, source: string, link: Link, change: string, findings: Finding[]) {
-  const target = entry(repo, targetId(link.target)); // TE-01.1
-  return `<pre>${[`${source} ${link.type} ${link.target}`, entry(repo, source).item.data.text, target.item.data.text, change, link.by && `Confirmed by ${link.by} on ${link.on}`,
-    ...findings.filter((finding) => finding.file === target.item.path).map((f) => `${f.code} ${f.message}`)].filter(Boolean).map(escape).join('</pre><pre>')}</pre>
-<button onclick="vscode.postMessage(1)">Confirm</button><button onclick="vscode.postMessage(0)">Cancel</button><script>const vscode = acquireVsCodeApi()</script>`;
+// VS-04.4
+export function suspectLines(found: Entry, states: LinkState[]) {
+  return list<Link>(found.item.data.links).flatMap((listed, index) => {
+    const state = states.find((s) => s.source === found.id && s.link.type === listed.type && s.link.target === listed.target && s.state !== 'current');
+    if (!state) return [];
+    const node: any = found.item.doc.getIn(['links', index], true);
+    return [{ line: found.item.lines.linePos(node.range[0]).line, state }];
+  });
 }
+
+// VS-04.6
+export const hasSuspect = (states: LinkState[], id: string) => states.some((s) => s.source === id && s.state !== 'current');

@@ -11,33 +11,37 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | 0.5 | 4 | 2 | done (v0.5.0, meeting #85) |
 | 0.6 | 3 | 1 | done (v0.6.0, meeting #85) |
 | 0.7 | 1 | 1 | done (v0.7.0, meeting #90) |
-| 0.8 | 4 | 0 | active (meetings #90, #92) |
-| 0.9 | — | — | planned |
+| 0.8 | 4 | 3 | done (v0.8.0, meetings #90, #92) |
+| 0.9 | 2 | 0 | active (meeting #100) |
+| 0.10 | 1 | 0 | decided (meeting #100) |
 
 Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is a GitHub milestone holding its issues. Standing directions for every feature: PLM holds product data only, no project management (#64); use by LLM agents is a strength to keep and document (#54).
 
 ## Active milestone
 
-**Next milestone: 0.8.** Product structure and configurations.
+**Next milestone: 0.9.** UI foundation.
 
-Budget: 4 windows.
+Budget: 2 windows.
 
-Scope decided in release meeting #90 (2026-11-20); details in feature review #92 (2026-11-20). Requirements applied to `documents/`.
+Scope decided in release meeting #100 (2026-11-21, `meetings/2026-11-20-release-0.8.md`).
 
 ### Entry conditions
 
-- [x] #40 Occurrences and quantities. *Done when:* `uses` entries may be `{item, quantity, ref, …}` besides IDs, plain-ID repositories keep their versions; `validate` reports bad entries and `ambiguous-use` (CO-02.12), also after a merge (#66); changing an entry changes the assembly's version, not the part's; `plm report parts [<item>]` (CO-03.4) totals quantities; README paragraph on BOM views (#42); `scripts/check.sh` passes.
-- [ ] #43 Variants and effectivity. *Done when:* `config` in `plm.yaml` (lists or `ordered`), `when` on `uses` entries and the global `--config` make every walk through `uses` follow only selected entries (CO-01.6); `validate` reports `config` and, under every configuration, `ambiguous-use` and `empty-use`, also after a merge (#66); versions read every entry; README paragraph on configurations; `scripts/check.sh` passes.
+- [ ] #101 UI foundation (#67 part 1). *Done when:* VS-01.2, VS-02.3, VS-02.4, VS-02.6, VS-04.4 and VS-04.6 are implemented and tested in `extension/test/`; the forms and the review page (VS-04.2) removed; VS-01.3 and VS-01.5 tested; `scripts/check.sh` passes.
+- [ ] #94 Neutral test data. *Done when:* the test fixtures use neutral names and `scripts/check.sh` passes.
+- [ ] #87 Missing `files` file. *Done when:* CO-02.10 states that `validate` reports a named file missing from the item's folder as `missing-file`, the code and a test follow it; `scripts/check.sh` passes.
 
 ### Active topics
 
-* #40 merged (PR #97). Next: #43 on `feat/variants` from `develop`, `feature-dev` then `reviewer`.
+* None started.
 
 ### Coming owner meetings
 
-* None until 0.8's entry conditions are ticked (release meeting: 0.9 is not planned).
+* None; 0.10 follows without a meeting.
 
 ## Planned milestones
 
-* **0.9 UI redesign**, not planned: #67.
-* **Backlog, no milestone:** #61 requirements import and export (ReqIF, CSV), #55 MCP server (#78), #87, #94.
+* **0.10 UI views**, decided (meeting #100), budget 1 window:
+  - [ ] #102 UI views (#67 part 2). *Done when:* VS-03.5, VS-04.5 and VS-06.2 are implemented and tested; the document webview (VS-03.1–VS-03.4) and the VS-06.1 command removed; `scripts/check.sh` passes.
+* **Later, next release meeting:** whole-product graph, structure diff, overview (#67).
+* **Parked, no milestone:** #61 requirements exchange (until a project exchanges requirements), #55 MCP server (until an agent use without a shell).

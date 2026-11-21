@@ -43,8 +43,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.9** `plm.yaml` may declare `links: {<name>: {from: [<type>…], to: [<type>…]}}` (`*` any type); declared link types shall be checked as built-in ones (CO-02.2), matching an item's base, and naming a built-in link type shall be an error.
 *Rationale:* Projects link items in ways PLM does not build in.
 
-**CO-02.10** A type file may hold `files: {<name>: <JSON Schema>}`; the core shall validate each named YAML file in an item's folder against it, as CO-02.1, reporting `schema` findings with that file's line.
-*Rationale:* Checks a structured artifact, e.g. a port's `icd.yaml`, like `item.yaml`.
+**CO-02.10** A type file may hold `files: {<name>: <JSON Schema>}`; the core shall validate each named YAML file in an item's folder against it, as CO-02.1, reporting `schema` findings there, or `missing-file` if absent.
+*Rationale:* Checks a structured artifact, e.g. a port's `icd.yaml`.
 
 **CO-02.12** The core shall report as error two or more `uses` entries of one item with the same `ref` that are selected together (`ambiguous-use`) or of which none is selected (`empty-use`) under some configuration (CO-01.6), and a `when` that names an undeclared parameter or value or gives a range for a listed parameter (`config`). Some configuration ranges over every combination of the declared values of listed parameters and, for ordered ones, the `from`/`to` values in `when`s, a value between each adjacent pair and one beyond each outer value. An unknown parameter or value in `--config` shall be a usage error.
 *Rationale:* CI then catches a forgotten or doubled alternative, also after a clean merge.
@@ -163,17 +163,26 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-01.1** The extension shall reuse the core library and run in the extension host without a separate server, bundled by esbuild into one CommonJS file and activated in workspaces containing `plm.yaml`.
 *Rationale:* One core avoids duplicated logic and diverging results between editor and CI. A bundle needs no installed dependencies.
 
-**VS-01.2** Editing the active item (the innermost item containing the active editor's file) or a product tree item shall open a webview form generated from the type's JSON Schema, with fields for its string, number, enum and string array attributes and for `status` and `owner`. The form shall show schema errors while typing; saving shall write `item.yaml` and `meta/<ID>.yaml` through the core, keeping other attributes and comments.
-*Rationale:* Forms generated from schemas support new and program-specific types without extension code. Flat fields cover the built-in types; nested attributes are edited in YAML.
+**VS-01.2** `item.yaml` shall get completion, hover and diagnostics while typing from its type's JSON Schema.
+*Rationale:* Most YAML users already have the Red Hat YAML extension.
 
 **VS-01.3** Diagnostics shall be updated in the Problems panel within one second of saving a file.
 *Rationale:* Immediate feedback catches errors while the context is fresh. Validation reads files from disk, so unsaved edits are not seen.
 
-**VS-01.5** A "New item" command on product tree items shall pick a type, ask for a title, create the item per CL-02.1 in that item's folder, and open its form.
+**VS-01.5** A "New item" command on product tree items shall pick a type, ask for a title, create the item per CL-02.1 in that item's folder, and open it.
 *Rationale:* Items are created where they belong in the product structure.
 
 **VS-02.1** A tree view shall show composition, nested and used items, from the top-level items, with type icons and status badges; selecting an item opens its `item.yaml`.
 *Rationale:* Badges show maturity. Used items appear under each item using them, as they count toward its version.
+
+**VS-02.3** PLM's views shall sit in an Activity Bar container of their own; the tree shall show each `uses` quantity.
+*Rationale:* Avoids crowding the Explorer.
+
+**VS-02.4** A status bar item shall show the configuration selected per CO-01.6; picking another makes the tree, document and diagnostics follow it.
+*Rationale:* Results depend on the configuration.
+
+**VS-02.6** An item file's breadcrumbs shall show its path in the product tree.
+*Rationale:* Orients engineers without opening the tree view.
 
 **VS-03.1** A product tree command shall show a read-only webview of an item with a section per item of its subtree (TE-06.2), each item once, numbered and headed by depth (1, 1.1, 1.1.1), each listing the item's requirements with title in bold, ID, status, coverage state and rendered Markdown text; clicking an ID opens its file.
 *Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements top to bottom in the product's structure.
@@ -184,11 +193,14 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-03.4** The document shall begin with each requirement's coverage state and the output of `plm suspects <item>`, and take all link states, coverage and runs from the core functions behind `plm suspects` and `plm report coverage`.
 *Rationale:* Reviewers see the item's gaps first, including links to requirements outside the subtree.
 
-**VS-04.2** "Review link" shall show one page with the link type, the source's and target's text, the diff from TE-03.2 or, if unconfirmed, the target's file, the previous confirmer and date, and the target's findings; "Confirm" shall confirm that link per CL-01.2, "Cancel" close the page.
-*Rationale:* Users decide on one link with everything needed on one page.
-
 **VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file.
-*Rationale:* Links are inspected and navigated where they are written, replacing a separate links view.
+*Rationale:* Links are inspected and navigated where they are written.
+
+**VS-04.4** Above each suspect link in an item file, a line shall offer: show the TE-03.2 diff beside the file, confirm per TE-02.1, and remove the link.
+*Rationale:* Resolves suspects in place.
+
+**VS-04.6** The Explorer shall tint and badge the files and folders of items with suspect links.
+*Rationale:* Suspects show before a file is opened.
 
 **VS-06.1** A command shall record a manual test run, picking test cases, system under test, each test case's result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
 *Rationale:* Manual and automated runs must produce identical evidence; one recording function in the core guarantees it.

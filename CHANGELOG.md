@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 (2026-11-21)
+
+* VS Code extension: `item.yaml` gets completion, hover and diagnostics from its type's schema through the Red Hat YAML extension, replacing the forms; PLM's views in their own Activity Bar container with `uses` quantities; configuration picker in the status bar; product-tree breadcrumbs; diff, confirm and remove above each suspect link, replacing the review page; suspect items tinted and badged in the Explorer (#101, #67).
+* `validate` reports a file named in `files` but missing from the item's folder as `missing-file` (#87).
+* Test fixtures use neutral names (#94).
+
 ## 0.8.0 (2026-11-20)
 
 * `uses` entries may be `{item, quantity, ref, …}` besides IDs; changing an entry changes the assembly's version; `validate` reports bad entries and `ambiguous-use`; `plm report parts [<item>]` totals quantities; README paragraph on BOM views (#40, #42).

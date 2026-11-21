@@ -29,7 +29,7 @@ Scope decided in release meeting #110 (2026-11-21, `meetings/2026-11-21-release-
 ### Entry conditions
 
 - [x] #111 Structure diff in `impact`. *Done when:* TE-05.4 is implemented and tested; `scripts/check.sh` passes.
-- [ ] #112 Status counts in the requirements document. *Done when:* CL-01.9 is implemented and tested; `scripts/check.sh` passes.
+- [x] #112 Status counts in the requirements document. *Done when:* CL-01.9 is implemented and tested; `scripts/check.sh` passes.
 - [x] #113 Mermaid graph of `show --down/--up`. *Done when:* CL-01.10 and the US-2 clause are in place, implemented and tested; `scripts/check.sh` passes.
 
 ### Active topics

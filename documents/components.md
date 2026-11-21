@@ -46,8 +46,8 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 ## VS Code extension (VS)
 
-**VS-01** The extension shall create and edit items in forms validated while typing. (CR-04; US-1, US-2, US-5)
-*Rationale:* Engineers should not need to know the YAML schemas; forms with live validation lower the entry barrier.
+**VS-01** The extension shall help edit item files with completion and validation from the type's schema. (CR-04; US-1, US-2, US-5)
+*Rationale:* Engineers need not know the YAML schemas; completion and validation from the schema lower the entry barrier.
 
 **VS-02** The extension shall show the product tree of the repository. (CR-02, CR-05; US-2)
 *Rationale:* The product tree is how engineers think about the product and is their main navigation.
@@ -55,7 +55,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 **VS-03** The extension shall show an item's requirements as a readable document with their traceability, verification coverage and suspect links. (CR-05, CR-06, CR-09, CR-10; US-1, US-5)
 *Rationale:* Requirements engineers review requirements as documents; links, tests and coverage next to each requirement make the document the traceability matrix and the place to resolve gaps.
 
-**VS-04** The extension shall show an item's links with their suspect state and let users re-confirm them. (CR-06, CR-07; US-10)
+**VS-04** The extension shall show an item's links with their suspect state and let users re-confirm or remove them. (CR-06, CR-07; US-10)
 *Rationale:* Suspects are resolved where the engineer works, without switching tools.
 
 **VS-06** The extension shall let users enter manual test results. (CR-09; US-5)

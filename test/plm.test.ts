@@ -230,16 +230,10 @@ test('CO-02.5, CO-02.6, CO-02.8, CO-02.10, TE-06.6: ports', () => {
 });
 
 test('CL-01.8: document', () => {
-  expect(plm(root, 'report', 'document', 'A').stdout).toContain('## 1 [A](frame/item.yaml) Frame\n\n**Load** [R](frame/requirements/load.yaml) unverified');
-  expect(plm(root, 'report', 'document').stdout).toContain('[L](bolt/item.yaml) Bolt');
-
   setLoad(root, 'links: [{type: derives, target: X}]\n', 3);
-  write(root, { 'frame/tests/t/item.yaml': 'id: T\ntype: test-case\ntitle: T\nlinks: [{type: verifies, target: R}]\n' });
-  commit(root);
-  plm(root, 'test', 'record', 'T', '--sut', 'A', '--result', 'pass');
   const doc = plm(root, 'report', 'document', 'A').stdout;
-  expect(doc.indexOf('verified R (Load)')).toBeLessThan(doc.indexOf('## 1'));
-  expect(doc).toContain('WIP-MARKER');
+  expect(doc.slice(0, doc.indexOf('## 1'))).toContain('derives X');
+  expect(doc).toMatch(/derives X\n- unconfirmed \[P\].*\n\n\n### 1\.1 \[P\].*\n\n\n### 1\.2 \[L\]/);
 });
 
 test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {

@@ -230,9 +230,11 @@ test('CO-02.5, CO-02.6, CO-02.8, CO-02.10, TE-06.6: ports', () => {
   expect(plm(root, 'report', 'connections')).toMatchObject({ status: 1, stdout: 'open PE (E)\nfew CA (C) 1\nsenders CF (F) 2\n' });
 });
 
-test('CL-01.8: document', () => {
+test('CL-01.8, CL-01.9: document', () => {
   setLoad(root, 'links: [{type: derives, target: X}]\n', 3);
+  write(root, { 'types/meta.yaml': 'required: [owner]\n' });
   const doc = plm(root, 'report', 'document', 'A').stdout;
+  expect(doc).toMatch(/^findings: schema 4, unknown-target 1\nitems: draft 1\n\n/);
   expect(doc.slice(0, doc.indexOf('## 1'))).toContain('derives X');
   expect(doc).toMatch(/derives X\n- unconfirmed \[P\].*\n\n\n### 1\.1 \[P\].*\n\n\n### 1\.2 \[L\]/);
 });

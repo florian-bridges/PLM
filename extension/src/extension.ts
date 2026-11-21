@@ -54,18 +54,18 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   // VS-04.3, VS-04.4
-  const reviewLink = async (source: string, target: string) => {
+  const act = async (source: string, target: string, picked?: string) => {
     const repo = open(), current = linksOf(entry(repo, source)).find((l) => l.target === target)!;
-    const picked = await vscode.window.showQuickPick(['Diff', 'Confirm', 'Remove']);
     if (picked === 'Diff') {
       const { diff } = current.version ? changeSince(repo, current) : { diff: String(entry(repo, targetId(target)).item.doc) };
       const doc = await vscode.workspace.openTextDocument({ content: diff || 'No change', language: 'diff' });
-      return void vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.Beside });
+      return vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.Beside });
     }
     if (picked === 'Confirm') confirm(repo, currentVersions(repo), validate(repo), source, target);
     else if (picked === 'Remove') link(repo, source, current.type, target, true);
     if (picked) refresh();
   };
+  const reviewLink = async (source: string, target: string) => act(source, target, await vscode.window.showQuickPick(['Diff', 'Confirm', 'Remove']));
 
   // VS-01.2
   vscode.extensions.getExtension('redhat.vscode-yaml')?.activate().then((api: any) => api.registerContributor('plm',
@@ -109,7 +109,7 @@ export function activate(context: vscode.ExtensionContext) {
   const pickConfig = async () => {
     const picked = await vscode.window.showInputBox({ prompt: 'config (CO-01.6)', value: configText });
     if (picked === undefined) return;
-    setConfig(open(), configText = picked);
+    setConfig(open(), (configText = picked) || undefined);
     showConfig();
     refresh();
   };
@@ -134,6 +134,7 @@ export function activate(context: vscode.ExtensionContext) {
     register('plm.newItem', createItem),
     register('plm.showRequirements', showRequirements),
     register('plm.reviewLink', reviewLink),
+    register('plm.act', act),
     register('plm.recordTestRun', recordTestRun),
     register('plm.pickConfig', pickConfig),
     // VS-02.6
@@ -145,8 +146,8 @@ export function activate(context: vscode.ExtensionContext) {
     // VS-04.4
     vscode.languages.registerCodeLensProvider(yaml, { provideCodeLenses: (document) => {
       const repo = open(), file = relative(root, document.uri.fsPath), id = innermostItem(repo, file), found = id && entry(repo, id);
-      return found && found.item.path === file ? logic.suspectLines(found, statesOf(repo)).map(({ line, state }) =>
-        new vscode.CodeLens(document.lineAt(line - 1).range, { title: 'Review link', command: 'plm.reviewLink', arguments: [state.source, state.link.target] })) : [];
+      return found && found.item.path === file ? logic.suspectLines(found, statesOf(repo)).flatMap(({ line, state }) =>
+        ['Diff', 'Confirm', 'Remove'].map((title) => new vscode.CodeLens(document.lineAt(line - 1).range, { title, command: 'plm.act', arguments: [state.source, state.link.target, title] }))) : [];
     } }),
     // VS-04.6
     vscode.window.registerFileDecorationProvider({ onDidChangeFileDecorations: decorations.event, provideFileDecoration: (uri) => {

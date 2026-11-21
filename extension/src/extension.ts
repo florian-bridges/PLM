@@ -144,6 +144,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   // VS-04.5
   const hierarchyItem = (found: Entry) => new vscode.CallHierarchyItem(vscode.SymbolKind.Object, found.id, found.item.data.title as string, fileUri(found.item.path), new vscode.Range(0, 0, 0, 0), new vscode.Range(0, 0, 0, 0));
+  const calls = <T,>(linked: typeof logic.incoming, Call: new (item: vscode.CallHierarchyItem, ranges: vscode.Range[]) => T) => (item: vscode.CallHierarchyItem) => {
+    const repo = open();
+    return linked(statesOf(repo), item.name).filter((id) => repo.entries.has(id)).map((id) => new Call(hierarchyItem(entry(repo, id)), []));
+  };
 
   context.subscriptions.push(
     diagnostics, configBar, testController,
@@ -160,9 +164,9 @@ export function activate(context: vscode.ExtensionContext) {
     } }),
     // VS-04.5
     vscode.languages.registerCallHierarchyProvider(yaml, {
-      prepareCallHierarchy: atId((found) => hierarchyItem(found)),
-      provideCallHierarchyIncomingCalls: (item) => { const repo = open(); return logic.incoming(statesOf(repo), item.name).filter((id) => repo.entries.has(id)).map((id) => new vscode.CallHierarchyIncomingCall(hierarchyItem(entry(repo, id)), [])); },
-      provideCallHierarchyOutgoingCalls: (item) => { const repo = open(); return logic.outgoing(statesOf(repo), item.name).filter((id) => repo.entries.has(id)).map((id) => new vscode.CallHierarchyOutgoingCall(hierarchyItem(entry(repo, id)), [])); },
+      prepareCallHierarchy: atId(hierarchyItem),
+      provideCallHierarchyIncomingCalls: calls(logic.incoming, vscode.CallHierarchyIncomingCall),
+      provideCallHierarchyOutgoingCalls: calls(logic.outgoing, vscode.CallHierarchyOutgoingCall),
     }),
     // VS-02.6
     vscode.languages.registerDocumentSymbolProvider(yaml, { provideDocumentSymbols: (document) => {

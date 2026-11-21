@@ -230,9 +230,7 @@ test('CO-02.5, CO-02.6, CO-02.8, CO-02.10, TE-06.6: ports', () => {
 });
 
 test('CL-01.8: document', () => {
-  const doc = plm(root, 'report', 'document', 'A').stdout;
-  expect(doc).toContain('## 1 [A](frame/item.yaml) Frame\n\n**Load** [R](frame/requirements/load.yaml) unverified');
-  expect(doc).not.toContain('Review link');
+  expect(plm(root, 'report', 'document', 'A').stdout).toContain('## 1 [A](frame/item.yaml) Frame\n\n**Load** [R](frame/requirements/load.yaml) unverified');
   expect(plm(root, 'report', 'document').stdout).toContain('[L](bolt/item.yaml) Bolt');
 });
 

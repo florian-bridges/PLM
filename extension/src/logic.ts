@@ -37,14 +37,10 @@ export const breadcrumbChain = (repo: Repo, id?: string): string[] => {
 };
 
 // VS-04.3
-export const linkState = (state: LinkState, review = state.state !== 'current') =>
-  state.state + (review ? ` [Review link](command:plm.reviewLink?${encodeURIComponent(JSON.stringify([state.source, state.link.target]))})` : '');
-
-// VS-04.3
 export function hoverMarkdown(repo: Repo, states: LinkState[], id: string, source?: string) {
   const { item, meta } = entry(repo, id);
   const link = states.find((state) => state.source === source && state.link.target === id);
-  return `**${item.data.title}**\n\n${[item.data.type, meta.data.status].filter(Boolean).join(', ')}${link ? `\n\n${linkState(link, true)}` : ''}`;
+  return `**${item.data.title}**\n\n${[item.data.type, meta.data.status].filter(Boolean).join(', ')}${link ? `\n\n${link.state} [Review link](command:plm.reviewLink?${encodeURIComponent(JSON.stringify([link.source, link.link.target]))})` : ''}`;
 }
 
 // VS-04.4

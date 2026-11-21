@@ -47,7 +47,7 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 ## VS Code extension (VS)
 
 **VS-01** The extension shall help edit item files with completion and validation from the type's schema. (CR-04; US-1, US-2, US-5)
-*Rationale:* Engineers need not know the YAML schemas; completion and validation from the schema lower the entry barrier.
+*Rationale:* Engineers need not know the YAML schemas.
 
 **VS-02** The extension shall show the product tree of the repository. (CR-02, CR-05; US-2)
 *Rationale:* The product tree is how engineers think about the product and is their main navigation.

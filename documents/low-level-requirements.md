@@ -164,7 +164,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* One core avoids duplicated logic and diverging results between editor and CI. A bundle needs no installed dependencies.
 
 **VS-01.2** `item.yaml` shall get completion, hover and diagnostics while typing from its type's JSON Schema.
-*Rationale:* Most YAML users already have the Red Hat YAML extension installed.
+*Rationale:* Most YAML users already have the Red Hat YAML extension.
 
 **VS-01.3** Diagnostics shall be updated in the Problems panel within one second of saving a file.
 *Rationale:* Immediate feedback catches errors while the context is fresh. Validation reads files from disk, so unsaved edits are not seen.
@@ -176,13 +176,13 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Badges show maturity. Used items appear under each item using them, as they count toward its version.
 
 **VS-02.3** PLM's views shall sit in an Activity Bar container of their own; the tree shall show each `uses` quantity.
-*Rationale:* Avoids crowding the Explorer; shows how much of a used item is needed.
+*Rationale:* Avoids crowding the Explorer.
 
 **VS-02.4** A status bar item shall show the configuration selected per CO-01.6; picking another makes the tree, document and diagnostics follow it.
-*Rationale:* Keeps the active configuration visible and easy to change.
+*Rationale:* Results depend on the configuration.
 
 **VS-02.6** An item file's breadcrumbs shall show its path in the product tree.
-*Rationale:* Orients engineers in deep product trees without opening the tree view.
+*Rationale:* Orients engineers without opening the tree view.
 
 **VS-03.1** A product tree command shall show a read-only webview of an item with a section per item of its subtree (TE-06.2), each item once, numbered and headed by depth (1, 1.1, 1.1.1), each listing the item's requirements with title in bold, ID, status, coverage state and rendered Markdown text; clicking an ID opens its file.
 *Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements top to bottom in the product's structure.
@@ -194,13 +194,13 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* Reviewers see the item's gaps first, including links to requirements outside the subtree.
 
 **VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file.
-*Rationale:* Links are inspected and navigated where they are written, replacing a separate links view.
+*Rationale:* Links are inspected and navigated where they are written.
 
 **VS-04.4** Above each suspect link in an item file, a line shall offer: show the TE-03.2 diff beside the file, confirm per TE-02.1, and remove the link.
-*Rationale:* Acts on a suspect without leaving the file.
+*Rationale:* Resolves suspects in place.
 
 **VS-04.6** The Explorer shall tint and badge the files and folders of items with suspect links.
-*Rationale:* Suspects must be seen before a file is opened.
+*Rationale:* Suspects show before a file is opened.
 
 **VS-06.1** A command shall record a manual test run, picking test cases, system under test, each test case's result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
 *Rationale:* Manual and automated runs must produce identical evidence; one recording function in the core guarantees it.

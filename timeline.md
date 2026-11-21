@@ -35,6 +35,7 @@ Scope decided in release meeting #110 (2026-11-21, `meetings/2026-11-21-release-
 ### Active topics
 
 * #111, #112, #113 being built in parallel worktrees.
+* #114 bug fix on `feat/top-level-items`, for patch 0.10.1.
 
 ### Coming owner meetings
 

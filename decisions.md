@@ -63,3 +63,4 @@ One line each: date, decision, source (issue or meeting). Append only; the chief
 * 2026-11-21: Overview: `report document` begins with counts, within the printed subtree, of `validate` findings by code and of items by `status` (CL-01.9); no new view (2). (#110)
 * 2026-11-21: Graph: `show --down/--up --format mermaid` (CL-01.10); US-2 gains "…and sees the product structure and its links as a graph"; no graph webview (3). (#110)
 * 2026-11-21: One milestone, 0.11 "Change, status and graph", budget 2 windows; #67 closes after 0.11; #61 and #55 stay parked (4). (#110)
+* 2026-11-21: Items under a folder without `item.yaml` are top-level (CO-01.1); fix `productTree` with a test, release as patch 0.10.1. (#114)

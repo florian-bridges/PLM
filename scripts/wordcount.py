@@ -79,7 +79,7 @@ def main():
     # #31 (report connections, role), meeting #85 estimate +80/+130: +73/+114 measured after review cuts (-5 docs, -62 src).
     # #113 (Mermaid graph, CL-01.10, quote escaping): +73 src measured after review cuts (-10 src, -9 docs).
     parser.add_argument("--max-docs", type=int, default=5830, help="word limit for the documents directory")
-    parser.add_argument("--max-src", type=int, default=6746, help="word limit for the source and test directories")
+    parser.add_argument("--max-src", type=int, default=6861, help="word limit for the source and test directories")
     parser.add_argument("--max-ext", type=int, default=1545, help="word limit for the extension directory")
     parser.add_argument("-u", "--include-untracked", action="store_true",
                         help="also count untracked files that are not git-ignored")

@@ -479,7 +479,7 @@ test('TE-01.1–TE-01.2: commit', () => {
 test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
   write(root, { 'meta/A.yaml': 'owner: ana\nstatus: draft\n' });
   const repo = loadRepo(root);
-  expect(search(repo, 'rod')).toEqual([{ id: 'P', title: 'Rod' }]);
+  expect(search(repo, 'ro')).toEqual([{ id: 'P', title: 'Rod' }]);
   expect(search(repo, 'carry 3')).toEqual([{ id: 'R', title: 'Load' }]);
   expect(search(repo, 'carry rod')).toEqual([]);
   expect(search(repo, 'owner:ana status:draft uses:L')).toEqual([{ id: 'A', title: 'Frame' }]);

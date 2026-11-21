@@ -128,7 +128,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.6** `plm apply <file> [--dry-run]` shall run a YAML list of `plm` command lines (`new`, `set`, `link`, `confirm`), `$n` standing for the ID the n-th command printed; if a command fails, validation finds an error the run did not start with, or run with `--dry-run`, it shall restore every file written, remove every file and folder created, and exit 1 (0 for a clean dry run), printing each command's output and the files written.
 *Rationale:* A failed command leaves a half-applied change; a dry run previews it safely.
 
-**CL-01.8** `report document [<item>]` shall print the VS-03.1 document of the item, or of each top-level item, as Markdown without "Review link", IDs linking to their files.
+**CL-01.8** `report document [<item>]` shall print, for the item or each top-level item, a section per item of its subtree (TE-06.2) once, numbered and headed by depth (1, 1.1, 1.1.1); it shall begin with each requirement's coverage state and the output of `plm suspects <item>`, then list each requirement with title in bold, ID, status, coverage state, rendered text, its links and the links to it with state per TE-03.1, and each verifying test case's latest run per TE-06.1, from the core functions behind `plm suspects` and `plm report coverage`; as Markdown, IDs linking to their files.
 *Rationale:* VS Code is not always available.
 
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8) in block style, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters outside `a-z0-9` replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
@@ -184,14 +184,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-02.6** An item file's breadcrumbs shall show its path in the product tree.
 *Rationale:* Orients engineers without opening the tree view.
 
-**VS-03.1** A product tree command shall show a read-only webview of an item with a section per item of its subtree (TE-06.2), each item once, numbered and headed by depth (1, 1.1, 1.1.1), each listing the item's requirements with title in bold, ID, status, coverage state and rendered Markdown text; clicking an ID opens its file.
-*Rationale:* Read-only rendering avoids a second editor; reviewers read the requirements top to bottom in the product's structure.
-
-**VS-03.3** Each requirement shall list its links and the links to it with their state per TE-03.1 and, if not current, "Review link" (VS-04.3), and each verifying test case its latest run per TE-06.1.
-*Rationale:* Links in both directions per requirement form the traceability matrix in reading order.
-
-**VS-03.4** The document shall begin with each requirement's coverage state and the output of `plm suspects <item>`, and take all link states, coverage and runs from the core functions behind `plm suspects` and `plm report coverage`.
-*Rationale:* Reviewers see the item's gaps first, including links to requirements outside the subtree.
+**VS-03.5** The document of CL-01.8 shall open in VS Code's Markdown preview, refreshed on save, with live link states.
+*Rationale:* Reuses VS Code's renderer instead of a second one.
 
 **VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file.
 *Rationale:* Links are inspected and navigated where they are written.
@@ -199,8 +193,11 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-04.4** Above each suspect link in an item file, a line shall offer: show the TE-03.2 diff beside the file, confirm per TE-02.1, and remove the link.
 *Rationale:* Resolves suspects in place.
 
+**VS-04.5** Show Call Hierarchy on an ID shall trace its links: incoming are links to it, outgoing links from it.
+*Rationale:* Reuses a native VS Code view for link navigation instead of a new one.
+
 **VS-04.6** The Explorer shall tint and badge the files and folders of items with suspect links.
 *Rationale:* Suspects show before a file is opened.
 
-**VS-06.1** A command shall record a manual test run, picking test cases, system under test, each test case's result and log files in quick picks and a file dialog, and recording it through the core per CL-03.1 to CL-03.3.
-*Rationale:* Manual and automated runs must produce identical evidence; one recording function in the core guarantees it.
+**VS-06.2** Test cases shall appear in the Testing panel by item; a Manual run asks each result and log files and records them per CL-03.1.
+*Rationale:* The Testing panel is VS Code's native place for running and recording tests.

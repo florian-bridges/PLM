@@ -1,6 +1,7 @@
-// VS-01–VS-04: editor logic without the vscode API, for tests.
-import { requirementsMarkdown as render, type Coverage, type LinkState } from '../../src/links.ts';
-import { entry, innermostItem, list, parentOf, useEntries, type Entry, type Link, type Repo } from '../../src/repo.ts';
+// VS-01–VS-06: editor logic without the vscode API, for tests.
+import { dirname } from 'node:path';
+import type { LinkState } from '../../src/links.ts';
+import { entry, innermostItem, list, parentOf, targetId, useEntries, type Entry, type Link, type Repo } from '../../src/repo.ts';
 import { itemSchema } from '../../src/validate.ts';
 import type { Finding } from '../../src/validate.ts';
 
@@ -35,13 +36,9 @@ export const breadcrumbChain = (repo: Repo, id?: string): string[] => {
   return chain;
 };
 
-// VS-03.3, VS-04.3
+// VS-04.3
 export const linkState = (state: LinkState, review = state.state !== 'current') =>
   state.state + (review ? ` [Review link](command:plm.reviewLink?${encodeURIComponent(JSON.stringify([state.source, state.link.target]))})` : '');
-
-// VS-03.3: the shared document with Review links.
-export const requirementsMarkdown = (repo: Repo, id: string, link: (found: Entry) => string, states: LinkState[], rows: Coverage[], suspects: LinkState[]) =>
-  render(repo, id, link, states, rows, suspects, linkState);
 
 // VS-04.3
 export function hoverMarkdown(repo: Repo, states: LinkState[], id: string, source?: string) {
@@ -60,5 +57,13 @@ export function suspectLines(found: Entry, states: LinkState[]) {
   });
 }
 
+// VS-04.5
+export const incoming = (states: LinkState[], id: string) => states.filter((s) => targetId(s.link.target) === id).map((s) => s.source);
+export const outgoing = (states: LinkState[], id: string) => states.filter((s) => s.source === id).map((s) => targetId(s.link.target));
+
 // VS-04.6
 export const hasSuspect = (states: LinkState[], id: string) => states.some((s) => s.source === id && s.state !== 'current');
+
+// VS-06.2
+export const testCasesByOwner = (repo: Repo) =>
+  Map.groupBy([...repo.entries.values()].filter((found) => found.item.data.type === 'test-case'), (found) => innermostItem(repo, dirname(found.path)));

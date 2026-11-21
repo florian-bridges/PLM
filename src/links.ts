@@ -167,11 +167,11 @@ export function unreached(repo: Repo, states: LinkState[], type: string, root?: 
     .map((e) => named(repo, e.id));
 }
 
-// CL-01.8, VS-03.1, VS-03.3, VS-03.4
-export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry) => string, states: LinkState[], rows: Coverage[], suspects: LinkState[], stateText: (state: LinkState) => string = (state) => state.state): string {
+// CL-01.8, VS-03.5
+export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry) => string, states: LinkState[], rows: Coverage[], suspects: LinkState[]): string {
   const ref = (id: string) => { const found = repo.entries.get(id); return found ? `[${id}](${link(found)}) ${found.item.data.title}` : id; };
   const status = (found: Entry) => (found.meta.data.status ? ` *${found.meta.data.status}*` : '');
-  const linkLine = (state: LinkState) => `- ${stateText(state)} ${ref(state.source)} ${state.link.type} ${ref(state.link.target)}\n`;
+  const linkLine = (state: LinkState) => `- ${state.state} ${ref(state.source)} ${state.link.type} ${ref(state.link.target)}\n`;
   const summary = rows.map((row) => `- ${row.state} ${ref(row.requirement)}\n`).join('') + suspects.map(linkLine).join('');
   const seen = new Set<string>();
   const section = (itemId: string, number: string): string => {

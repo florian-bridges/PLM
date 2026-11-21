@@ -1,5 +1,5 @@
 {
-  "//": "VS-01.1, VS-01.2, VS-01.5, VS-02.1, VS-02.3, VS-03.1, VS-06.1",
+  "//": "VS-01.1, VS-01.2, VS-01.5, VS-02.1, VS-02.3",
   "name": "plm-vscode",
   "displayName": "PLM",
   "version": "0.1.0",
@@ -14,7 +14,6 @@
     "views": { "plm": [{ "id": "plm.tree", "name": "Product" }] },
     "commands": [
       { "command": "plm.newItem", "category": "PLM", "title": "New item" },
-      { "command": "plm.recordTestRun", "title": "PLM: Record test run" },
       { "command": "plm.showRequirements", "title": "Show requirements", "icon": "$(book)" }
     ],
     "menus": {

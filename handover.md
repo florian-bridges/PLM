@@ -6,10 +6,10 @@ Latest release: 0.8.0 (2026-11-20). Milestones and entry conditions: `timeline.m
 
 ## Active topics
 
-* 0.8 done: #40 (PR #97), #43 (PR #98), v0.8.0 (PR #99). Limits now src+test 6673, documents 5830 (all full; extension 1544/1545).
-* Release meeting #100 ready (`meetings/2026-11-20-release-0.8.md`), 0.9/0.10 UI phases reworked from the owner's HMI interview (2723b36). No milestone decided after 0.8. Next: record its decisions (skill `meeting`, section 3), make 0.9 active.
-* Decisions 8 and 9 of #90: dropping `detail` from `report connections` rows and #87 stay in the backlog unless #100 takes them.
-* Backlog from reviews: #94 (neutral test data), #87 (missing `files` file); both proposed for 0.9 in #100.
+* Meeting #100 recorded (closed): 0.9 UI foundation active (2 windows: #101, #94, #87), 0.10 UI views decided (1 window: #102), then a release meeting for graph, diff and overview (#67). #61 and #55 parked.
+* 0.9 in progress: #101 (`feat/ui-foundation`) and #87 (`feat/missing-file`) building; #94 next.
+* Limits all full (src+test 6673, documents 5830, extension 1544/1545): the reviewer raises them per feature with measured numbers.
+* Decision 8 of #90 (dropping `detail` from `report connections` rows) stays in the backlog.
 
 ## Open pull requests and blockers
 

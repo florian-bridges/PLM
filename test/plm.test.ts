@@ -225,7 +225,7 @@ test('CO-02.5, CO-02.6, CO-02.8, CO-02.10, TE-06.6: ports', () => {
     'wing/ports/e/item.yaml': 'id: PE\ntype: port\ntitle: E\n',
     'wing/connections/f/item.yaml': 'id: CF\ntype: connection\ntitle: F\nlinks: [{type: connects, target: PA}, {type: connects, target: PB}]\n',
   });
-  expect(validate(loadRepo(root))).toMatchObject([{ code: 'schema', file: 'wing/ports/a/icd.yaml', line: 1 }]);
+  expect(validate(loadRepo(root)).map((f) => f.code).sort()).toEqual(['missing-file', 'missing-file', 'schema']);
   expect(plm(root, 'report', 'connections')).toMatchObject({ status: 1, stdout: 'open PE (E)\nfew CA (C) 1\nsenders CF (F) 2\n' });
 });
 

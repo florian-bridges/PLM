@@ -1,7 +1,7 @@
 // VS-01–VS-06: VS Code glue.
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
-import { changeSince, confirm, coverage, link, linkStates, recordRun, suspects } from '../../src/links.ts';
+import { changeSince, confirm, coverage, link, linkStates, recordRun, requirementsMarkdown, suspects } from '../../src/links.ts';
 import { childrenOf, entry, findRoot, innermostItem, linksOf, loadRepo, newItem, setConfig, targetId, type Entry, type Repo } from '../../src/repo.ts';
 import { results } from '../../src/schemas.ts';
 import { validate } from '../../src/validate.ts';
@@ -43,14 +43,18 @@ export function activate(context: vscode.ExtensionContext) {
     }
     treeChanged.fire();
     decorations.fire(undefined);
+    docChanged.fire(docUri); // VS-03.5
+    buildTests();
   };
 
-  // VS-03.1, VS-03.4
+  // VS-03.5
+  const docUri = vscode.Uri.parse('plm:/requirements.md');
+  let docId: string | undefined;
+  const docChanged = new vscode.EventEmitter<vscode.Uri>();
   const showRequirements = async (found: Entry) => {
-    const repo = open(), states = statesOf(repo);
-    const toFile = (target: Entry) => `command:vscode.open?${encodeURIComponent(JSON.stringify([fileUri(target.item.path)]))}`;
-    const panel = vscode.window.createWebviewPanel('plm.requirements', `${found.item.data.title} requirements`, vscode.ViewColumn.Active, { enableCommandUris: ['vscode.open', 'plm.reviewLink'] });
-    panel.webview.html = await vscode.commands.executeCommand<string>('markdown.api.render', logic.requirementsMarkdown(repo, found.id, toFile, states, coverage(repo, states, found.id), suspects(repo, states, found.id)));
+    docId = found.id;
+    docChanged.fire(docUri);
+    await vscode.commands.executeCommand('markdown.showPreview', docUri);
   };
 
   // VS-04.3, VS-04.4
@@ -82,24 +86,35 @@ export function activate(context: vscode.ExtensionContext) {
     refresh();
   };
 
-  // VS-06.1
-  const recordTestRun = async () => {
+  // VS-06.2
+  const testController = vscode.tests.createTestController('plm', 'PLM');
+  const buildTests = () => {
     const repo = open();
-    const items = (type?: string) => [...repo.entries.values()]
-      .filter((found) => !type || found.item.data.type === type).map((found) => ({ label: found.id, description: found.item.data.title }));
-    const testCases = (await vscode.window.showQuickPick(items('test-case'), { placeHolder: 'Test cases', canPickMany: true }))?.map((picked) => picked.label);
-    if (!testCases?.length) return;
-    const sut = await vscode.window.showQuickPick(items(), { placeHolder: 'System under test' });
-    if (!sut) return;
-    const picked: string[] = [];
-    for (const testCase of testCases) {
-      const result = await vscode.window.showQuickPick(results, { placeHolder: `Result of ${testCase}` });
-      if (!result) return;
-      picked.push(result);
+    testController.items.replace([...logic.testCasesByOwner(repo)].filter(([owner]) => owner).map(([owner, cases]) => {
+      const item = testController.createTestItem(owner!, entry(repo, owner!).item.data.title as string, fileUri(entry(repo, owner!).item.path));
+      item.children.replace(cases.map((found) => testController.createTestItem(found.id, found.item.data.title as string, fileUri(found.item.path))));
+      return item;
+    }));
+  };
+  const manualRun = async (request: vscode.TestRunRequest) => {
+    const repo = open(), run = testController.createTestRun(request), all: vscode.TestItem[] = [];
+    testController.items.forEach((owner) => owner.children.forEach((child) => all.push(child)));
+    const picked = (request.include ?? all).filter((found) => !request.exclude?.includes(found));
+    const sut = await vscode.window.showQuickPick([...repo.entries.values()].map((found) => ({ label: found.id, description: found.item.data.title as string })), { placeHolder: 'System under test' });
+    if (!sut) return run.end();
+    const got: string[] = [];
+    for (const testCase of picked) {
+      const result = await vscode.window.showQuickPick(results, { placeHolder: `Result of ${testCase.id}` });
+      if (!result) return run.end();
+      got.push(result);
     }
     const logs = await vscode.window.showOpenDialog({ canSelectMany: true, openLabel: 'Attach logs' }) ?? [];
-    vscode.window.showInformationMessage(`Recorded ${recordRun(repo, testCases, [sut.label], picked, logs.map((log) => log.fsPath))}`);
+    recordRun(repo, picked.map((found) => found.id), [sut.label], got, logs.map((log) => log.fsPath));
+    picked.forEach((found, i) => got[i] === 'pass' ? run.passed(found) : got[i] === 'fail' ? run.failed(found, new vscode.TestMessage('fail')) : run.skipped(found));
+    run.end();
+    refresh(); // VS-03.5
   };
+  testController.createRunProfile('Manual', vscode.TestRunProfileKind.Run, manualRun, true);
 
   // VS-02.4
   const configBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
@@ -128,15 +143,32 @@ export function activate(context: vscode.ExtensionContext) {
   };
   const register = (name: string, command: Function) => vscode.commands.registerCommand(name, reporting(command));
 
+  // VS-04.5
+  const hierarchyItem = (found: Entry) => new vscode.CallHierarchyItem(vscode.SymbolKind.Object, found.id, found.item.data.title as string, fileUri(found.item.path), new vscode.Range(0, 0, 0, 0), new vscode.Range(0, 0, 0, 0));
+  const calls = <T,>(linked: typeof logic.incoming, Call: new (item: vscode.CallHierarchyItem, ranges: vscode.Range[]) => T) => (item: vscode.CallHierarchyItem) => {
+    const repo = open();
+    return linked(statesOf(repo), item.name).filter((id) => repo.entries.has(id)).map((id) => new Call(hierarchyItem(entry(repo, id)), []));
+  };
+
   context.subscriptions.push(
-    diagnostics, configBar,
+    diagnostics, configBar, testController,
     vscode.window.registerTreeDataProvider('plm.tree', tree),
     register('plm.newItem', createItem),
     register('plm.showRequirements', showRequirements),
     register('plm.reviewLink', reviewLink),
     register('plm.act', act),
-    register('plm.recordTestRun', recordTestRun),
     register('plm.pickConfig', pickConfig),
+    // VS-03.5
+    vscode.workspace.registerTextDocumentContentProvider('plm', { onDidChange: docChanged.event, provideTextDocumentContent: () => {
+      const repo = open(), states = statesOf(repo);
+      return docId && requirementsMarkdown(repo, docId, (found) => fileUri(found.item.path).toString(), states, coverage(repo, states, docId), suspects(repo, states, docId));
+    } }),
+    // VS-04.5
+    vscode.languages.registerCallHierarchyProvider(yaml, {
+      prepareCallHierarchy: atId(hierarchyItem),
+      provideCallHierarchyIncomingCalls: calls(logic.incoming, vscode.CallHierarchyIncomingCall),
+      provideCallHierarchyOutgoingCalls: calls(logic.outgoing, vscode.CallHierarchyOutgoingCall),
+    }),
     // VS-02.6
     vscode.languages.registerDocumentSymbolProvider(yaml, { provideDocumentSymbols: (document) => {
       const repo = open(), range = new vscode.Range(0, 0, document.lineCount, 0);

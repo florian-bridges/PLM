@@ -58,3 +58,4 @@ One line each: date, decision, source (issue or meeting). Append only; the chief
 * 2026-11-21: Budgets: 0.9 2 windows, 0.10 1 window (3). (#100)
 * 2026-11-21: #61 stays parked until a project exchanges requirements; decision 5 falls away (4). (#100)
 * 2026-11-21: #55 stays parked until an agent use without a shell appears (6). (#100)
+* 2026-11-21: 0.10 keeps its scope (#102 UI views); budget raised to 3 windows (overrun was a window-counting artefact). (#107)

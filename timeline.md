@@ -12,36 +12,32 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | 0.6 | 3 | 1 | done (v0.6.0, meeting #85) |
 | 0.7 | 1 | 1 | done (v0.7.0, meeting #90) |
 | 0.8 | 4 | 3 | done (v0.8.0, meetings #90, #92) |
-| 0.9 | 2 | 0 | active (meeting #100) |
-| 0.10 | 1 | 0 | decided (meeting #100) |
+| 0.9 | 2 | 1 | done (v0.9.0, meeting #100) |
+| 0.10 | 3 | 0 | active (meeting #100) |
 
 Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is a GitHub milestone holding its issues. Standing directions for every feature: PLM holds product data only, no project management (#64); use by LLM agents is a strength to keep and document (#54).
 
 ## Active milestone
 
-**Next milestone: 0.9.** UI foundation.
+**Next milestone: 0.10.** UI views.
 
-Budget: 2 windows.
+Budget: 3 windows.
 
-Scope decided in release meeting #100 (2026-11-21, `meetings/2026-11-20-release-0.8.md`).
+Scope decided in release meeting #100 (2026-11-21, `meetings/2026-11-20-release-0.8.md`, 3.1 "0.10 views").
 
 ### Entry conditions
 
-- [ ] #101 UI foundation (#67 part 1). *Done when:* VS-01.2, VS-02.3, VS-02.4, VS-02.6, VS-04.4 and VS-04.6 are implemented and tested in `extension/test/`; the forms and the review page (VS-04.2) removed; VS-01.3 and VS-01.5 tested; `scripts/check.sh` passes.
-- [ ] #94 Neutral test data. *Done when:* the test fixtures use neutral names and `scripts/check.sh` passes.
-- [ ] #87 Missing `files` file. *Done when:* CO-02.10 states that `validate` reports a named file missing from the item's folder as `missing-file`, the code and a test follow it; `scripts/check.sh` passes.
+- [x] #102 UI views (#67 part 2). *Done when:* VS-03.5, VS-04.5 and VS-06.2 are implemented and tested; the document webview (VS-03.1–VS-03.4) and the VS-06.1 command removed; `scripts/check.sh` passes.
 
 ### Active topics
 
-* None started.
+* #102 on `feat/ui-views`: built, reviewed; WIP a43056e: CL-01.8 detailed test left.
 
 ### Coming owner meetings
 
-* None; 0.10 follows without a meeting.
+* After 0.10: release meeting on the graph, structure diff and overview (#67), no decided milestone left.
 
 ## Planned milestones
 
-* **0.10 UI views**, decided (meeting #100), budget 1 window:
-  - [ ] #102 UI views (#67 part 2). *Done when:* VS-03.5, VS-04.5 and VS-06.2 are implemented and tested; the document webview (VS-03.1–VS-03.4) and the VS-06.1 command removed; `scripts/check.sh` passes.
 * **Later, next release meeting:** whole-product graph, structure diff, overview (#67).
 * **Parked, no milestone:** #61 requirements exchange (until a project exchanges requirements), #55 MCP server (until an agent use without a shell).

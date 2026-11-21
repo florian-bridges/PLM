@@ -76,7 +76,7 @@ test('TE-01.2, CO-01.3: artifacts', () => {
   expect(json(root, 'show', 'P').artifacts).toHaveLength(1);
 });
 
-test('CL-01.5: show walk', () => {
+test('CL-01.5, CL-01.10: show walk', () => {
   const a = json(root, 'show', 'A');
   expect(a).not.toHaveProperty('parent');
   expect(a.requirements).toMatchObject([{ id: 'R', title: 'Load', links: [{ link: { type: 'satisfies', target: 'R' } }] }]);
@@ -87,6 +87,7 @@ test('CL-01.5: show walk', () => {
   ]));
   expect(json(root, 'show', 'L', '--up', '1')).toEqual([{ id: 'A', title: 'Frame', depth: 1, via: 'uses' }]);
   expect(plm(root, 'show', 'R', '--down', '1').stdout).toBe('1 satisfies P (Rod)\n');
+  expect(plm(root, 'show', 'A', '--down', '2', '--format', 'mermaid').stdout).toMatch(/A -->\|uses\| L[^]*stroke:red/);
 });
 
 test('CL-01.6: apply', () => {
@@ -229,9 +230,11 @@ test('CO-02.5, CO-02.6, CO-02.8, CO-02.10, TE-06.6: ports', () => {
   expect(plm(root, 'report', 'connections')).toMatchObject({ status: 1, stdout: 'open PE (E)\nfew CA (C) 1\nsenders CF (F) 2\n' });
 });
 
-test('CL-01.8: document', () => {
+test('CL-01.8, CL-01.9: document', () => {
   setLoad(root, 'links: [{type: derives, target: X}]\n', 3);
+  write(root, { 'types/meta.yaml': 'required: [owner]\n' });
   const doc = plm(root, 'report', 'document', 'A').stdout;
+  expect(doc).toMatch(/^findings: schema 4, unknown-target 1\nitems: draft 1\n\n/);
   expect(doc.slice(0, doc.indexOf('## 1'))).toContain('derives X');
   expect(doc).toMatch(/derives X\n- unconfirmed \[P\].*\n\n\n### 1\.1 \[P\].*\n\n\n### 1\.2 \[L\]/);
 });
@@ -441,7 +444,7 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-02.2, 
   expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 });
 
-test('TE-05.1–TE-05.3: impact', () => {
+test('TE-05.1–TE-05.4: impact', () => {
   write(root, {
     'runs/X/item.yaml': 'id: X\ntype: test-run\ntitle: Run\nlinks:\n  - type: tests\n    target: A\n',
     'meta/P.yaml': 'confirmed:\n  R:\n    version: outdated\n',
@@ -458,6 +461,10 @@ test('TE-05.1–TE-05.3: impact', () => {
   commit(root);
   write(root, { 'frame/rod/item.yaml': rod + 'x: 1\n' });
   expect(plm(root, 'impact', 'HEAD')).toMatchObject({ status: 1, stdout: expect.stringContaining('released P') });
+  write(root, { 'frame/item.yaml': `${frame}uses: [{item: L, quantity: 2}]\n` });
+  expect(json(root, 'impact', 'HEAD').uses).toMatchObject([{ id: 'A', uses: { id: 'L' }, status: 'changed' }]);
+  write(root, { 'frame/item.yaml': `${frame}uses: [P]\n` });
+  expect(json(root, 'impact', 'HEAD').uses).toMatchObject([{ id: 'A', uses: { id: 'L' }, status: 'removed' }, { id: 'A', uses: { id: 'P' }, status: 'added' }]);
 });
 
 test('TE-01.1–TE-01.2: commit', () => {

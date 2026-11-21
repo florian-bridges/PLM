@@ -1,9 +1,9 @@
 import { copyFileSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
-import { childrenOf, entry, git, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, typeOf, UsageError, walk, writeYaml, type Entry, type Link, type Named, type Repo } from './repo.ts';
+import { childrenOf, entry, git, innermostItem, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, typeOf, UsageError, walk, writeYaml, type Entry, type Link, type Named, type Repo } from './repo.ts';
 import { allowedLinks, allows, disallowed } from './schemas.ts';
-import type { Finding } from './validate.ts';
+import { validate, type Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
 
 export interface LinkState { source: string; title: string; link: Link; targetTitle: string; state: 'current' | 'suspect' | 'unconfirmed' }
@@ -170,6 +170,8 @@ export function unreached(repo: Repo, states: LinkState[], type: string, root?: 
 // CL-01.8, VS-03.5
 export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry) => string, states: LinkState[], rows: Coverage[], suspects: LinkState[]): string {
   const ref = (id: string) => { const found = repo.entries.get(id); return found ? `[${id}](${link(found)}) ${found.item.data.title}` : id; };
+  // CL-01.9
+  const items = within(repo, id), tally = (xs: unknown[]) => [...new Set(xs)].map((x) => `${x} ${xs.filter((y) => y === x).length}`).join(', ');
   const status = (found: Entry) => (found.meta.data.status ? ` *${found.meta.data.status}*` : '');
   const linkLine = (state: LinkState) => `- ${state.state} ${ref(state.source)} ${state.link.type} ${ref(state.link.target)}\n`;
   const summary = rows.map((row) => `- ${row.state} ${ref(row.requirement)}\n`).join('') + suspects.map(linkLine).join('');
@@ -185,7 +187,7 @@ export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry
         + row.tests.map((test) => `- ${ref(test.testCase.id)}: ${test.run ? `${ref(test.run.id)} ${test.result}${test.outdated ? ' outdated' : ''}` : 'no run'}\n`).join('') + '\n';
     }).join('') + childrenOf(found).map((child) => seen.has(child) || !repo.entries.has(child) ? '' : section(child, `${number}.${++n}`)).join('');
   };
-  return summary + section(id, '1');
+  return `findings: ${tally(validate(repo).filter((f) => items.some((e) => e.id === innermostItem(repo, f.file) || e.meta.path === f.file)).map((f) => f.code))}\nitems: ${tally(items.map((e) => e.meta.data.status).filter(Boolean))}\n\n` + summary + section(id, '1');
 }
 
 // TE-06.6

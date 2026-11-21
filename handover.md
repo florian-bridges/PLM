@@ -2,17 +2,17 @@
 
 What the next session needs to start. Current state only; history in git. The chief engineer keeps it current (skill `chief-engineer`, Your files).
 
-Latest release: 0.9.0 (2026-11-21). Milestones and entry conditions: `timeline.md`.
+Latest release: 0.10.0 (2026-11-21). Milestones and entry conditions: `timeline.md`.
 
 ## Active topics
 
-* 0.9 done: #87 (PR #103), #94 (PR #104), #101 (PR #105), v0.9.0 (PR #106). Limits: documents 5824/5830, extension 1545/1545 (full), src+test 6673.
-* 0.10 UI views active (1 window, decided in #100): #102 on `feat/ui-views` (worktree `/home/tower/PLM-wt/ui-views`), built and reviewed (679b616); WIP a43056e has the VS-03.5/VS-06.2 wording fixes. Next: feature-dev finishes the detailed CL-01.8 test in `test/plm.test.ts` (replace the WIP-MARKER placeholder; cover suspects first, links both directions, test runs, depth numbering, each item once) within the src+test limit (now 6697/6673), optionally drops CL-01.8's "from the core functions behind..." clause; check.sh, PR, merge, release 0.10. After its release, prepare a release meeting (graph, structure diff, overview; #67).
+* 0.11 active (meeting #110, budget 2): #111 TE-05.4, #112 CL-01.9, #113 CL-01.10, each a `feat/` branch in `/home/tower/PLM-wt`. Limits before: documents 5767/5830, extension 1529/1545, src+test 6672/6673 (full): reviewer raises by measured numbers.
+* #114 bug (owner: fix, patch 0.10.1): `productTree` misses items under a folder without `item.yaml`, so the Product tree, `report document` and `report parts` are empty. feature-dev on `feat/top-level-items` (worktree `.claude/worktrees/top-level-items`). Next: check, reviewer (src+test limit full), merge; release 0.10.1 from `main` if 0.11 work is on `develop`.
 * #61 and #55 parked; decision 8 of #90 (dropping `detail` from `report connections` rows) stays in the backlog.
 
 ## Open pull requests and blockers
 
-* None; branch `feat/ui-views` pushed, no PR yet.
+* None yet; no blockers.
 
 ## Owner directions
 

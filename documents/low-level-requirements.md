@@ -90,6 +90,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-05.3** `impact` shall also list as `released`, and exit 1 for, each changed item (TE-05.1) whose `status` is unchanged and in `plm.yaml`'s `released_states` (default `[released]`).
 *Rationale:* Others rely on a released item; only a status change may announce a change to it.
 
+**TE-05.4** `impact` shall also list, per item, the `uses` entries added, removed, or changed in `quantity`, `ref` or `when` between base and head, matching same-item entries by position.
+*Rationale:* Structure changes matter alongside item changes, and impact already walks both trees.
+
 **TE-06.1** A requirement shall count as verified when a test case `verifies` it through a current link and that test case's latest run, by date, with current `executes` and `tests` links records `pass` for it; coverage shall list each verifying test case with its latest run, that run's result for it and whether it is outdated.
 *Rationale:* Evidence counts only for the versions tested and the latest result; reusing the suspect mechanism avoids a second staleness check.
 
@@ -130,6 +133,12 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 **CL-01.8** `report document [<item>]` shall print, for the item or each top-level item, a section per item of its subtree (TE-06.2) once, numbered and headed by depth (1, 1.1, 1.1.1); it shall begin with each requirement's coverage state and the output of `plm suspects <item>`, then list each requirement with title in bold, ID, status, coverage state, rendered text, its links and the links to it with state per TE-03.1, and each verifying test case's latest run per TE-06.1; as Markdown, IDs linking to their files.
 *Rationale:* VS Code is not always available.
+
+**CL-01.9** `report document` shall begin with counts, within the printed subtree, of `validate`'s findings by code and of items by `status`.
+*Rationale:* The counts show the product's state at a glance.
+
+**CL-01.10** `show --down`/`--up --format mermaid` shall print a Mermaid graph of the items, their `uses` and links, coloured by state per TE-03.1.
+*Rationale:* Git hosts and Markdown viewers render Mermaid.
 
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8) in block style, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters outside `a-z0-9` replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
 *Rationale:* Templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.

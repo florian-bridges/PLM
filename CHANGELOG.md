@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.0 (2026-11-21)
+
+* `impact` lists, per item, the `uses` entries added, removed, or changed in `quantity`, `ref` or `when` (#111, #67).
+* `report document` begins with counts of `validate` findings by code and of items by `status` within the printed subtree (#112, #67).
+* `show --down/--up --format mermaid` prints the items, their `uses` and links, coloured by state, as a Mermaid graph (#113, #67).
+
 ## 0.10.0 (2026-11-21)
 
 * VS Code extension: the requirements document opens in VS Code's Markdown preview, replacing the document webview; Show Call Hierarchy on an ID traces its links; test cases appear in the Testing panel under their item, replacing the run-test command (#102, #67).

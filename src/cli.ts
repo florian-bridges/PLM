@@ -6,7 +6,7 @@ import { Command, CommanderError, Option } from 'commander';
 import { parse as parseYaml, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, connections, coverage, link, linkStates, recordRun, requirementsMarkdown, suspects, unreached, type LinkState } from './links.ts';
-import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, partsOf, productTree, parentOf, Refused, rollback, setConfig, targetId, UsageError, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
+import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, partsOf, productTree, parentOf, Refused, rollback, setConfig, targetId, UsageError, usesOf, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
 import { allowedLinks, results } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
@@ -37,6 +37,16 @@ const record = (repo: Repo, found: Entry) => ({ ...found.item.data, text: expand
   label = ({ id, title }: Named) => (title ? `${id} (${title})` : id),
   linkLabel = (state: LinkState) => `${label({ id: state.source, title: state.title })} ${state.link.type} ${label({ id: state.link.target, title: state.targetTitle })}`;
 
+// CL-01.10
+const stateColor = { current: 'green', suspect: 'orange', unconfirmed: 'red' };
+function mermaid(repo: Repo, ids: Set<string>) {
+  const edges = [...ids].flatMap((i) => usesOf(repo.entries.get(i)?.item.data).map((u) => [i, 'uses', u]))
+    .concat(linkStates(repo, currentVersions(repo)).map((s) => [s.source, s.link.type, targetId(s.link.target), stateColor[s.state]]))
+    .filter(([a, , b]) => ids.has(a) && ids.has(b));
+  return ['graph TD', ...[...ids].map((i) => `  ${i}["${label(named(repo, i)).replaceAll('"', '#quot;')}"]`), ...edges.map(([a, t, b]) => `  ${a} -->|${t}| ${b}`),
+    ...edges.map(([, , , c], n) => c && `linkStyle ${n} stroke:${c}`).filter(Boolean)].join('\n');
+}
+
 // CL-05.2
 let exitCode = 0;
 
@@ -54,8 +64,9 @@ program.command('show <id>').description('show an item')
     const repo = openRepo(), found = entry(repo, id), steps = options.down ?? options.up;
     if (steps !== undefined) {
       setConfig(repo, program.opts().config);
-      const rows = walk(repo, id, options.down !== undefined, Number(steps)).filter((w) => w.depth)
+      const reached = walk(repo, id, options.down !== undefined, Number(steps)), rows = reached.filter((w) => w.depth)
         .map((w) => ({ ...named(repo, w.id), depth: w.depth, via: w.via }));
+      if (program.opts().format === 'mermaid') return output(mermaid(repo, new Set(reached.map((w) => w.id))), null);
       return output(rows.map((w) => `${w.depth} ${w.via} ${label(w)}`).join('\n'), rows);
     }
     const versions = currentVersions(repo),
@@ -128,7 +139,7 @@ program.command('suspects [item]').description('list suspect links').action((ite
   exitCode = states.length && 1;
 });
 
-// TE-05.1, TE-05.3
+// TE-05.1, TE-05.3, TE-05.4
 program.command('impact <range>').description('list a change\'s impact').action((range) => {
   const repo = openRepo(), [base, head] = range.split('..'),
     headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) },
@@ -139,6 +150,7 @@ program.command('impact <range>').description('list a change\'s impact').action(
       ...result.released.map((item) => `released ${label(item)}`),
       ...result.suspects.map((state) => `suspect ${linkLabel(state)}`),
       ...result.runs.map((run) => `outdated run ${label(run)}`),
+      ...result.uses.map((u) => `uses ${u.status} ${label(u.uses)} ${u.status === 'removed' ? 'from' : 'to'} ${label(u)}`),
     ];
   output(lines.join('\n'), result);
   exitCode = result.released.length && 1;

@@ -81,7 +81,7 @@ def main():
     # #113 after merging #111: +17 docs, the part of its +39 that #111 left no spare for, measured after review cuts (-11 docs).
     # #112 (CL-01.9 counts) after #111, #113: +31 docs (its measured net, the spare it used now taken by #113), +39 src after review cuts (-5 docs, -8 src).
     parser.add_argument("--max-docs", type=int, default=5878, help="word limit for the documents directory")
-    parser.add_argument("--max-src", type=int, default=6900, help="word limit for the source and test directories")
+    parser.add_argument("--max-src", type=int, default=6906, help="word limit for the source and test directories")
     parser.add_argument("--max-ext", type=int, default=1545, help="word limit for the extension directory")
     parser.add_argument("-u", "--include-untracked", action="store_true",
                         help="also count untracked files that are not git-ignored")

@@ -39,10 +39,10 @@ const record = (repo: Repo, found: Entry) => ({ ...found.item.data, text: expand
 
 // CL-01.10
 const stateColor = { current: 'green', suspect: 'orange', unconfirmed: 'red' };
-function mermaid(repo: Repo, ids: Set<string>, versions: Map<string, string>) {
-  const edges = [...ids].flatMap((i) => usesOf(repo.entries.get(i)?.item.data).filter((u) => ids.has(u)).map((u) => [i, 'uses', u, '']))
-    .concat(linkStates(repo, versions).filter((s) => ids.has(s.source) && ids.has(targetId(s.link.target)))
-      .map((s) => [s.source, s.link.type, targetId(s.link.target), stateColor[s.state]]));
+function mermaid(repo: Repo, ids: Set<string>) {
+  const edges = [...ids].flatMap((i) => usesOf(repo.entries.get(i)?.item.data).map((u) => [i, 'uses', u]))
+    .concat(linkStates(repo, currentVersions(repo)).map((s) => [s.source, s.link.type, targetId(s.link.target), stateColor[s.state]]))
+    .filter(([a, , b]) => ids.has(a) && ids.has(b));
   return ['graph TD', ...[...ids].map((i) => `  ${i}["${label(named(repo, i))}"]`), ...edges.map(([a, t, b]) => `  ${a} -->|${t}| ${b}`),
     ...edges.map(([, , , c], n) => c && `linkStyle ${n} stroke:${c}`).filter(Boolean)].join('\n');
 }
@@ -66,7 +66,7 @@ program.command('show <id>').description('show an item')
       setConfig(repo, program.opts().config);
       const reached = walk(repo, id, options.down !== undefined, Number(steps)), rows = reached.filter((w) => w.depth)
         .map((w) => ({ ...named(repo, w.id), depth: w.depth, via: w.via }));
-      if (program.opts().format === 'mermaid') return output(mermaid(repo, new Set(reached.map((w) => w.id)), currentVersions(repo)), null);
+      if (program.opts().format === 'mermaid') return output(mermaid(repo, new Set(reached.map((w) => w.id))), null);
       return output(rows.map((w) => `${w.depth} ${w.via} ${label(w)}`).join('\n'), rows);
     }
     const versions = currentVersions(repo),

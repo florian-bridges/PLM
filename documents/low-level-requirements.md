@@ -132,7 +132,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* VS Code is not always available.
 
 **CL-01.10** `show --down`/`--up` shall print, with `--format mermaid`, the items and their `uses` and links, coloured by state per TE-03.1, as a Mermaid graph.
-*Rationale:* A Mermaid graph renders in GitHub and in any viewer; agents read it too.
+*Rationale:* Git hosts and Markdown viewers render Mermaid.
 
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8) in block style, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters outside `a-z0-9` replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
 *Rationale:* Templates let programs prefill attributes and conventions. Names show the structure in file browsers and on the Git host; they lack the ID, so equal titles would overwrite files.

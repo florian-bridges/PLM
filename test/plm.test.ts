@@ -76,7 +76,7 @@ test('TE-01.2, CO-01.3: artifacts', () => {
   expect(json(root, 'show', 'P').artifacts).toHaveLength(1);
 });
 
-test('CL-01.5: show walk', () => {
+test('CL-01.5, CL-01.10: show walk', () => {
   const a = json(root, 'show', 'A');
   expect(a).not.toHaveProperty('parent');
   expect(a.requirements).toMatchObject([{ id: 'R', title: 'Load', links: [{ link: { type: 'satisfies', target: 'R' } }] }]);
@@ -87,6 +87,10 @@ test('CL-01.5: show walk', () => {
   ]));
   expect(json(root, 'show', 'L', '--up', '1')).toEqual([{ id: 'A', title: 'Frame', depth: 1, via: 'uses' }]);
   expect(plm(root, 'show', 'R', '--down', '1').stdout).toBe('1 satisfies P (Rod)\n');
+  const graph = plm(root, 'show', 'A', '--down', '2', '--format', 'mermaid').stdout;
+  expect(graph).toContain('A -->|uses| L');
+  expect(graph).toContain('P -->|satisfies| R');
+  expect(graph).toContain('stroke:red');
 });
 
 test('CL-01.6: apply', () => {

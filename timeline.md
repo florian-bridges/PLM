@@ -27,7 +27,7 @@ Scope decided in release meeting #100 (2026-11-21, `meetings/2026-11-20-release-
 
 ### Entry conditions
 
-- [ ] #102 UI views (#67 part 2). *Done when:* VS-03.5, VS-04.5 and VS-06.2 are implemented and tested; the document webview (VS-03.1–VS-03.4) and the VS-06.1 command removed; `scripts/check.sh` passes.
+- [x] #102 UI views (#67 part 2). *Done when:* VS-03.5, VS-04.5 and VS-06.2 are implemented and tested; the document webview (VS-03.1–VS-03.4) and the VS-06.1 command removed; `scripts/check.sh` passes.
 
 ### Active topics
 

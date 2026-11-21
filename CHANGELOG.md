@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0 (2026-11-21)
+
+* VS Code extension: the requirements document opens in VS Code's Markdown preview, replacing the document webview; Show Call Hierarchy on an ID traces its links; test cases appear in the Testing panel under their item, replacing the run-test command (#102, #67).
+
 ## 0.9.0 (2026-11-21)
 
 * VS Code extension: `item.yaml` gets completion, hover and diagnostics from its type's schema through the Red Hat YAML extension, replacing the forms; PLM's views in their own Activity Bar container with `uses` quantities; configuration picker in the status bar; product-tree breadcrumbs; diff, confirm and remove above each suspect link, replacing the review page; suspect items tinted and badged in the Explorer (#101, #67).

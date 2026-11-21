@@ -13,31 +13,34 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | 0.7 | 1 | 1 | done (v0.7.0, meeting #90) |
 | 0.8 | 4 | 3 | done (v0.8.0, meetings #90, #92) |
 | 0.9 | 2 | 1 | done (v0.9.0, meeting #100) |
-| 0.10 | 3 | 2 | done (v0.10.0, meetings #100, #107) |
+| 0.10 | 3 | 3 | done (v0.10.0, meetings #100, #107) |
+| 0.11 | 2 | 0 | active (meeting #110) |
 
 Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is a GitHub milestone holding its issues. Standing directions for every feature: PLM holds product data only, no project management (#64); use by LLM agents is a strength to keep and document (#54).
 
 ## Active milestone
 
-**Next milestone: 0.10.** UI views.
+**Next milestone: 0.11.** Change, status and graph.
 
-Budget: 3 windows.
+Budget: 2 windows.
 
-Scope decided in release meeting #100 (2026-11-21, `meetings/2026-11-20-release-0.8.md`, 3.1 "0.10 views").
+Scope decided in release meeting #110 (2026-11-21, `meetings/2026-11-21-release-0.10.md`).
 
 ### Entry conditions
 
-- [x] #102 UI views (#67 part 2). *Done when:* VS-03.5, VS-04.5 and VS-06.2 are implemented and tested; the document webview (VS-03.1–VS-03.4) and the VS-06.1 command removed; `scripts/check.sh` passes.
+- [ ] #111 Structure diff in `impact`. *Done when:* TE-05.4 is implemented and tested; `scripts/check.sh` passes.
+- [ ] #112 Status counts in the requirements document. *Done when:* CL-01.9 is implemented and tested; `scripts/check.sh` passes.
+- [ ] #113 Mermaid graph of `show --down/--up`. *Done when:* CL-01.10 and the US-2 clause are in place, implemented and tested; `scripts/check.sh` passes.
 
 ### Active topics
 
-* #102 merged (PR #108); v0.10.0 released (PR #109).
+* #111, #112, #113 being built in parallel worktrees.
 
 ### Coming owner meetings
 
-* Release meeting #110 (`meetings/2026-11-21-release-0.10.md`): structure diff, overview, graph (#67); next milestone and budget.
+* Release meeting after 0.11 (no decided milestone left).
 
 ## Planned milestones
 
-* **Later, next release meeting:** whole-product graph, structure diff, overview (#67).
+* **After 0.11:** #67 closes; no UI work of it left.
 * **Parked, no milestone:** #61 requirements exchange (until a project exchanges requirements), #55 MCP server (until an agent use without a shell).

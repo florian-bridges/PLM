@@ -6,13 +6,12 @@ Latest release: 0.10.0 (2026-11-21). Milestones and entry conditions: `timeline.
 
 ## Active topics
 
-* 0.10 done: #102 (PR #108), v0.10.0 (PR #109). Limits: documents 5767/5830, extension 1529/1545, src+test 6672/6673 (full).
-* Release meeting #110 prepared (`meetings/2026-11-21-release-0.10.md`, reviewer findings in it): waits for the owner; no decided milestone left.
+* 0.11 active (meeting #110, budget 2): #111 TE-05.4, #112 CL-01.9, #113 CL-01.10, each a `feat/` branch in `/home/tower/PLM-wt`. Limits before: documents 5767/5830, extension 1529/1545, src+test 6672/6673 (full): reviewer raises by measured numbers.
 * #61 and #55 parked; decision 8 of #90 (dropping `detail` from `report connections` rows) stays in the backlog.
 
 ## Open pull requests and blockers
 
-* None. Blocker: next milestone needs meeting #110.
+* None yet; no blockers.
 
 ## Owner directions
 

@@ -59,3 +59,7 @@ One line each: date, decision, source (issue or meeting). Append only; the chief
 * 2026-11-21: #61 stays parked until a project exchanges requirements; decision 5 falls away (4). (#100)
 * 2026-11-21: #55 stays parked until an agent use without a shell appears (6). (#100)
 * 2026-11-21: 0.10 keeps its scope (#102 UI views); budget raised to 3 windows (overrun was a window-counting artefact). (#107)
+* 2026-11-21: Structure diff: `impact` also lists, per item, the `uses` entries added, removed, or changed in `quantity`, `ref` or `when` between base and head (TE-05.4); no new command, no tree view (1). (#110)
+* 2026-11-21: Overview: `report document` begins with counts, within the printed subtree, of `validate` findings by code and of items by `status` (CL-01.9); no new view (2). (#110)
+* 2026-11-21: Graph: `show --down/--up --format mermaid` (CL-01.10); US-2 gains "…and sees the product structure and its links as a graph"; no graph webview (3). (#110)
+* 2026-11-21: One milestone, 0.11 "Change, status and graph", budget 2 windows; #67 closes after 0.11; #61 and #55 stay parked (4). (#110)

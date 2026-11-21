@@ -4,7 +4,7 @@ import type { LinkState } from '../../src/links.ts';
 import type { Entry, Repo } from '../../src/repo.ts';
 import * as logic from '../src/logic.ts';
 
-const fakeRepo = (...entries: { id: string; [field: string]: unknown }[]) => ({ entries: new Map(entries.map((found) => [found.id, {
+const fakeRepo = (...entries: { id: string; [field: string]: unknown }[]) => ({ types: { run: { folder: 'runs' } }, entries: new Map(entries.map((found) => [found.id, {
   path: found.id, nested: [], requirements: [], item: { data: { title: found.id.toLowerCase(), text: `${found.id} text` } }, meta: { data: { status: 'draft' } }, ...found,
 }])) }) as unknown as Repo;
 

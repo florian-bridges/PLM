@@ -36,7 +36,6 @@ Scope decided in release meeting #110 (2026-11-21, `meetings/2026-11-21-release-
 
 * #111 (PR #115), #112 (PR #117), #113 (PR #116) merged; v0.11.0 released (PR #118); #67 closed.
 * #114 (owner bug) fixed (PR #119), v0.11.1 released (PR #120).
-* #114 bug fix on `feat/top-level-items`, for patch 0.10.1.
 
 ### Coming owner meetings
 

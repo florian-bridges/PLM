@@ -184,7 +184,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-02.6** An item file's breadcrumbs shall show its path in the product tree.
 *Rationale:* Orients engineers without opening the tree view.
 
-**VS-03.5** The document of CL-01.8 shall open in VS Code's Markdown preview, refreshed on save, with live link states.
+**VS-03.5** The document of CL-01.8 shall open in VS Code's Markdown preview, refreshed on each repository change.
 *Rationale:* Reuses VS Code's renderer instead of a second one.
 
 **VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file.
@@ -199,5 +199,5 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-04.6** The Explorer shall tint and badge the files and folders of items with suspect links.
 *Rationale:* Suspects show before a file is opened.
 
-**VS-06.2** Test cases shall appear in the Testing panel by item; a Manual run asks each result and log files and records them per CL-03.1.
+**VS-06.2** Test cases shall appear in the Testing panel grouped under the item whose tests folder holds them; a Manual run asks the system under test, each result and log files, and records them per CL-03.1.
 *Rationale:* The Testing panel is VS Code's native place for running and recording tests.

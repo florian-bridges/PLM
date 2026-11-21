@@ -43,7 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
     treeChanged.fire();
     decorations.fire(undefined);
-    docChanged.fire(docUri); // VS-03.5: live link states
+    docChanged.fire(docUri); // VS-03.5
     buildTests();
   };
 
@@ -112,6 +112,7 @@ export function activate(context: vscode.ExtensionContext) {
     recordRun(repo, picked.map((found) => found.id), [sut.label], got, logs.map((log) => log.fsPath));
     picked.forEach((found, i) => got[i] === 'pass' ? run.passed(found) : got[i] === 'fail' ? run.failed(found, new vscode.TestMessage('fail')) : run.skipped(found));
     run.end();
+    refresh(); // VS-03.5
   };
   testController.createRunProfile('Manual', vscode.TestRunProfileKind.Run, manualRun, true);
 

@@ -43,7 +43,7 @@ function mermaid(repo: Repo, ids: Set<string>) {
   const edges = [...ids].flatMap((i) => usesOf(repo.entries.get(i)?.item.data).map((u) => [i, 'uses', u]))
     .concat(linkStates(repo, currentVersions(repo)).map((s) => [s.source, s.link.type, targetId(s.link.target), stateColor[s.state]]))
     .filter(([a, , b]) => ids.has(a) && ids.has(b));
-  return ['graph TD', ...[...ids].map((i) => `  ${i}["${label(named(repo, i))}"]`), ...edges.map(([a, t, b]) => `  ${a} -->|${t}| ${b}`),
+  return ['graph TD', ...[...ids].map((i) => `  ${i}["${label(named(repo, i)).replaceAll('"', '#quot;')}"]`), ...edges.map(([a, t, b]) => `  ${a} -->|${t}| ${b}`),
     ...edges.map(([, , , c], n) => c && `linkStyle ${n} stroke:${c}`).filter(Boolean)].join('\n');
 }
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.1 (2026-11-21)
+
+* Items in a folder without `item.yaml` are top-level: they appear in the Product tree, `report document` and `report parts` (#114).
+
 ## 0.11.0 (2026-11-21)
 
 * `impact` lists, per item, the `uses` entries added, removed, or changed in `quantity`, `ref` or `when` (#111, #67).

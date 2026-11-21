@@ -14,7 +14,7 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | 0.8 | 4 | 3 | done (v0.8.0, meetings #90, #92) |
 | 0.9 | 2 | 1 | done (v0.9.0, meeting #100) |
 | 0.10 | 3 | 3 | done (v0.10.0, meetings #100, #107) |
-| 0.11 | 2 | 0 | active (meeting #110) |
+| 0.11 | 2 | 1 | done (v0.11.0, meeting #110) |
 
 Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is a GitHub milestone holding its issues. Standing directions for every feature: PLM holds product data only, no project management (#64); use by LLM agents is a strength to keep and document (#54).
 
@@ -34,14 +34,14 @@ Scope decided in release meeting #110 (2026-11-21, `meetings/2026-11-21-release-
 
 ### Active topics
 
-* #111 (PR #115), #113 (PR #116) merged; #112 in review.
+* #111 (PR #115), #112 (PR #117), #113 (PR #116) merged; v0.11.0 released (PR #118); #67 closed.
+* #114 (owner, bug: items under a folder without `item.yaml` not top-level): building on `feat/transparent-top`, release 0.11.1.
 * #114 bug fix on `feat/top-level-items`, for patch 0.10.1.
 
 ### Coming owner meetings
 
-* Release meeting after 0.11 (no decided milestone left).
+* Release meeting after 0.11.1 (no decided milestone left).
 
 ## Planned milestones
 
-* **After 0.11:** #67 closes; no UI work of it left.
 * **Parked, no milestone:** #61 requirements exchange (until a project exchanges requirements), #55 MCP server (until an agent use without a shell).

@@ -2,14 +2,13 @@
 
 What the next session needs to start. Current state only; history in git. The chief engineer keeps it current (skill `chief-engineer`, Your files).
 
-Latest release: 0.8.0 (2026-11-20). Milestones and entry conditions: `timeline.md`.
+Latest release: 0.9.0 (2026-11-21). Milestones and entry conditions: `timeline.md`.
 
 ## Active topics
 
-* Meeting #100 recorded (closed): 0.9 UI foundation active (2 windows: #101, #94, #87), 0.10 UI views decided (1 window: #102), then a release meeting for graph, diff and overview (#67). #61 and #55 parked.
-* 0.9 in progress: #101 (`feat/ui-foundation`) and #87 (`feat/missing-file`) building; #94 next.
-* Limits all full (src+test 6673, documents 5830, extension 1544/1545): the reviewer raises them per feature with measured numbers.
-* Decision 8 of #90 (dropping `detail` from `report connections` rows) stays in the backlog.
+* 0.9 done: #87 (PR #103), #94 (PR #104), #101 (PR #105), v0.9.0 (PR #106). Limits: documents 5824/5830, extension 1545/1545 (full), src+test 6673.
+* 0.10 UI views active (1 window, decided in #100): #102. Next: worktree `feat/ui-views`, feature-dev on #102, then reviewer. After its release, prepare a release meeting (graph, structure diff, overview; #67).
+* #61 and #55 parked; decision 8 of #90 (dropping `detail` from `report connections` rows) stays in the backlog.
 
 ## Open pull requests and blockers
 

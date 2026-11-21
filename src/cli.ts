@@ -128,7 +128,7 @@ program.command('suspects [item]').description('list suspect links').action((ite
   exitCode = states.length && 1;
 });
 
-// TE-05.1, TE-05.3
+// TE-05.1, TE-05.3, TE-05.4
 program.command('impact <range>').description('list a change\'s impact').action((range) => {
   const repo = openRepo(), [base, head] = range.split('..'),
     headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) },
@@ -139,6 +139,7 @@ program.command('impact <range>').description('list a change\'s impact').action(
       ...result.released.map((item) => `released ${label(item)}`),
       ...result.suspects.map((state) => `suspect ${linkLabel(state)}`),
       ...result.runs.map((run) => `outdated run ${label(run)}`),
+      ...result.uses.map((u) => `uses ${u.status} ${label(u.uses)} ${u.status === 'removed' ? 'from' : 'to'} ${label(u)}`),
     ];
   output(lines.join('\n'), result);
   exitCode = result.released.length && 1;

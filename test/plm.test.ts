@@ -128,7 +128,7 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, CO-02.12, TE-01.1:
   const repo = loadRepo(root);
   expect(repo.entries.get('Z')?.path).toBe('frame/misc/panel');
   expect(repo.entries.has('H')).toBe(false);
-  expect(productTree(repo).map((e)=>e.id)).toContain('K');
+  expect(productTree(repo).map((e) => e.id)).toContain('K');
   const findings = validate(repo);
   expect(findings.map((f) => f.code).sort()).toEqual(['ambiguous-use', 'cycle', 'cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', ...Array(6).fill('schema'), 'unknown-target']);
   expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ line: 3, col: 9 });

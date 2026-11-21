@@ -30,11 +30,11 @@ Scope decided in release meeting #110 (2026-11-21, `meetings/2026-11-21-release-
 
 - [x] #111 Structure diff in `impact`. *Done when:* TE-05.4 is implemented and tested; `scripts/check.sh` passes.
 - [ ] #112 Status counts in the requirements document. *Done when:* CL-01.9 is implemented and tested; `scripts/check.sh` passes.
-- [ ] #113 Mermaid graph of `show --down/--up`. *Done when:* CL-01.10 and the US-2 clause are in place, implemented and tested; `scripts/check.sh` passes.
+- [x] #113 Mermaid graph of `show --down/--up`. *Done when:* CL-01.10 and the US-2 clause are in place, implemented and tested; `scripts/check.sh` passes.
 
 ### Active topics
 
-* #111 merged (PR #115); #112, #113 in parallel worktrees.
+* #111 (PR #115), #113 (PR #116) merged; #112 in review.
 * #114 bug fix on `feat/top-level-items`, for patch 0.10.1.
 
 ### Coming owner meetings

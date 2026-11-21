@@ -143,7 +143,7 @@ export const childrenOf = (entry?: Entry) => [...(entry?.nested ?? []), ...usesO
 // VS-02.1, CL-01.8
 export const productTree = (repo: Repo, parent?: string): Entry[] => parent
   ? childrenOf(repo.entries.get(parent)).flatMap((id) => repo.entries.get(id) ?? [])
-  : [...repo.entries.values()].filter((found) => !found.path.includes('/'));
+  : [...repo.entries.values()].filter((found)=>!parentOf(repo,found.id)&&!homeFolders(repo).some((f)=>dirname(found.path).split('/').includes(f)));
 
 // CO-03.4
 export function partsOf(repo: Repo, root?: string) {

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, beforeEach, expect, test } from 'vitest';
 import { changeSince, confirm, link, linkStates, recordRun, requirementsMarkdown } from '../src/links.ts';
-import { git, linksOf, loadRepo, Refused } from '../src/repo.ts';
+import { git, linksOf, loadRepo, productTree, Refused } from '../src/repo.ts';
 import { search } from '../src/search.ts';
 import { validate } from '../src/validate.ts';
 import { currentVersions, versionAt } from '../src/version.ts';
@@ -122,11 +122,13 @@ test('CO-01.1–CO-01.2, CO-02.1–CO-02.2, CO-02.4, CO-02.6, CO-02.12, TE-01.1:
     'frame/requirements/structure/brace.yaml': 'id: Q\ntype: part\ntitle: Brace\n',
     'frame/misc/panel/item.yaml': 'id: Z\ntype: part\ntitle: Panel\n',
     'frame/.attic/item.yaml': 'id: H\ntype: part\ntitle: Hidden\n',
+    'crate/body/item.yaml': 'id: K\ntype: part\ntitle: Body\n',
     'meta/M.yaml': 'status: draft\n',
   });
   const repo = loadRepo(root);
   expect(repo.entries.get('Z')?.path).toBe('frame/misc/panel');
   expect(repo.entries.has('H')).toBe(false);
+  expect(productTree(repo).map((e)=>e.id)).toContain('K');
   const findings = validate(repo);
   expect(findings.map((f) => f.code).sort()).toEqual(['ambiguous-use', 'cycle', 'cycle', 'id-clash', 'link-type', 'misplaced', 'orphan', ...Array(6).fill('schema'), 'unknown-target']);
   expect(findings.findLast((f) => f.code === 'schema')).toMatchObject({ line: 3, col: 9 });

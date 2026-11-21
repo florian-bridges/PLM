@@ -64,7 +64,7 @@ export function validate(repo: Repo) {
     if (validateMeta) findings.push(...schemaFindings(meta, validateMeta, false));
     // CO-02.10
     for (const [name, schema] of Object.entries(repo.types[type]?.files ?? {}))
-      if (existsSync(join(repo.root, entry.path, name))) findings.push(...schemaFindings(readYaml(repo.root, `${entry.path}/${name}`), ajv.compile(schema), draft));
+      findings.push(...(existsSync(join(repo.root, entry.path, name)) ? schemaFindings(readYaml(repo.root, `${entry.path}/${name}`), ajv.compile(schema), draft) : [finding(item, [], 'missing-file', name)]));
 
     if (misplaced) findings.push(finding(item, ['type'], 'misplaced', `outside ${home}`));
 

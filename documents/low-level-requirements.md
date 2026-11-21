@@ -43,8 +43,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CO-02.9** `plm.yaml` may declare `links: {<name>: {from: [<type>…], to: [<type>…]}}` (`*` any type); declared link types shall be checked as built-in ones (CO-02.2), matching an item's base, and naming a built-in link type shall be an error.
 *Rationale:* Projects link items in ways PLM does not build in.
 
-**CO-02.10** A type file may hold `files: {<name>: <JSON Schema>}`; the core shall validate each named YAML file in an item's folder against it, as CO-02.1, reporting `schema` findings with that file's line.
-*Rationale:* Checks a structured artifact, e.g. a port's `icd.yaml`, like `item.yaml`.
+**CO-02.10** A type file may hold `files: {<name>: <JSON Schema>}`; the core shall validate each named YAML file in an item's folder against it, as CO-02.1, reporting `schema` findings there, or `missing-file` if absent.
+*Rationale:* Checks a structured artifact, e.g. a port's `icd.yaml`.
 
 **CO-02.12** The core shall report as error two or more `uses` entries of one item with the same `ref` that are selected together (`ambiguous-use`) or of which none is selected (`empty-use`) under some configuration (CO-01.6), and a `when` that names an undeclared parameter or value or gives a range for a listed parameter (`config`). Some configuration ranges over every combination of the declared values of listed parameters and, for ordered ones, the `from`/`to` values in `when`s, a value between each adjacent pair and one beyond each outer value. An unknown parameter or value in `--config` shall be a usage error.
 *Rationale:* CI then catches a forgotten or doubled alternative, also after a clean merge.

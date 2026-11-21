@@ -13,7 +13,7 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | 0.7 | 1 | 1 | done (v0.7.0, meeting #90) |
 | 0.8 | 4 | 3 | done (v0.8.0, meetings #90, #92) |
 | 0.9 | 2 | 1 | done (v0.9.0, meeting #100) |
-| 0.10 | 1 | 0 | active (meeting #100) |
+| 0.10 | 3 | 0 | active (meeting #100) |
 
 Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is a GitHub milestone holding its issues. Standing directions for every feature: PLM holds product data only, no project management (#64); use by LLM agents is a strength to keep and document (#54).
 
@@ -21,7 +21,7 @@ Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is
 
 **Next milestone: 0.10.** UI views.
 
-Budget: 1 window.
+Budget: 3 windows.
 
 Scope decided in release meeting #100 (2026-11-21, `meetings/2026-11-20-release-0.8.md`, 3.1 "0.10 views").
 

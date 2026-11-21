@@ -31,7 +31,7 @@ Scope decided in release meeting #100 (2026-11-21, `meetings/2026-11-20-release-
 
 ### Active topics
 
-* None started.
+* #102 on `feat/ui-views`: built, reviewed; review fixes in progress.
 
 ### Coming owner meetings
 

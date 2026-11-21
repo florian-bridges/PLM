@@ -9,19 +9,12 @@ export function changedFiles(root: string, base: string, head?: string) {
 }
 
 // TE-05.4
-function usesDiff(base: Snapshot, head: Snapshot, ids: string[], name: (id: string) => any) {
-  const group = (es: any[]) => es.reduce((m, u) => m.set(u.item, [...(m.get(u.item) ?? []), u]), new Map<string, any[]>()),
-    same = (a: any, b: any) => (a.quantity ?? 1) === (b.quantity ?? 1) && a.ref === b.ref && JSON.stringify(a.when) === JSON.stringify(b.when);
-  return ids.flatMap((id) => {
-    const b = group(useEntries(base.repo.entries.get(id)?.item.data)), h = group(useEntries(head.repo.entries.get(id)?.item.data));
-    return [...new Set([...b.keys(), ...h.keys()])].flatMap((item) => {
-      const bs = b.get(item) ?? [], hs = h.get(item) ?? [], rows: any[] = [];
-      for (let i = 0; i < Math.max(bs.length, hs.length); i++) {
-        const status = !bs[i] ? 'added' : !hs[i] ? 'removed' : same(bs[i], hs[i]) ? '' : 'changed';
-        if (status) rows.push({ ...name(id), uses: name(item), status });
-      }
-      return rows;
-    });
+function usesDiff(base: Snapshot, head: Snapshot, id: string, name: (id: string) => any) {
+  const keyed = (s: Snapshot) => new Map(useEntries(s.repo.entries.get(id)?.item.data).map((u, i, all) => [u.item + ' ' + all.slice(0, i).filter((o) => o.item === u.item).length, u])),
+    b = keyed(base), h = keyed(head), fields = (u: any) => JSON.stringify([u.quantity ?? 1, u.ref, u.when]);
+  return [...new Set([...b.keys(), ...h.keys()])].flatMap((key) => {
+    const x = b.get(key), y = h.get(key), status = !x ? 'added' : !y ? 'removed' : fields(x) === fields(y) ? '' : 'changed';
+    return status ? [{ ...name(id), uses: name((x ?? y).item), status }] : [];
   });
 }
 
@@ -42,6 +35,6 @@ export function impact(base: Snapshot, head: Snapshot, files: string[]) {
     released: changed.filter((id) => (base.repo.settings.released_states ?? ['released']).includes(status(base, id)) && status(head, id) === status(base, id)).map(name),
     suspects: becameSuspects.filter((state) => !fromRun(head.repo, state)),
     runs: [...new Set(becameSuspects.filter((state) => fromRun(head.repo, state)).map((state) => state.source))].map(name),
-    uses: usesDiff(base, head, [...ids], name),
+    uses: [...ids].flatMap((id) => usesDiff(base, head, id, name)),
   };
 }

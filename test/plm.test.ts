@@ -441,7 +441,7 @@ test('CO-01.1–CO-01.2, CO-02.2, CO-02.5, CL-02.1, CL-03.1–CL-03.3, TE-02.2, 
   expect(validate(loadRepo(root)).some((f) => f.code === 'misplaced')).toBe(true);
 });
 
-test('TE-05.1–TE-05.3: impact', () => {
+test('TE-05.1–TE-05.4: impact', () => {
   write(root, {
     'runs/X/item.yaml': 'id: X\ntype: test-run\ntitle: Run\nlinks:\n  - type: tests\n    target: A\n',
     'meta/P.yaml': 'confirmed:\n  R:\n    version: outdated\n',
@@ -458,6 +458,10 @@ test('TE-05.1–TE-05.3: impact', () => {
   commit(root);
   write(root, { 'frame/rod/item.yaml': rod + 'x: 1\n' });
   expect(plm(root, 'impact', 'HEAD')).toMatchObject({ status: 1, stdout: expect.stringContaining('released P') });
+  write(root, { 'frame/item.yaml': `${frame}uses: [{item: L, quantity: 2}]\n` });
+  expect(json(root, 'impact', 'HEAD').uses).toMatchObject([{ id: 'A', uses: { id: 'L' }, status: 'changed' }]);
+  write(root, { 'frame/item.yaml': `${frame}uses: [P]\n` });
+  expect(json(root, 'impact', 'HEAD').uses).toMatchObject([{ id: 'A', uses: { id: 'L' }, status: 'removed' }, { id: 'A', uses: { id: 'P' }, status: 'added' }]);
 });
 
 test('TE-01.1–TE-01.2: commit', () => {

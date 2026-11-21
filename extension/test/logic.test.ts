@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { LineCounter, parseDocument } from 'yaml';
-import type { Coverage, LinkState } from '../../src/links.ts';
+import type { LinkState } from '../../src/links.ts';
 import type { Entry, Repo } from '../../src/repo.ts';
 import * as logic from '../src/logic.ts';
 
@@ -23,15 +23,15 @@ test('VS-02.4, VS-02.6: a status bar label for the configuration; breadcrumbs to
   expect(logic.breadcrumbChain(repo, 'L')).toEqual(['A', 'P', 'L']);
 });
 
-test('VS-03.1, VS-03.3, VS-03.4: coverage and suspects, then a section per subtree item once by depth with its requirements, links and runs', () => {
-  const repo = fakeRepo({ id: 'A', requirements: ['R'], nested: ['P'], item: { data: { title: 'a', uses: ['L'] } } }, { id: 'R' }, { id: 'P', meta: { data: {} }, item: { data: { title: 'p', uses: ['L'] } } }, { id: 'L' }, { id: 'T' }, { id: 'U' });
-  const suspect = { source: 'R', link: { type: 'derives', target: 'X' }, state: 'suspect' } as LinkState;
-  const verifies = { source: 'T', link: { type: 'verifies', target: 'R' }, state: 'current' } as LinkState;
-  const rows = [{ requirement: 'R', title: 'r', state: 'pending', tests: [{ testCase: { id: 'T', title: 't' }, run: { id: 'U', title: 'u' }, result: 'pass', outdated: true }] }] as Coverage[];
-  const review = '[Review link](command:plm.reviewLink?%5B%22R%22%2C%22X%22%5D)';
-  expect(logic.requirementsMarkdown(repo, 'A', (found) => `#${found.id}`, [suspect, verifies], rows, [suspect])).toBe(`- pending [R](#R) r\n- suspect ${review} [R](#R) r derives X\n`
-    + `\n## 1 [A](#A) a *draft*\n\n**r** [R](#R) *draft* pending\n\nR text\n\n- suspect ${review} [R](#R) r derives X\n- current [T](#T) t verifies [R](#R) r\n- [T](#T) t: [U](#U) u pass outdated\n\n`
-    + '\n### 1.1 [P](#P) p\n\n\n#### 1.1.1 [L](#L) l *draft*\n\n');
+test('VS-04.5: incoming and outgoing links of an ID', () => {
+  const states = [{ source: 'A', link: { target: 'B' } }, { source: 'C', link: { target: 'A' } }] as LinkState[];
+  expect(logic.outgoing(states, 'A')).toEqual(['B']);
+  expect(logic.incoming(states, 'A')).toEqual(['C']);
+});
+
+test('VS-06.2: test cases grouped by the item owning their tests folder', () => {
+  const repo = fakeRepo({ id: 'A', path: 'a' }, { id: 'T', path: 'a/tests/T', item: { data: { type: 'test-case', title: 't' } } });
+  expect([...logic.testCasesByOwner(repo)]).toEqual([['A', [repo.entries.get('T')]]]);
 });
 
 test('VS-01.2: the active item\'s own file maps to a schema id, not another file in its folder', () => {

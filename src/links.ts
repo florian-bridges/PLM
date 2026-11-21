@@ -187,7 +187,7 @@ export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry
         + row.tests.map((test) => `- ${ref(test.testCase.id)}: ${test.run ? `${ref(test.run.id)} ${test.result}${test.outdated ? ' outdated' : ''}` : 'no run'}\n`).join('') + '\n';
     }).join('') + childrenOf(found).map((child) => seen.has(child) || !repo.entries.has(child) ? '' : section(child, `${number}.${++n}`)).join('');
   };
-  return `findings: ${tally(validate(repo).filter((f) => items.some((e) => e.id === innermostItem(repo, f.file))).map((f) => f.code))}\nitems: ${tally(items.map((e) => e.meta.data.status).filter(Boolean))}\n\n` + summary + section(id, '1');
+  return `findings: ${tally(validate(repo).filter((f) => items.some((e) => e.id === innermostItem(repo, f.file) || e.meta.path === f.file)).map((f) => f.code))}\nitems: ${tally(items.map((e) => e.meta.data.status).filter(Boolean))}\n\n` + summary + section(id, '1');
 }
 
 // TE-06.6

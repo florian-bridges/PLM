@@ -13,7 +13,7 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | 0.7 | 1 | 1 | done (v0.7.0, meeting #90) |
 | 0.8 | 4 | 3 | done (v0.8.0, meetings #90, #92) |
 | 0.9 | 2 | 1 | done (v0.9.0, meeting #100) |
-| 0.10 | 3 | 0 | active (meeting #100) |
+| 0.10 | 3 | 2 | done (v0.10.0, meetings #100, #107) |
 
 Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is a GitHub milestone holding its issues. Standing directions for every feature: PLM holds product data only, no project management (#64); use by LLM agents is a strength to keep and document (#54).
 
@@ -31,11 +31,11 @@ Scope decided in release meeting #100 (2026-11-21, `meetings/2026-11-20-release-
 
 ### Active topics
 
-* #102 on `feat/ui-views`: built, reviewed; WIP a43056e: CL-01.8 detailed test left.
+* #102 merged (PR #108); v0.10.0 released (PR #109).
 
 ### Coming owner meetings
 
-* After 0.10: release meeting on the graph, structure diff and overview (#67), no decided milestone left.
+* Release meeting #110 (`meetings/2026-11-21-release-0.10.md`): structure diff, overview, graph (#67); next milestone and budget.
 
 ## Planned milestones
 

@@ -2,17 +2,17 @@
 
 What the next session needs to start. Current state only; history in git. The chief engineer keeps it current (skill `chief-engineer`, Your files).
 
-Latest release: 0.9.0 (2026-11-21). Milestones and entry conditions: `timeline.md`.
+Latest release: 0.10.0 (2026-11-21). Milestones and entry conditions: `timeline.md`.
 
 ## Active topics
 
-* 0.9 done: #87 (PR #103), #94 (PR #104), #101 (PR #105), v0.9.0 (PR #106). Limits: documents 5824/5830, extension 1545/1545 (full), src+test 6673.
-* 0.10 UI views active (1 window, decided in #100): #102 on `feat/ui-views` (worktree `/home/tower/PLM-wt/ui-views`), built and reviewed (679b616); WIP a43056e has the VS-03.5/VS-06.2 wording fixes. Next: feature-dev finishes the detailed CL-01.8 test in `test/plm.test.ts` (replace the WIP-MARKER placeholder; cover suspects first, links both directions, test runs, depth numbering, each item once) within the src+test limit (now 6697/6673), optionally drops CL-01.8's "from the core functions behind..." clause; check.sh, PR, merge, release 0.10. After its release, prepare a release meeting (graph, structure diff, overview; #67).
+* 0.10 done: #102 (PR #108), v0.10.0 (PR #109). Limits: documents 5767/5830, extension 1529/1545, src+test 6672/6673 (full).
+* Release meeting #110 prepared (`meetings/2026-11-21-release-0.10.md`, reviewer findings in it): waits for the owner; no decided milestone left.
 * #61 and #55 parked; decision 8 of #90 (dropping `detail` from `report connections` rows) stays in the backlog.
 
 ## Open pull requests and blockers
 
-* None; branch `feat/ui-views` pushed, no PR yet.
+* None. Blocker: next milestone needs meeting #110.
 
 ## Owner directions
 

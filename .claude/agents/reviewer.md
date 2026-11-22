@@ -14,7 +14,7 @@ Read `git diff develop...HEAD --stat`, then the diff and only the code, requirem
 * **Duplication:** no logic that already exists in core, CLI or extension; one shared function instead.
 * **Wording:** each requirement has one clear meaning (no vague terms, undefined names, "etc.", "should" for "shall") and does not restate other text; each comment and test carries content.
 
-**Apply** cuts that keep behaviour and traces (merging duplicates, shorter text, dropping redundant tests or assertions), rerun `scripts/check.sh`, revert a cut that breaks it, and commit. **Propose, don't apply,** removing or merging features or requirements and rewordings that change meaning: those are the owner's.
+**Apply** cuts that keep behaviour and traces (merging duplicates, shorter text, dropping redundant tests or assertions), rerun `scripts/check.sh`, revert a cut that breaks it, and commit. **Propose, don't apply,** removing or merging features or requirements and rewordings that change meaning: those are the chief engineer's.
 
 **Word limits** are the defaults in `scripts/wordcount.py`. When a needed feature cannot fit after the cuts the aim allows, raise a limit in a commit of its own whose message gives the reason and the words cut first. Lower a limit when a cut frees a lasting margin.
 

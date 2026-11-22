@@ -13,9 +13,9 @@ The next target state, when no decided milestone is left. The owner defines it; 
 
 1. **Reached:** in a few lines.
 2. **Concepts:** per candidate the concepts and options; then your questions, one at a time.
-3. **Target state:** the owner states it; read back the target state, its check and the scenarios and tool requirements it needs. Later milestones may be decided the same way.
+3. **Target state:** the owner states it; read back the target state and its check. Later milestones may be decided the same way.
 4. **Budget:** rough, in usage windows.
 
 ## Outcome
 
-The target state, its check and budget as the active milestone in `timeline.md`, later ones under *Planned milestones* marked `decided (meeting #n)`; the approved scenarios and tool requirements into `documents/` (one commit naming the meeting); the GitHub milestone; one line per decision in `decisions.md`. Then break the active milestone down (skill `chief-engineer`) and build it without asking again.
+The target state, its check and budget as the active milestone in `timeline.md`, later ones under *Planned milestones* marked `decided (meeting #n)`; the GitHub milestone; one line per decision in `decisions.md`. Then break the active milestone down (skill `chief-engineer`) and build it without asking again.

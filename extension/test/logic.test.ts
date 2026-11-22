@@ -48,6 +48,10 @@ test('VS-01.3, VS-01.5: diagnostics group by file; item types for "New item" exc
   expect(logic.itemTypes({ types: { part: {}, meta: {} } } as unknown as Repo)).toEqual(['part']);
 });
 
+test('VS-03.5', () => {
+  expect(logic.docLink('sub/a b')).toBe('/sub/a%20b');
+});
+
 test('VS-04.3: hover', () => {
   const repo = fakeRepo({ id: 'A', item: { data: { text: 'a', links: [{ target: 'R' }] } } }, { id: 'R', item: { path: 'R', data: { title: 'r', type: 'requirement', text: '<R>' } } });
   expect(logic.hoverMarkdown(repo, [{ source: 'A', link: { target: 'R' }, state: 'suspect' } as LinkState], 'R', 'A'))

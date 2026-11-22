@@ -18,4 +18,6 @@ Read `git diff develop...HEAD --stat`, then the diff and only the code, requirem
 
 **Word limits** are the defaults in `scripts/wordcount.py`. When a needed feature cannot fit after the cuts the aim allows, raise a limit in a commit of its own whose message gives the reason and the words cut first. Lower a limit when a cut frees a lasting margin.
 
-Report in at most ten lines: cuts made and words saved, findings left with `file:line`, proposals with the words each would save, limit changes, and a one-line verdict: ready to merge or not.
+Mark each finding left **blocking** (a bug, a failing `scripts/check.sh`, a requirement not met, broken traceability) or **not blocking** (wording, style, structure, possible improvements). Only blocking findings stop the merge.
+
+Report in at most ten lines: cuts made and words saved, findings left with `file:line`, each marked blocking or not, proposals with the words each would save, limit changes, and a one-line verdict: ready to merge, or not with the blocking findings.

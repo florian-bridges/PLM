@@ -5,10 +5,10 @@ Defines the development: no milestone in `timeline.md`. No preparation file: the
 ## Agenda
 
 1. **Needs:** what the projects using PLM need next (`improvements.md`, open `type:backlog` issues), generalised.
-2. **Milestones:** usually releases; per milestone its features as entry conditions, each with a *done when*, and its budget in usage windows.
-3. **Features of the first two or three milestones:** go, smaller scope or no-go each, as in `release.md`, Agenda 3.
+2. **Concepts:** the concepts and options behind the needs, and the chief engineer's questions, as in `milestone.md`.
+3. **Milestones:** the first one or more target states, each with its check and a rough budget in usage windows.
 4. **Standing directions.**
 
 ## Outcome
 
-`timeline.md` with all milestones, the first one active with its entry conditions and budget, the others decided as in `release.md`, Outcome; one `type:feature` issue per feature; GitHub milestones; standing directions in `decisions.md`; `handover.md`.
+As in `milestone.md`, Outcome; standing directions in `decisions.md`; `handover.md`.

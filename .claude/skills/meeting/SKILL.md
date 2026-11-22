@@ -1,6 +1,6 @@
 ---
 name: meeting
-description: Prepare, hold and record an owner meeting - kickoff, feature review, release, decision meeting, re-plan or status. Use "/meeting <issue>" to hold a prepared meeting, and to prepare one when the work needs the owner.
+description: Prepare, hold and record an owner meeting - kickoff, milestone, feature review, decision meeting, re-plan or status. Use "/meeting <issue>" to hold a prepared meeting, and to prepare one when the work needs the owner.
 ---
 
 # Owner meeting
@@ -11,9 +11,9 @@ The chief engineer chairs and presents; agents answer detail questions on reques
 |---|---|
 | `kickoff` | no milestone defined |
 | `feature` | before an architecture change is built (`kinds/feature.md`, When) |
-| `release` | no decided milestone left: the next one has no scope and budget from the owner (after a release, or every entry condition ticked) |
+| `milestone` | no decided milestone left: the next target state, its check and budget are not decided by the owner |
 | `decision` | a `needs-owner` question blocks all remaining work, or three or more are open |
-| `replan` | a milestone over budget or stalled |
+| `replan` | a milestone stalled, or over budget with work left the budget cannot cover |
 | `status` | the owner asks where the work stands |
 
 ## 1. Prepare (chief engineer, usually on shift)
@@ -41,5 +41,5 @@ The chief engineer chairs and presents; agents answer detail questions on reques
 ## Rules
 
 * The owner's time is scarce: short file, short answers, one question per decision, but never a question without its context.
-* Few meetings: a release or kickoff meeting decides several milestones ahead; between them the shift releases and goes on without one (skill `chief-engineer`, Releases).
+* Few meetings: a milestone or kickoff meeting decides a target state that lasts many windows, maybe several ahead; between them the shift breaks it down, releases and goes on without one (skill `chief-engineer`).
 * Nothing is recorded as decided that the owner did not say.

@@ -6,14 +6,13 @@ Latest release: 0.11.1 (2026-11-21). Milestones and entry conditions: `timeline.
 
 ## Active topics
 
-* 0.11 done: #111 (PR #115), #112 (PR #117), #113 (PR #116), v0.11.0 (PR #118); #67 closed.
-* #114 fixed (PR #119), released as v0.11.1 (PR #120) since 0.11.0 was out; any `feat/top-level-items` branch from the owner session is superseded. Limits full: documents 5878/5878, src+test 6911/6911, extension 1533/1542.
-* Milestone meeting #121 prepared (`meetings/2026-11-22-milestone-next.md`, review points of 0.11 and #123 in it): waits for the owner; no decided milestone left.
-* #61 and #55 parked; decision 8 of #90 (dropping `detail` from `report connections` rows) stays in the backlog.
+* 0.12 "Cleanup" active (meeting #121, budget 3 windows): entry conditions in `timeline.md`, GitHub milestone 0.12. Next step: build #125, #126, #128, #123, then #129, #127, #130, release.
+* PR #122 (word count by tokens, control room) is the owner's to merge; #127 waits for it.
+* #61 and #55 parked.
 
 ## Open pull requests and blockers
 
-* None. Blocker: next milestone needs meeting #121.
+* #122 (owner's). No blockers.
 
 ## Owner directions
 

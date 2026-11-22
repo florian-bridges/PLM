@@ -41,3 +41,11 @@ After the discussion: the target state in one or two sentences, its check, a rou
 *Recommendation:* D, then A. D lies wholly inside PLM, so the shift can reach it alone; it gathers the open points; and it fixes the data format before a real product depends on it. A follows while pathfinder-uav is the main project. B and C stay parked until a project needs them.
 
 *Prepared in the control room on the owner's request (2026-11-22); `reviewer` has not read this file.*
+
+## Minutes
+
+Held by the owner in the control room on #121; the earlier 0.12 "Tidy-up" decisions there were replaced by the last one.
+
+**Decisions:** 0.12 "Cleanup", budget 3 windows: the six cleanups and a whole-project check and cleanup; check: the six issues closed, a whole-project `reviewer` review with no blocking findings left, `scripts/check.sh` passes, released as 0.12. Documentation for agents as in `decisions.md`. Word count change in PR #122. #55 and #61 stay parked; no later milestone.
+
+**Actions:** see the entry conditions of 0.12 in `timeline.md`.

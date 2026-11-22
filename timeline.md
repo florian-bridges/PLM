@@ -32,10 +32,11 @@ Budget: 3 windows.
 - [x] #123 Requirements document links render in VS Code Markdown Preview: done when links are workspace-relative and tested
 - [x] #129 PLM documented for agents: done when the help is the complete reference, `docs/setup.md` exists, README is short and `check.sh` fails on missing help text
 - [ ] #127 Normal spacing for squashed lines in src/cli.ts: done when no squashed lines remain (after PR #122)
-- [ ] #130 Whole-project check and cleanup: done when `reviewer` reviewed the whole project and no blocking findings are left
+- [x] #130 Whole-project check and cleanup: done when `reviewer` reviewed the whole project and no blocking findings are left
 - [ ] Release 0.12: done when released with `check.sh` passing
 
 Breakdown: the six decided cleanups one issue each; the whole-project cleanup and the release as their own conditions; #127 waits for PR #122 (owner's word-count change).
+#127 no longer waits for PR #122: respacing raises the current limit by its cost; #122 re-measures on merge.
 
 ### Coming owner meetings
 

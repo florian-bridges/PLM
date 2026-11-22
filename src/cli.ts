@@ -242,7 +242,7 @@ report.command('connections [item]').description('report ports and connections t
   .action((item) => {
     const rows = connections(...scoped(item));
     exitCode = rows.length && 1;
-    output(rows.map((row) => `${row.code} ${label(row.item)}${row.detail && ' ' + row.detail}`).join('\n'), rows);
+    output(rows.map((row) => `${row.code} ${label(row.item)}`).join('\n'), rows);
   });
 
 // CO-03.4, CO-01.6

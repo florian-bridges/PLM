@@ -161,7 +161,7 @@ export function activate(context: vscode.ExtensionContext) {
     // VS-03.5
     vscode.workspace.registerTextDocumentContentProvider('plm', { onDidChange: docChanged.event, provideTextDocumentContent: () => {
       const repo = open(), states = statesOf(repo);
-      return docId && requirementsMarkdown(repo, docId, (found) => fileUri(found.item.path).toString(), states, coverage(repo, states, docId), suspects(repo, states, docId));
+      return docId && requirementsMarkdown(repo, docId, (found) => logic.docLink(found.item.path), states, coverage(repo, states, docId), suspects(repo, states, docId));
     } }),
     // VS-04.5
     vscode.languages.registerCallHierarchyProvider(yaml, {

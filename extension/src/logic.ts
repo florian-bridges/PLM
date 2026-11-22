@@ -36,6 +36,9 @@ export const breadcrumbChain = (repo: Repo, id?: string): string[] => {
   return chain;
 };
 
+// VS-03.5
+export const docLink = (path: string) => `/${encodeURI(path)}`;
+
 // VS-04.3
 export function hoverMarkdown(repo: Repo, states: LinkState[], id: string, source?: string) {
   const { item, meta } = entry(repo, id);

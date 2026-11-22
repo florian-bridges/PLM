@@ -193,8 +193,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-02.6** An item file's breadcrumbs shall show its path in the product tree.
 *Rationale:* Orients engineers without opening the tree view.
 
-**VS-03.5** The document of CL-01.8 shall open in VS Code's Markdown preview, refreshed on each repository change.
-*Rationale:* Reuses VS Code's renderer instead of a second one.
+**VS-03.5** CL-01.8's document shall open in VS Code's Markdown preview, refreshed on change, IDs as workspace-relative links.
+*Rationale:* Reuses VS Code's renderer, needing `/`-rooted links, not `file://`.
 
 **VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file.
 *Rationale:* Links are inspected and navigated where they are written.

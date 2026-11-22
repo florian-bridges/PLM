@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Ajv2020, type ValidateFunction } from 'ajv/dist/2020.js';
 import { childrenOf, citations, cmp, homeFolders, innermostItem, linksOf, list, parameterOf, readYaml, selected, targetId, typeOf, undeclared, useEntries, yamlIn, type Parameter, type Repo, type YamlFile } from './repo.ts';
-import { baseSchema, builtinTypes, disallowed, linkRules, type TypeDef } from './schemas.ts';
+import { baseSchema, builtinTypes, disallowed, linkRules, typeFileKeys, type TypeDef } from './schemas.ts';
 
 // CO-02.4
 export interface Finding { file: string; line: number; col: number; severity: 'error' | 'warning'; code: string; message: string }
@@ -108,7 +108,7 @@ export function validate(repo: Repo) {
   for (const file of yamlIn(repo.root, 'meta')) if (!repo.entries.has(file.slice(0, -5))) findings.push({ file: `meta/${file}`, line: 1, col: 1, severity: 'error', code: 'orphan', message: file });
   // CO-02.8
   for (const file of yamlIn(repo.root, 'types').map((f) => readYaml<TypeDef>(repo.root, `types/${f}`))) {
-    for (const key of Object.keys(file.data)) if (!['base', 'prefix', 'folder', 'template', 'fields', 'required', 'files'].includes(key)) findings.push(finding(file, [key], 'type-file', key));
+    for (const key of Object.keys(file.data)) if (!typeFileKeys.includes(key)) findings.push(finding(file, [key], 'type-file', key));
     const { base } = file.data;
     if (base && (!Object.hasOwn(builtinTypes, base) || Object.hasOwn(builtinTypes, file.path.slice(6, -5)) || file.data.folder)) findings.push(finding(file, ['base'], 'type-file', base));
   }

@@ -501,15 +501,17 @@ test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
   expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {}, links: [{ target: 'R' }] }]);
 });
 
-// CL-08.1, CL-08.2
-test('CL-08.1–CL-08.2: --help points to the setup guide; every command and option gives an example; topics', () => {
+test('CL-08.1–CL-08.2: help', () => {
+  const check = (command: string[]): void => {
+    const [head, commands] = plm(root, ...command, '--help').stdout.split('Commands:');
+    for (const line of head.split('\n').filter((l) => /^ +-/.test(l) && !/-[hV],/.test(l))) expect(line).toContain('e.g.');
+    if (!commands) return void expect(head.split('\n')[2]).toContain('e.g.');
+    for (const [, name] of commands.matchAll(/^  (\w+)/gm)) if (name !== 'help') check([...command, name]);
+  };
+  check([]);
   expect(plm(root, '--help').stdout).toContain('docs/setup.md');
   expect(plm(root, 'help', 'nope').status).toBe(2);
-  const commands = ['validate', 'show', 'link', 'types', 'set', 'get', 'list', 'search', 'confirm', 'suspects', 'impact', 'new', 'apply',
-    ['test', 'record'], ['report', 'coverage'], ['report', 'connections'], ['report', 'parts'], ['report', 'document']];
-  for (const c of commands) expect(plm(root, ...[c].flat(), '--help').stdout).toContain('e.g.');
   for (const t of ['structure', 'interfaces', 'variants']) expect(plm(root, 'help', t).status).toBe(0);
   const files = plm(root, 'help', 'files').stdout;
-  for (const type of Object.keys(builtinTypes)) expect(files).toContain(type);
-  for (const key of ['informative', 'parameter_states', 'released_states', 'links', 'config']) expect(files).toContain(key);
+  for (const key of [...Object.keys(builtinTypes), 'informative', 'parameter_states', 'released_states', 'links', 'config']) expect(files).toContain(key);
 });

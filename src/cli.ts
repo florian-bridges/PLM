@@ -7,7 +7,7 @@ import { parse as parseYaml, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, connections, coverage, link, linkStates, recordRun, requirementsMarkdown, suspects, unreached, type LinkState } from './links.ts';
 import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, partsOf, productTree, parentOf, Refused, rollback, setConfig, targetId, UsageError, usesOf, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
-import { allowedLinks, builtinTypes, results } from './schemas.ts';
+import { allowedLinks, builtinTypes, results, typeFileKeys } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
 import { currentVersions, snapshotAt } from './version.ts';
@@ -15,7 +15,7 @@ import { currentVersions, snapshotAt } from './version.ts';
 // CL-08.1
 const program = new Command('plm')
     .version(createRequire(import.meta.url)('../package.json').version)
-    .option('-C, --repo <dir>', 'repo; e.g. -C ../wing', '.')
+    .option('-C, --repo <dir>', 'repo; e.g. -C ../widget', '.')
     .option('--format <format>', 'text/json; e.g. --format json', 'text')
     .option('--config <config>', 'variant; e.g. --config duty=long')
     .addHelpText('afterAll', '\nSetup: see docs/setup.md.')
@@ -170,7 +170,7 @@ program.command('new <type> <title>').description('create an item; e.g. new part
 const splitLine=(line: string)=>[...line.matchAll(/"[^"]*"|'[^']*'|\S+/g)].map((m)=>m[0].replace(/^['"]|['"]$/g,'')),
   errorKeys=(repo: Repo)=>validate(repo).filter((f)=>f.severity==='error').map((f)=>`${f.file}:${f.code}:${f.message}`);
 
-program.command('apply <file>').description('run related commands all or nothing, with a dry run; e.g. apply plan.yaml').option('--dry-run', 'preview; e.g. --dry-run').action((file,options)=>{
+program.command('apply <file>').description('run related commands all or nothing; e.g. apply plan.yaml').option('--dry-run', 'preview; e.g. --dry-run').action((file,options)=>{
     const root=workingFolder(),json=program.opts().format==='json',
       lines=parseYaml(readFileSync(file,'utf8')) as string[],before=errorKeys(openRepo()),ids:string[]=[],texts:string[]=[];
     journalOn();
@@ -268,7 +268,7 @@ const topics: Record<string, string> = {
   structure: 'Assemblies nest parts via `uses` with `quantity`; `report parts [item]` totals the BOM below an item.',
   interfaces: '`port` items connect via `connection` items\' `connects` links, each `role` sender/receiver; an ICD is a `files`-checked file. `report connections [item]` lists mismatches.',
   variants: '`--config <param>=<value>,...` selects `uses` entries by `when`, matched against `plm.yaml`\'s `config`.',
-  files: `plm.yaml keys: informative, parameter_states, released_states, links, config. types/<type>.yaml keys: base, prefix, folder, fields, required, files, template. Built-in types: ${Object.keys(builtinTypes).join(', ')}.`,
+  files: `plm.yaml keys: informative, parameter_states, released_states, links, config. types/<type>.yaml keys: ${typeFileKeys.join(', ')}. Built-in types: ${Object.keys(builtinTypes).join(', ')}.`,
 };
 program.command('help [topic]').description('a topic: structure, interfaces, variants, files; e.g. help structure')
   .action((topic) => {

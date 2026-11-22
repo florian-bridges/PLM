@@ -168,7 +168,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 *Rationale:* An agent or script looks the schema up instead of guessing it.
 
 **CL-08.1** Every command's and option's description shall explain and exemplify it; `--help` shall end with a line to `docs/setup.md`. `plm help <topic>` shall print a fixed text per `structure` (CO-01.6, CO-03.4), `interfaces` (CO-02.5, CO-02.10, TE-06.6), `variants` (CO-01.6, CO-02.12) and `files`, the last naming every built-in type (CO-02.5), type file key (CO-02.8) and `plm.yaml` key.
-*Rationale:* An agent without `docs/setup.md` learns commands and concepts from `--help` alone.
+*Rationale:* Topics explain what spans several commands.
 
 **CL-08.2** A test shall fail if a command or option lacks an example, or a type, type file key or `plm.yaml` key is missing from its topic.
 *Rationale:* A code check catches a text left behind when a command or key changes.

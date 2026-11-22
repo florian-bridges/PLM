@@ -195,8 +195,7 @@ export function connections(repo: Repo, states: LinkState[], root?: string) {
   return [...unreached(repo, states, 'connects', root).map((item) => ({ code: 'open', item })),
     ...within(repo, root, 'connection').flatMap((c) => {
       const roles = linksOf(c).filter((l) => l.type === 'connects').map((l) => entry(repo, targetId(l.target)).item.data.role),
-        senders = roles.filter((r) => r === 'sender').length,
-        code = roles.length < 2 ? 'few' : roles.some(Boolean) && senders !== 1 ? 'senders' : '';
+        code = roles.length < 2 ? 'few' : roles.some(Boolean) && roles.filter((r) => r === 'sender').length !== 1 ? 'senders' : '';
       return code ? [{ code, item: named(repo, c.id) }] : [];
     })];
 }

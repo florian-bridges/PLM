@@ -233,6 +233,7 @@ test('CO-02.5, CO-02.6, CO-02.8, CO-02.10, TE-06.6: ports', () => {
 });
 
 test('CL-01.8, CL-01.9: document', () => {
+  expect(plm(root, 'report', 'document').stdout).not.toContain('findings:');
   setLoad(root, 'links: [{type: derives, target: X}]\n', 3);
   write(root, { 'types/meta.yaml': 'required: [owner]\n' });
   const doc = plm(root, 'report', 'document', 'A').stdout;

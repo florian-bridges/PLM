@@ -1,6 +1,6 @@
 # Feature review
 
-The owner decides each milestone's features in its release or kickoff meeting, prepared as below. A separate feature review is held only for a real architecture change found later.
+The owner decides target states in milestone or kickoff meetings; the chief engineer breaks them into features. A feature review is held only for a real architecture change.
 
 ## When
 

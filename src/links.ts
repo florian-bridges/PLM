@@ -3,7 +3,7 @@ import { basename, join } from 'node:path';
 import { Document, parseDocument } from 'yaml';
 import { childrenOf, entry, git, innermostItem, isRequirementFile, linksOf, list, named, newId, Refused, subtree, targetId, tryGit, typeOf, UsageError, walk, writeYaml, type Entry, type Link, type Named, type Repo } from './repo.ts';
 import { allowedLinks, allows, disallowed } from './schemas.ts';
-import { validate, type Finding } from './validate.ts';
+import { type Finding } from './validate.ts';
 import { currentVersions, versionAt } from './version.ts';
 
 export interface LinkState { source: string; title: string; link: Link; targetTitle: string; state: 'current' | 'suspect' | 'unconfirmed' }
@@ -76,7 +76,7 @@ export function link(repo: Repo, source: string, type: string, target: string, r
   if (bad) throw new UsageError(bad);
   if (!remove) item.doc.setIn(['links', links.length], { type, target });
   else if (at < 0) throw new UsageError(target);
-  else item.doc.deleteIn(['links', at]), meta.doc.has('confirmed')&&meta.doc.deleteIn(['confirmed', target]), writeYaml(repo.root, meta);
+  else item.doc.deleteIn(['links', at]), meta.doc.has('confirmed')&&meta.doc.deleteIn(['confirmed', target])&&writeYaml(repo.root, meta);
   writeYaml(repo.root, item);
 }
 
@@ -106,7 +106,7 @@ export function changeSince(repo: Repo, link: Link) {
 }
 
 // TE-03.1, TE-06.2
-const within = (repo: Repo, root?: string, type?: string) => {
+export const within = (repo: Repo, root?: string, type?: string) => {
   const items = root && new Set(walk(repo, root, true, Infinity, false).map((w) => w.id));
   return [...repo.entries.values()].filter((e) => (!items || items.has(e.id)) && (!type || typeOf(repo, e.item.data.type) === type));
 };
@@ -116,7 +116,7 @@ export const suspects = (repo: Repo, states: LinkState[], root?: string) => {
   return states.filter((state) => state.state !== 'current' && !fromRun(repo, state) && ids.includes(state.source));
 };
 
-export interface Coverage {
+interface Coverage {
   requirement: string; title: string; state: 'verified' | 'pending' | 'unverified' | 'allocated' | 'retained' | 'unallocated';
   tests: { testCase: Named; run?: Named; result?: string; outdated?: boolean }[];
 }
@@ -168,13 +168,13 @@ export function unreached(repo: Repo, states: LinkState[], type: string, root?: 
 }
 
 // CL-01.8, VS-03.5
-export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry) => string, states: LinkState[], rows: Coverage[], suspects: LinkState[]): string {
+export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry) => string, states: LinkState[], findings: Finding[]): string {
   const ref = (id: string) => { const found = repo.entries.get(id); return found ? `[${id}](${link(found)}) ${found.item.data.title}` : id; };
   // CL-01.9
-  const items = within(repo, id), tally = (xs: unknown[]) => [...new Set(xs)].map((x) => `${x} ${xs.filter((y) => y === x).length}`).join(', ');
+  const items = within(repo, id), rows = coverage(repo, states, id), tally = (xs: unknown[]) => [...new Set(xs)].map((x) => `${x} ${xs.filter((y) => y === x).length}`).join(', ');
   const status = (found: Entry) => (found.meta.data.status ? ` *${found.meta.data.status}*` : '');
   const linkLine = (state: LinkState) => `- ${state.state} ${ref(state.source)} ${state.link.type} ${ref(state.link.target)}\n`;
-  const summary = rows.map((row) => `- ${row.state} ${ref(row.requirement)}\n`).join('') + suspects.map(linkLine).join('');
+  const summary = rows.map((row) => `- ${row.state} ${ref(row.requirement)}\n`).join('') + suspects(repo, states, id).map(linkLine).join('');
   const seen = new Set<string>();
   const section = (itemId: string, number: string): string => {
     seen.add(itemId);
@@ -187,16 +187,16 @@ export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry
         + row.tests.map((test) => `- ${ref(test.testCase.id)}: ${test.run ? `${ref(test.run.id)} ${test.result}${test.outdated ? ' outdated' : ''}` : 'no run'}\n`).join('') + '\n';
     }).join('') + childrenOf(found).map((child) => seen.has(child) || !repo.entries.has(child) ? '' : section(child, `${number}.${++n}`)).join('');
   };
-  return `findings: ${tally(validate(repo).filter((f) => items.some((e) => e.id === innermostItem(repo, f.file) || e.meta.path === f.file)).map((f) => f.code))}\nitems: ${tally(items.map((e) => e.meta.data.status).filter(Boolean))}\n\n` + summary + section(id, '1');
+  const own = findings.filter((f) => items.some((e) => e.id === innermostItem(repo, f.file) || e.meta.path === f.file)).map((f) => f.code);
+  return `${own[0] ? `findings: ${tally(own)}\n` : ''}items: ${tally(items.map((e) => e.meta.data.status).filter(Boolean))}\n\n${summary}${section(id, '1')}`;
 }
 
 // TE-06.6
 export function connections(repo: Repo, states: LinkState[], root?: string) {
-  return [...unreached(repo, states, 'connects', root).map((item) => ({ code: 'open', item, detail: '' })),
+  return [...unreached(repo, states, 'connects', root).map((item) => ({ code: 'open', item })),
     ...within(repo, root, 'connection').flatMap((c) => {
       const roles = linksOf(c).filter((l) => l.type === 'connects').map((l) => entry(repo, targetId(l.target)).item.data.role),
-        senders = roles.filter((r) => r === 'sender').length,
-        [code, n] = roles.length < 2 ? ['few', roles.length] : roles.some(Boolean) && senders !== 1 ? ['senders', senders] : [];
-      return code ? [{ code, item: named(repo, c.id), detail: String(n) }] : [];
+        code = roles.length < 2 ? 'few' : roles.some(Boolean) && roles.filter((r) => r === 'sender').length !== 1 ? 'senders' : '';
+      return code ? [{ code, item: named(repo, c.id) }] : [];
     })];
 }

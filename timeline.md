@@ -1,6 +1,6 @@
 # Timeline
 
-Milestones (usually releases), their budgets in 5-hour usage windows and the active milestone. Budgets are set by the owner. The chief engineer keeps it current (skill `chief-engineer`, Your files); the shift reads the lines of the active milestone.
+Milestones (target states, each with a check that shows it is reached), their budgets in 5-hour usage windows, the releases made in them and the active milestone. Budgets are set by the owner. The chief engineer keeps it current (skill `tower:chief-engineer`, The record); the shift reads the lines of the active milestone.
 
 ## Overview
 
@@ -15,32 +15,32 @@ Milestones (usually releases), their budgets in 5-hour usage windows and the act
 | 0.9 | 2 | 1 | done (v0.9.0, meeting #100) |
 | 0.10 | 3 | 3 | done (v0.10.0, meetings #100, #107) |
 | 0.11 | 2 | 1 | done (v0.11.0, meeting #110) |
+| 0.12 | 3 | 0 | active (meeting #121) |
 
 Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is a GitHub milestone holding its issues. Standing directions for every feature: PLM holds product data only, no project management (#64); use by LLM agents is a strength to keep and document (#54).
 
 ## Active milestone
 
-**Next milestone: 0.11.** Change, status and graph.
-
-Budget: 2 windows.
-
-Scope decided in release meeting #110 (2026-11-21, `meetings/2026-11-21-release-0.10.md`).
-
+**Next milestone: 0.12 "Cleanup".**
+What PLM has built so far is clean: six cleanups decided in meeting #121 and a general check and cleanup of the whole project (bugs, dead or duplicated code, unneeded requirements and tests, outdated docs).
+Check: the six issues closed; one whole-project review by `reviewer` with no blocking findings left; `scripts/check.sh` passes; released as 0.12.
+Budget: 3 windows.
 ### Entry conditions
+- [x] #125 Mermaid graph shows nesting: done when CL-01.10 names nesting edges, output and test match
+- [x] #126 report document: one validate run, no empty findings line: done when CL-01.9 code and test match
+- [x] #128 report connections rows without detail: done when TE-06.6, code and test drop `detail`
+- [x] #123 Requirements document links render in VS Code Markdown Preview: done when links are workspace-relative and tested
+- [x] #129 PLM documented for agents: done when the help is the complete reference, `docs/setup.md` exists, README is short and `check.sh` fails on missing help text
+- [ ] #127 Normal spacing for squashed lines in src/cli.ts: done when no squashed lines remain (after PR #122)
+- [x] #130 Whole-project check and cleanup: done when `reviewer` reviewed the whole project and no blocking findings are left
+- [ ] Release 0.12: done when released with `check.sh` passing
 
-- [x] #111 Structure diff in `impact`. *Done when:* TE-05.4 is implemented and tested; `scripts/check.sh` passes.
-- [x] #112 Status counts in the requirements document. *Done when:* CL-01.9 is implemented and tested; `scripts/check.sh` passes.
-- [x] #113 Mermaid graph of `show --down/--up`. *Done when:* CL-01.10 and the US-2 clause are in place, implemented and tested; `scripts/check.sh` passes.
-
-### Active topics
-
-* #111 (PR #115), #112 (PR #117), #113 (PR #116) merged; v0.11.0 released (PR #118); #67 closed.
-* #114 (owner, bug: items under a folder without `item.yaml` not top-level): building on `feat/transparent-top`, release 0.11.1.
-* #114 bug fix on `feat/top-level-items`, for patch 0.10.1.
+Breakdown: the six decided cleanups one issue each; the whole-project cleanup and the release as their own conditions; #127 waits for PR #122 (owner's word-count change).
+#127 no longer waits for PR #122: respacing raises the current limit by its cost; #122 re-measures on merge.
 
 ### Coming owner meetings
 
-* Release meeting after 0.11.1 (no decided milestone left).
+* None.
 
 ## Planned milestones
 

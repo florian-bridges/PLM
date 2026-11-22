@@ -1,7 +1,5 @@
 # Component Requirements
 
-Each requirement traces to top-level requirements (CR) and user scenarios (US).
-
 ## Core library (CO)
 
 **CO-01** The core shall load items, artifacts and links from a repository, selecting used items by configuration if given. (CR-01–CR-03; US-2)
@@ -43,6 +41,9 @@ Each requirement traces to top-level requirements (CR) and user scenarios (US).
 
 **CL-05** The CLI shall offer machine-readable output and fail with non-zero exit codes. (CR-19; US-5, US-8, US-12)
 *Rationale:* Scripts and CI need parseable results and reliable failure signals.
+
+**CL-08** The CLI help shall be the complete reference: every command and option explained, and exemplified if it takes a value, and help topics (`plm help <topic>`) for structure, interfaces, variants and file formats, covering every built-in type and `plm.yaml` key. (CR-04, CR-19; US-12)
+*Rationale:* An agent without a human guide learns the tool from its own help.
 
 ## VS Code extension (VS)
 

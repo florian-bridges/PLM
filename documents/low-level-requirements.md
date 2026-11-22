@@ -1,7 +1,5 @@
 # Low-Level Requirements
 
-Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.md](components.md).
-
 ## Core library
 
 **CO-01.1** The core shall read `plm.yaml` (repository settings), requirements as `<name>.yaml` and other items as `<name>/item.yaml`, in their type's home folder (CO-02.8), if it has one, or its subfolders; a home folder sits in the parent item, test runs' at the root, and a top-level item has none; and `meta/<ID>.yaml`, all with the `yaml` package, keeping comments, formatting and line width when writing back. A folder with no `item.yaml` shall be transparent, hidden folders excepted: items under it belong to the nearest enclosing item, or are top-level if none.
@@ -108,12 +106,12 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-06.5** With `--link <type>`, coverage shall list the items of the link type's target types, in the repository or subtree, that no link of that type reaches (any state), and exit 1 if any.
 *Rationale:* Declared link types need the same gap check as unallocated requirements (TE-06.4).
 
-**TE-06.6** `report connections` shall list, for the repository or a subtree, `open` ports (TE-06.5 for `connects`), connections with fewer than two `connects` links (`few`) and connections whose ports have a `role` but not exactly one `sender` (`senders`), each as `{code, item, detail}` with `detail` the number of ports or senders, and exit 1 if any.
+**TE-06.6** `report connections` shall list, for the repository or a subtree, `open` ports (TE-06.5 for `connects`), connections with fewer than two `connects` links (`few`) and connections whose ports have a `role` but not exactly one `sender` (`senders`), each as `{code, item}`, and exit 1 if any.
 *Rationale:* A directed port type's required `role` (`sender`/`receiver`, CO-02.8) gives direction without a new key.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]`, `apply <file>`, `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]`, `report connections [<item>]`, `report parts [<item>]` and `report document [<item>]`, finding the repository by searching upward for `plm.yaml`; each command shall have a one-line description.
+**CL-01.1** The CLI shall be a Node.js 22.18 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]`, `apply <file>`, `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]`, `report connections [<item>]`, `report parts [<item>]` and `report document [<item>]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
@@ -134,10 +132,10 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.8** `report document [<item>]` shall print, for the item or each top-level item, a section per item of its subtree (TE-06.2) once, numbered and headed by depth (1, 1.1, 1.1.1); it shall begin with each requirement's coverage state and the output of `plm suspects <item>`, then list each requirement with title in bold, ID, status, coverage state, rendered text, its links and the links to it with state per TE-03.1, and each verifying test case's latest run per TE-06.1; as Markdown, IDs linking to their files.
 *Rationale:* VS Code is not always available.
 
-**CL-01.9** `report document` shall begin with counts, within the printed subtree, of `validate`'s findings by code and of items by `status`.
-*Rationale:* The counts show the product's state at a glance.
+**CL-01.9** `report document` shall call `validate` once and begin with counts, within the printed subtree, of its findings by code, if any, and of items by `status`.
+*Rationale:* The counts show the product's state without repeated validation.
 
-**CL-01.10** `show --down`/`--up --format mermaid` shall print a Mermaid graph of the items, their `uses` and links, coloured by state per TE-03.1.
+**CL-01.10** `show --down`/`--up --format mermaid` shall print a Mermaid graph of the items' nesting, `uses` and links, coloured by state per TE-03.1.
 *Rationale:* Git hosts and Markdown viewers render Mermaid.
 
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8) in block style, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters outside `a-z0-9` replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.
@@ -167,6 +165,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-05.4** `plm types` shall print each type (CO-02.8) with its base, prefix, home folder, fields and required fields, and each link type (CO-02.9) with its source and target types.
 *Rationale:* An agent or script looks the schema up instead of guessing it.
 
+**CL-08.1** Every command's and option's description shall explain, and exemplify if it takes a value; `--help` shall end with a line to `docs/setup.md`. `plm help <topic>` shall print a fixed text per `structure` (CO-01.6, CO-03.4), `interfaces` (CO-02.5, CO-02.10, TE-06.6), `variants` (CO-01.6, CO-02.12) and `files`, the last naming every built-in type (CO-02.5), type file key (CO-02.8) and `plm.yaml` key, or else fall back to that command's help. A test shall fail when a description lacks its explanation or required example, or a key is missing from its topic.
+*Rationale:* Topics explain what spans several commands; a code check catches a text left behind when a command or key changes.
+
 ## VS Code extension
 
 **VS-01.1** The extension shall reuse the core library and run in the extension host without a separate server, bundled by esbuild into one CommonJS file and activated in workspaces containing `plm.yaml`.
@@ -193,8 +194,8 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **VS-02.6** An item file's breadcrumbs shall show its path in the product tree.
 *Rationale:* Orients engineers without opening the tree view.
 
-**VS-03.5** The document of CL-01.8 shall open in VS Code's Markdown preview, refreshed on each repository change.
-*Rationale:* Reuses VS Code's renderer instead of a second one.
+**VS-03.5** CL-01.8's document shall open in VS Code's Markdown preview, refreshed on change, IDs as workspace-relative links.
+*Rationale:* Reuses VS Code's renderer, needing `/`-rooted links, not `file://`.
 
 **VS-04.3** In item and requirement files, hovering an ID shall show its title, type and status and, for a link target, the link's state and "Review link"; Go to definition shall open its file.
 *Rationale:* Links are inspected and navigated where they are written.

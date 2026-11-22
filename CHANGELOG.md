@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.0 (2026-11-23)
+
+* The Mermaid graph shows nesting edges (#125).
+* `report document` runs `validate` once and prints no empty findings line (#126).
+* `report connections` rows drop `detail` (#128).
+* Requirements document links are workspace-relative and render in VS Code's Markdown preview (#123).
+* `plm help` is the complete reference for every command, option, type and `plm.yaml` key; `docs/setup.md` for agents; `check.sh` fails on missing help text (#129).
+* `list <field> <item>` includes the item's own requirements and exits 0; `link --remove` writes no empty meta file; the Testing panel shows types based on `test-case`; whole-project cleanup (#130, #127).
+
 ## 0.11.1 (2026-11-21)
 
 * Items in a folder without `item.yaml` are top-level: they appear in the Product tree, `report document` and `report parts` (#114).

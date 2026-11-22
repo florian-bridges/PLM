@@ -1,7 +1,7 @@
-// VS-01–VS-06: VS Code glue.
+// VS-01.1, VS-01–VS-06: VS Code glue.
 import { join, relative } from 'node:path';
 import * as vscode from 'vscode';
-import { changeSince, confirm, coverage, link, linkStates, recordRun, requirementsMarkdown, suspects } from '../../src/links.ts';
+import { changeSince, confirm, link, linkStates, recordRun, requirementsMarkdown } from '../../src/links.ts';
 import { childrenOf, entry, findRoot, innermostItem, linksOf, loadRepo, newItem, setConfig, targetId, type Entry, type Repo } from '../../src/repo.ts';
 import { results } from '../../src/schemas.ts';
 import { validate } from '../../src/validate.ts';
@@ -81,8 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
     const type = await vscode.window.showQuickPick(logic.itemTypes(open()));
     const title = type && await vscode.window.showInputBox({ prompt: 'Title' });
     if (!title) return;
-    const { path } = newItem(open(), type, title, join(root, at?.path ?? ''));
-    vscode.commands.executeCommand('vscode.open', fileUri(path));
+    vscode.commands.executeCommand('vscode.open', fileUri(newItem(open(), type, title, join(root, at?.path ?? '')).path));
     refresh();
   };
 
@@ -122,7 +121,7 @@ export function activate(context: vscode.ExtensionContext) {
   let configText = '';
   const showConfig = () => { configBar.text = logic.configLabel(configText); configBar.show(); };
   const pickConfig = async () => {
-    const picked = await vscode.window.showInputBox({ prompt: 'config (CO-01.6)', value: configText });
+    const picked = await vscode.window.showInputBox({ prompt: 'config', value: configText });
     if (picked === undefined) return;
     setConfig(open(), (configText = picked) || undefined);
     showConfig();
@@ -161,7 +160,7 @@ export function activate(context: vscode.ExtensionContext) {
     // VS-03.5
     vscode.workspace.registerTextDocumentContentProvider('plm', { onDidChange: docChanged.event, provideTextDocumentContent: () => {
       const repo = open(), states = statesOf(repo);
-      return docId && requirementsMarkdown(repo, docId, (found) => fileUri(found.item.path).toString(), states, coverage(repo, states, docId), suspects(repo, states, docId));
+      return docId && requirementsMarkdown(repo, docId, (found) => logic.docLink(vscode.workspace.asRelativePath(fileUri(found.item.path), false)), states, validate(repo));
     } }),
     // VS-04.5
     vscode.languages.registerCallHierarchyProvider(yaml, {

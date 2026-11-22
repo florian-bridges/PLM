@@ -5,7 +5,7 @@
 * **Git is the engine.** The product definition is a Git repository of plain-text files; Git provides versioning and configuration management (CR-12).
 * **Local and remote.** Engineers work locally with VS Code and a CLI; a Git host provides overview, reviews and change requests.
 * **Host-agnostic**, so programs can self-host for export control.
-* **Integrate, don't replace.** CAD, analysis and test tools stay; their outputs become artifacts. Text-based tools (KiCad, WireViz) are preferred because Git can diff them.
+* **Integrate, don't replace.** CAD, analysis and test tools stay; their outputs become artifacts. Text-based formats are preferred because Git can diff them.
 
 ## Product repository
 
@@ -23,7 +23,7 @@ meta/<ID>.yaml           owner, status, confirmations
 
 * **Items** (CR-01) have a stable ID and a type with its own schema (CO-02.5).
 * **Composition** (CR-02): folders nest; `uses` lists items reused from elsewhere, e.g. standard parts, with per-use data and alternatives (CO-01.5, CO-01.6).
-* **Artifacts** (CR-03) are the item directory's files not ignored by Git; binaries use Git LFS with locking. CAD is stored natively plus a STEP export.
+* **Artifacts** (CR-03) are the item directory's files not ignored by Git; binaries use Git LFS.
 * **Relationships** (CR-06) are typed links in `item.yaml` (`satisfies`, `verifies`, `implements`, …), confirmed in `meta/<ID>.yaml`.
 * **Requirements** are items, stored in the `requirements/` folder of the item they specify, so one link and suspect mechanism covers all disciplines.
 
@@ -36,10 +36,6 @@ meta/<ID>.yaml           owner, status, confirmations
 
 * **Change requests** use the host's issues and merge requests, which also carry reviews and permissions (CR-14).
 * **Tests** execute externally (CI, HIL rigs) and report via the CLI; manual results are entered in VS Code.
-
-## Components
-
-See [components.md](components.md).
 
 ## Toolchain
 

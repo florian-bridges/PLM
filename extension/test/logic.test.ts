@@ -30,7 +30,8 @@ test('VS-04.5: incoming and outgoing links of an ID', () => {
 });
 
 test('VS-06.2: test cases grouped by the item owning their tests folder', () => {
-  const repo = fakeRepo({ id: 'A', path: 'a' }, { id: 'T', path: 'a/tests/T', item: { data: { type: 'test-case', title: 't' } } });
+  const repo = fakeRepo({ id: 'A', path: 'a' }, { id: 'T', path: 'a/tests/T', item: { data: { type: 'manual', title: 't' } } });
+  repo.types.manual={base:'test-case'};
   expect([...logic.testCasesByOwner(repo)]).toEqual([['A', [repo.entries.get('T')]]]);
 });
 
@@ -46,6 +47,10 @@ test('VS-01.3, VS-01.5: diagnostics group by file; item types for "New item" exc
   const findings = [{ file: 'A', message: 'm1' }, { file: 'B', message: 'm2' }] as never[];
   expect([...logic.diagnosticsOf(findings)].map(([file, found]) => [file, found.length])).toEqual([['A', 1], ['B', 1]]);
   expect(logic.itemTypes({ types: { part: {}, meta: {} } } as unknown as Repo)).toEqual(['part']);
+});
+
+test('VS-03.5', () => {
+  expect(logic.docLink('sub/a b')).toBe('/sub/a%20b');
 });
 
 test('VS-04.3: hover', () => {

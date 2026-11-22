@@ -3,9 +3,11 @@
 
 Test words count toward the source limit; the extension has its own limit.
 
-Words are whitespace-separated tokens containing a letter or digit, so
-punctuation-only tokens such as `{`, `});` or `|` do not count and line
-breaks cost nothing. Binary files are skipped.
+In documents, words are whitespace-separated tokens containing a letter or
+digit. In code (source, test and extension), words are identifiers, keywords
+and numbers, so `a.b(c, d)` is four words however it is spaced and squashing
+code saves nothing (owner, #121). Punctuation and line breaks cost nothing.
+Binary files are skipped.
 Exits with status 1 if a given word limit is exceeded.
 """
 
@@ -17,6 +19,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 WORD = re.compile(r"\w")
+CODE_WORD = re.compile(r"[A-Za-z_$][\w$]*|\d+")
 
 
 def tracked_files(directories, include_untracked):
@@ -28,21 +31,23 @@ def tracked_files(directories, include_untracked):
     return sorted(p for p in out.decode().split("\0") if p)
 
 
-def count_words(path):
+def count_words(path, code):
     data = (REPO_ROOT / path).read_bytes()
     if b"\0" in data:
         return None  # binary
-    tokens = data.decode("utf-8", errors="replace").split()
-    return sum(1 for token in tokens if WORD.search(token))
+    text = data.decode("utf-8", errors="replace")
+    if code:
+        return len(CODE_WORD.findall(text))
+    return sum(1 for token in text.split() if WORD.search(token))
 
 
-def summarize(directories, limit, include_untracked, verbose):
+def summarize(directories, limit, include_untracked, verbose, code=False):
     counts = {}
     skipped = 0
     for path in tracked_files(directories, include_untracked):
         if not (REPO_ROOT / path).is_file():
             continue  # deleted in working tree
-        words = count_words(path)
+        words = count_words(path, code)
         if words is None:
             skipped += 1
         else:
@@ -80,17 +85,19 @@ def main():
     # #113 (Mermaid graph, CL-01.10, quote escaping): +73 src measured after review cuts (-10 src, -9 docs).
     # #113 after merging #111: +17 docs, the part of its +39 that #111 left no spare for, measured after review cuts (-11 docs).
     # #112 (CL-01.9 counts) after #111, #113: +31 docs (its measured net, the spare it used now taken by #113), +39 src after review cuts (-5 docs, -8 src).
+    # Code counted as identifiers, keywords and numbers (owner, #121): src+test 6911 -> 12401 and extension
+    # 1542 -> 2499, re-baselined by measurement with the same margins (src+test 0, extension 9 -> 15); no raise.
     parser.add_argument("--max-docs", type=int, default=5878, help="word limit for the documents directory")
-    parser.add_argument("--max-src", type=int, default=6911, help="word limit for the source and test directories")
-    parser.add_argument("--max-ext", type=int, default=1542, help="word limit for the extension directory")
+    parser.add_argument("--max-src", type=int, default=12401, help="word limit for the source and test directories")
+    parser.add_argument("--max-ext", type=int, default=2499, help="word limit for the extension directory")
     parser.add_argument("-u", "--include-untracked", action="store_true",
                         help="also count untracked files that are not git-ignored")
     parser.add_argument("-v", "--verbose", action="store_true", help="list per-file counts")
     args = parser.parse_args()
 
     ok = summarize([args.docs_dir], args.max_docs, args.include_untracked, args.verbose)
-    ok &= summarize([args.src_dir, args.test_dir], args.max_src, args.include_untracked, args.verbose)
-    ok &= summarize([args.ext_dir], args.max_ext, args.include_untracked, args.verbose)
+    ok &= summarize([args.src_dir, args.test_dir], args.max_src, args.include_untracked, args.verbose, code=True)
+    ok &= summarize([args.ext_dir], args.max_ext, args.include_untracked, args.verbose, code=True)
     sys.exit(0 if ok else 1)
 
 

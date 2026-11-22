@@ -7,16 +7,18 @@ import { parse as parseYaml, stringify } from 'yaml';
 import { changedFiles, impact } from './impact.ts';
 import { allocation, confirm, connections, coverage, link, linkStates, recordRun, requirementsMarkdown, suspects, unreached, type LinkState } from './links.ts';
 import { artifacts, entry, expanded, journalFiles, journalOff, journalOn, loadRepo, named, newItem, parameterOf, partsOf, productTree, parentOf, Refused, rollback, setConfig, targetId, UsageError, usesOf, walk, writeYaml, type Entry, type Named, type Parameter, type Repo } from './repo.ts';
-import { allowedLinks, results } from './schemas.ts';
+import { allowedLinks, builtinTypes, results, typeFileKeys } from './schemas.ts';
 import { list, search, setParameter } from './search.ts';
 import { validate } from './validate.ts';
 import { currentVersions, snapshotAt } from './version.ts';
 
+// CL-08.1
 const program = new Command('plm')
     .version(createRequire(import.meta.url)('../package.json').version)
-    .option('-C, --repo <dir>', '', '.')
-    .option('--format <format>', '', 'text')
-    .option('--config <config>', '')
+    .option('-C, --repo <dir>', 'repo; e.g. -C ../widget', '.')
+    .option('--format <format>', 'text/json; e.g. --format json', 'text')
+    .option('--config <config>', 'variant; e.g. --config duty=long')
+    .addHelpText('afterAll', '\nSetup: see docs/setup.md.')
     .exitOverride(),
   workingFolder = () => program.opts().repo,
   openRepo = () => loadRepo(workingFolder());
@@ -50,7 +52,7 @@ function mermaid(repo: Repo, ids: Set<string>) {
 // CL-05.2
 let exitCode = 0;
 
-program.command('validate').description('check the repository').action(() => {
+program.command('validate').description('check the repository; e.g. validate').action(() => {
   const findings = validate(openRepo()),
     lines = findings.map((finding) => `${finding.file}:${finding.line}:${finding.col} ${finding.severity} ${finding.code}: ${finding.message}`);
   output(lines.join('\n'), findings);
@@ -58,8 +60,8 @@ program.command('validate').description('check the repository').action(() => {
 });
 
 // CL-01.5, CO-01.6
-program.command('show <id>').description('show an item')
-  .option('--down <n>').option('--up <n>')
+program.command('show <id>').description('show an item; e.g. show PRT-1')
+  .option('--down <n>', 'steps down; e.g. --down 2').option('--up <n>', 'steps up; e.g. --up 1')
   .action((id, options) => {
     const repo = openRepo(), found = entry(repo, id), steps = options.down ?? options.up;
     if (steps !== undefined) {
@@ -78,12 +80,12 @@ program.command('show <id>').description('show an item')
     output(stringify(data, { aliasDuplicateObjects: false }), data);
   });
 
-program.command('link <source> <type> <target>').description('add a link')
-  .option('--remove')
+program.command('link <source> <type> <target>').description('add a link; e.g. link PRT-1 satisfies REQ-2')
+  .option('--remove', 'remove; e.g. --remove')
   .action((source, type, target, options) => link(openRepo(), source, type, target, options.remove));
 
 // CL-05.4
-program.command('types').description('print the type and link schema').action(() => {
+program.command('types').description('print types and links; e.g. types').action(() => {
   const repo = openRepo(), types = Object.fromEntries(Object.entries(repo.types).filter(([name]) => name !== 'meta')),
     links = allowedLinks(repo),
     lines = [
@@ -94,7 +96,7 @@ program.command('types').description('print the type and link schema').action(()
 });
 
 // CL-01.3
-program.command('set <ref> <field> <value>').description('write a field or parameter').action((ref, field, value) => {
+program.command('set <ref> <field> <value>').description('write a field or parameter; e.g. set PRT-1 title Clip').action((ref, field, value) => {
   const repo = openRepo(), id = targetId(ref);
   if (id !== ref) return setParameter(repo, id, ref, field, value);
   const found = entry(repo, id), file = field === 'owner' || field === 'status' ? found.meta : found.item, current = (file.data as any)[field];
@@ -104,7 +106,7 @@ program.command('set <ref> <field> <value>').description('write a field or param
 });
 
 // CL-01.4
-program.command('get <ref> [key]').description('print a parameter').action((ref, key = 'value') => {
+program.command('get <ref> [key]').description('print a parameter; e.g. get PRT-1:mass_kg').action((ref, key = 'value') => {
   const found = parameterOf(openRepo(), ref);
   if (!found || !['name', 'value', 'unit', 'state'].includes(key)) throw new UsageError(ref);
   const val = found.parameter[key as keyof Parameter];
@@ -113,7 +115,7 @@ program.command('get <ref> [key]').description('print a parameter').action((ref,
 });
 
 // CO-03.3, CL-01.1
-program.command('list <field> [args...]').description('list entries of a field').action((field, args: string[] = []) => {
+program.command('list <field> [args...]').description('list field entries; e.g. list links PRT-1').action((field, args: string[] = []) => {
   const repo=openRepo(),item=args[0]?.includes(':')?undefined:args.shift(),
     matches = list(repo,field,item,args.map((f)=>f.split(/:(.*)/))),
     lines = matches.map((m) => `${label(named(repo, m.source))} ${Object.entries(m).slice(1).map((e) => e.join(':')).join(' ')}`);
@@ -122,25 +124,25 @@ program.command('list <field> [args...]').description('list entries of a field')
 });
 
 // CO-03.2
-program.command('search <query...>').description('find items').action((query) => {
+program.command('search <query...>').description('find items; e.g. search clip').action((query) => {
   const repo = openRepo(), found = search(repo, query.join(' ')).map((item) => record(repo, entry(repo, item.id)));
   output(found.map(label).join('\n'), found);
 });
 
 // CL-01.2, TE-02.2
-program.command('confirm <source> [target]').description('confirm links').option('--reason <text>').action((source, target, options) => {
+program.command('confirm <source> [target]').description('confirm links; e.g. confirm PRT-1').option('--reason <text>', 'why; e.g. --reason reviewed').action((source, target, options) => {
   const repo = openRepo(), links = confirm(repo, currentVersions(repo), validate(repo), source, target, options.reason);
   output(links.map((link) => `confirmed ${source} ${link.type} ${link.target}`).join('\n'), links);
 });
 
-program.command('suspects [item]').description('list suspect links').action((item) => {
+program.command('suspects [item]').description('list suspect links; e.g. suspects PRT-1').action((item) => {
   const states = suspects(...scoped(item));
   output(states.map((state) => `${state.state} ${linkLabel(state)}`).join('\n'), states);
   exitCode = states.length && 1;
 });
 
 // TE-05.1, TE-05.3, TE-05.4
-program.command('impact <range>').description('list a change\'s impact').action((range) => {
+program.command('impact <range>').description('list a change\'s impact; e.g. impact main..HEAD').action((range) => {
   const repo = openRepo(), [base, head] = range.split('..'),
     headSnapshot = head ? snapshotAt(repo.root, head) : { repo, versions: currentVersions(repo) },
     result = impact(snapshotAt(repo.root, base), headSnapshot, changedFiles(repo.root, base, head)),
@@ -157,7 +159,7 @@ program.command('impact <range>').description('list a change\'s impact').action(
 });
 
 // CL-02.1
-program.command('new <type> <title>').description('create an item')
+program.command('new <type> <title>').description('create item; e.g. new part Clip')
   .action((type, title) => {
   const created = newItem(openRepo(), type, title, workingFolder());
   output(created.id, created);
@@ -168,7 +170,7 @@ program.command('new <type> <title>').description('create an item')
 const splitLine=(line: string)=>[...line.matchAll(/"[^"]*"|'[^']*'|\S+/g)].map((m)=>m[0].replace(/^['"]|['"]$/g,'')),
   errorKeys=(repo: Repo)=>validate(repo).filter((f)=>f.severity==='error').map((f)=>`${f.file}:${f.code}:${f.message}`);
 
-program.command('apply <file>').description('run related commands all or nothing, with a dry run').option('--dry-run').action((file,options)=>{
+program.command('apply <file>').description('run commands all or nothing; e.g. apply plan.yaml').option('--dry-run', 'preview; e.g. --dry-run').action((file,options)=>{
     const root=workingFolder(),json=program.opts().format==='json',
       lines=parseYaml(readFileSync(file,'utf8')) as string[],before=errorKeys(openRepo()),ids:string[]=[],texts:string[]=[];
     journalOn();
@@ -196,10 +198,10 @@ program.command('apply <file>').description('run related commands all or nothing
   });
 
 // CL-03.1
-program.command('test').command('record <test-case...>').description('record a test run')
-  .requiredOption('--sut <ids...>')
-  .addOption(new Option('--result <results...>').choices(results).makeOptionMandatory())
-  .option('--log <files...>', '', [])
+program.command('test').command('record <test-case...>').description('record a test run; e.g. record TC-1 --sut PRT-1 --result pass')
+  .requiredOption('--sut <ids...>', 'tested; e.g. --sut PRT-1')
+  .addOption(new Option('--result <results...>', 'result; e.g. --result pass').choices(results).makeOptionMandatory())
+  .option('--log <files...>', 'logs; e.g. --log run.log', [])
   .action((testCases, options) => {
     const id = recordRun(openRepo(), testCases, options.sut, options.result, options.log);
     output(id, { id });
@@ -207,10 +209,10 @@ program.command('test').command('record <test-case...>').description('record a t
 
 // TE-06.2, TE-06.4, TE-06.5
 const report = program.command('report');
-report.command('coverage [item]').description('report verification coverage')
-  .option('--by <field>')
-  .option('--allocation')
-  .option('--link <type>')
+report.command('coverage [item]').description('report verification coverage; e.g. report coverage')
+  .option('--by <field>', 'group by; e.g. --by owner')
+  .option('--allocation', 'allocation; e.g. --allocation')
+  .option('--link <type>', 'unreached; e.g. --link verifies')
   .action((item, options) => {
     const state = scoped(item);
     if (options.link) {
@@ -238,7 +240,7 @@ report.command('coverage [item]').description('report verification coverage')
   });
 
 // TE-06.6
-report.command('connections [item]').description('report ports and connections that do not fit')
+report.command('connections [item]').description('report bad ports/connections; e.g. report connections')
   .action((item) => {
     const rows = connections(...scoped(item));
     exitCode = rows.length && 1;
@@ -246,7 +248,7 @@ report.command('connections [item]').description('report ports and connections t
   });
 
 // CO-03.4, CO-01.6
-report.command('parts [item]').description('report item totals').action((item) => {
+report.command('parts [item]').description('report item totals; e.g. report parts').action((item) => {
   const repo = openRepo();
   setConfig(repo, program.opts().config);
   const rows = partsOf(repo, item && entry(repo, item).id);
@@ -254,12 +256,28 @@ report.command('parts [item]').description('report item totals').action((item) =
 });
 
 // CL-01.8
-report.command('document [item]').description('print the requirements document').action((item) => {
+report.command('document [item]').description('print requirements document; e.g. report document').action((item) => {
   const [repo, states, id] = scoped(item), findings = validate(repo);
   const text = (id ? [id] : productTree(repo).map((found) => found.id))
     .map((root) => requirementsMarkdown(repo, root, (found) => found.item.path, states, coverage(repo, states, root), suspects(repo, states, root), findings)).join('\n');
   output(text, text);
 });
+
+// CL-08.1
+const topics: Record<string, string> = {
+  structure: 'Assemblies nest parts via `uses` with `quantity`; `report parts [item]` totals the BOM below an item.',
+  interfaces: '`port` items connect via `connection` items\' `connects` links, each `role` sender/receiver; an ICD is a `files`-checked file. `report connections [item]` lists mismatches.',
+  variants: '`--config <param>=<value>,...` selects `uses` entries by `when`, matched against `plm.yaml`\'s `config`.',
+  files: `plm.yaml keys: informative, parameter_states, released_states, links, config. types/<type>.yaml keys: ${typeFileKeys.join(', ')}. Built-in types: ${Object.keys(builtinTypes).join(', ')}.`,
+};
+program.command('help [topic]').description('topic or command; e.g. help structure')
+  .action((topic) => {
+    if (!topic) return void program.outputHelp();
+    if (Object.hasOwn(topics, topic)) return void output(topics[topic], topics[topic]);
+    const cmd = program.commands.find((c) => c.name() === topic);
+    if (!cmd) throw new UsageError(topic);
+    cmd.outputHelp();
+  });
 
 try {
   program.parse();

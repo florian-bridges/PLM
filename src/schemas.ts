@@ -18,6 +18,7 @@ export const baseSchema = {
 };
 
 // CO-02.5, CO-02.8, CO-02.10
+export const typeFileKeys = ['base', 'prefix', 'folder', 'template', 'fields', 'required', 'files'];
 export interface TypeDef { base?: string; prefix?: string; folder?: string; fields?: Record<string, object>; required?: string[]; files?: Record<string, object> }
 export const builtinTypes: Record<string, TypeDef> = {
   requirement: { prefix: 'REQ-', folder: 'requirements', fields: { retained: str } },

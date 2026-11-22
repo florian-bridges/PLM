@@ -167,6 +167,9 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-05.4** `plm types` shall print each type (CO-02.8) with its base, prefix, home folder, fields and required fields, and each link type (CO-02.9) with its source and target types.
 *Rationale:* An agent or script looks the schema up instead of guessing it.
 
+**CL-08.1** Every command's and option's description shall explain and exemplify it; `--help` shall end with a line to `docs/setup.md`. `plm help <topic>` shall print a fixed text per `structure` (CO-01.6, CO-03.4), `interfaces` (CO-02.5, CO-02.10, TE-06.6), `variants` (CO-01.6, CO-02.12) and `files`, the last naming every built-in type (CO-02.5), type file key (CO-02.8) and `plm.yaml` key, or else fall back to that command's help. A test shall fail when a command or option lacks an example, or a key is missing from its topic.
+*Rationale:* Topics explain what spans several commands; a code check catches a text left behind when a command or key changes.
+
 ## VS Code extension
 
 **VS-01.1** The extension shall reuse the core library and run in the extension host without a separate server, bundled by esbuild into one CommonJS file and activated in workspaces containing `plm.yaml`.

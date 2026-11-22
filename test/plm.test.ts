@@ -6,6 +6,7 @@ import { afterAll, beforeEach, expect, test } from 'vitest';
 import { changeSince, confirm, link, linkStates, recordRun, requirementsMarkdown } from '../src/links.ts';
 import { git, linksOf, loadRepo, productTree, Refused } from '../src/repo.ts';
 import { search } from '../src/search.ts';
+import { builtinTypes } from '../src/schemas.ts';
 import { validate } from '../src/validate.ts';
 import { currentVersions, versionAt } from '../src/version.ts';
 
@@ -498,4 +499,20 @@ test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
   expect(plm(root, 'search', 'L:bo').stdout).toBe('L (Bolt)\n');
   link(repo, 'L', 'satisfies', 'R');
   expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {}, links: [{ target: 'R' }] }]);
+});
+
+test('CL-08.1: help', () => {
+  const check = (command: string[]): void => {
+    const [head, commands] = plm(root, ...command, '--help').stdout.split('Commands:');
+    for (const line of head.split('\n').filter((l) => /^ +-/.test(l) && !/-[hV],/.test(l))) expect(line).toContain('e.g.');
+    if (!commands) return void expect(head.split('\n')[2]).toContain('e.g.');
+    for (const [, name] of commands.matchAll(/^  (\w+)/gm)) if (name !== 'help') check([...command, name]);
+  };
+  check([]);
+  expect(plm(root, '--help').stdout).toContain('docs/setup.md');
+  expect(plm(root, 'help', 'nope').status).toBe(2);
+  expect(plm(root, 'help', 'show').stdout).toBe(plm(root, 'show', '--help').stdout);
+  for (const t of ['structure', 'interfaces', 'variants']) expect(plm(root, 'help', t).status).toBe(0);
+  const files = plm(root, 'help', 'files').stdout;
+  for (const key of [...Object.keys(builtinTypes), 'informative', 'parameter_states', 'released_states', 'links', 'config']) expect(files).toContain(key);
 });

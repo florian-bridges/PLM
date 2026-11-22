@@ -255,9 +255,9 @@ report.command('parts [item]').description('report item totals').action((item) =
 
 // CL-01.8
 report.command('document [item]').description('print the requirements document').action((item) => {
-  const [repo, states, id] = scoped(item);
+  const [repo, states, id] = scoped(item), findings = validate(repo);
   const text = (id ? [id] : productTree(repo).map((found) => found.id))
-    .map((root) => requirementsMarkdown(repo, root, (found) => found.item.path, states, coverage(repo, states, root), suspects(repo, states, root))).join('\n');
+    .map((root) => requirementsMarkdown(repo, root, (found) => found.item.path, states, coverage(repo, states, root), suspects(repo, states, root), findings)).join('\n');
   output(text, text);
 });
 

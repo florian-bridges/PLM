@@ -81,8 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
     const type = await vscode.window.showQuickPick(logic.itemTypes(open()));
     const title = type && await vscode.window.showInputBox({ prompt: 'Title' });
     if (!title) return;
-    const { path } = newItem(open(), type, title, join(root, at?.path ?? ''));
-    vscode.commands.executeCommand('vscode.open', fileUri(path));
+    vscode.commands.executeCommand('vscode.open', fileUri(newItem(open(), type, title, join(root, at?.path ?? '')).path));
     refresh();
   };
 
@@ -161,7 +160,7 @@ export function activate(context: vscode.ExtensionContext) {
     // VS-03.5
     vscode.workspace.registerTextDocumentContentProvider('plm', { onDidChange: docChanged.event, provideTextDocumentContent: () => {
       const repo = open(), states = statesOf(repo);
-      return docId && requirementsMarkdown(repo, docId, (found) => logic.docLink(vscode.workspace.asRelativePath(fileUri(found.item.path), false)), states, coverage(repo, states, docId), suspects(repo, states, docId));
+      return docId && requirementsMarkdown(repo, docId, (found) => logic.docLink(vscode.workspace.asRelativePath(fileUri(found.item.path), false)), states, coverage(repo, states, docId), suspects(repo, states, docId), validate(repo));
     } }),
     // VS-04.5
     vscode.languages.registerCallHierarchyProvider(yaml, {

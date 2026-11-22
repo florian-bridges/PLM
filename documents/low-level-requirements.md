@@ -108,7 +108,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **TE-06.5** With `--link <type>`, coverage shall list the items of the link type's target types, in the repository or subtree, that no link of that type reaches (any state), and exit 1 if any.
 *Rationale:* Declared link types need the same gap check as unallocated requirements (TE-06.4).
 
-**TE-06.6** `report connections` shall list, for the repository or a subtree, `open` ports (TE-06.5 for `connects`), connections with fewer than two `connects` links (`few`) and connections whose ports have a `role` but not exactly one `sender` (`senders`), each as `{code, item, detail}` with `detail` the number of ports or senders, and exit 1 if any.
+**TE-06.6** `report connections` shall list, for the repository or a subtree, `open` ports (TE-06.5 for `connects`), connections with fewer than two `connects` links (`few`) and connections whose ports have a `role` but not exactly one `sender` (`senders`), each as `{code, item}`, and exit 1 if any.
 *Rationale:* A directed port type's required `role` (`sender`/`receiver`, CO-02.8) gives direction without a new key.
 
 ## CLI
@@ -137,7 +137,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.9** `report document` shall begin with counts, within the printed subtree, of `validate`'s findings by code and of items by `status`.
 *Rationale:* The counts show the product's state at a glance.
 
-**CL-01.10** `show --down`/`--up --format mermaid` shall print a Mermaid graph of the items, their `uses` and links, coloured by state per TE-03.1.
+**CL-01.10** `show --down`/`--up --format mermaid` shall print a Mermaid graph of the items' nesting, `uses` and links, coloured by state per TE-03.1.
 *Rationale:* Git hosts and Markdown viewers render Mermaid.
 
 **CL-02.1** `plm new <type> <title>` shall create the item and meta files from the type's `template` (CO-02.8) in block style, in the working folder if that is inside the item folder and, for a type with a home folder (CO-01.1), inside that home folder, creating it if missing; otherwise in the home folder or the item folder containing the working folder. It shall print the new ID, and its path on stderr, name the file or folder by the title, lowercase, with runs of characters outside `a-z0-9` replaced by `-` and trimmed of `-`, or by the ID if that is empty, and refuse names in use.

@@ -82,7 +82,7 @@ def main():
     # #112 (CL-01.9 counts) after #111, #113: +31 docs (its measured net, the spare it used now taken by #113), +39 src after review cuts (-5 docs, -8 src).
     parser.add_argument("--max-docs", type=int, default=5878, help="word limit for the documents directory")
     parser.add_argument("--max-src", type=int, default=6911, help="word limit for the source and test directories")
-    parser.add_argument("--max-ext", type=int, default=1542, help="word limit for the extension directory")
+    parser.add_argument("--max-ext", type=int, default=1540, help="word limit for the extension directory")
     parser.add_argument("-u", "--include-untracked", action="store_true",
                         help="also count untracked files that are not git-ignored")
     parser.add_argument("-v", "--verbose", action="store_true", help="list per-file counts")

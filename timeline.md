@@ -15,7 +15,7 @@ Milestones (target states, each with a check that shows it is reached), their bu
 | 0.9 | 2 | 1 | done (v0.9.0, meeting #100) |
 | 0.10 | 3 | 3 | done (v0.10.0, meetings #100, #107) |
 | 0.11 | 2 | 1 | done (v0.11.0, meeting #110) |
-| 0.12 | 3 | 0 | active (meeting #121) |
+| 0.12 | 3 | 2 | done (v0.12.0, meeting #121) |
 
 Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is a GitHub milestone holding its issues. Standing directions for every feature: PLM holds product data only, no project management (#64); use by LLM agents is a strength to keep and document (#54).
 
@@ -31,16 +31,16 @@ Budget: 3 windows.
 - [x] #128 report connections rows without detail: done when TE-06.6, code and test drop `detail`
 - [x] #123 Requirements document links render in VS Code Markdown Preview: done when links are workspace-relative and tested
 - [x] #129 PLM documented for agents: done when the help is the complete reference, `docs/setup.md` exists, README is short and `check.sh` fails on missing help text
-- [ ] #127 Normal spacing for squashed lines in src/cli.ts: done when no squashed lines remain (after PR #122)
+- [x] #127 Normal spacing for squashed lines in src/cli.ts: done when no squashed lines remain (after PR #122)
 - [x] #130 Whole-project check and cleanup: done when `reviewer` reviewed the whole project and no blocking findings are left
-- [ ] Release 0.12: done when released with `check.sh` passing
+- [x] Release 0.12: done when released with `check.sh` passing
 
 Breakdown: the six decided cleanups one issue each; the whole-project cleanup and the release as their own conditions; #127 waits for PR #122 (owner's word-count change).
 #127 no longer waits for PR #122: respacing raises the current limit by its cost; #122 re-measures on merge.
 
 ### Coming owner meetings
 
-* None.
+* #139 milestone meeting: the next target state (`meetings/2026-11-23-milestone-next.md`).
 
 ## Planned milestones
 

@@ -2,12 +2,12 @@
 
 What the next session needs to start. Current state only; history in git. The chief engineer keeps it current (skill `tower:chief-engineer`, The record).
 
-Latest release: 0.11.1 (2026-11-21). Milestones and entry conditions: `timeline.md`.
+Latest release: 0.12.0 (2026-11-23). Milestones and entry conditions: `timeline.md`.
 
 ## Active topics
 
-* 0.12 "Cleanup" active (meeting #121, budget 3 windows): entry conditions in `timeline.md`, GitHub milestone 0.12. Merged: #128 (PR #131), #125 (PR #132), #123 (PR #133), #126 (PR #134), #129 (PR #135), #130 (PR #136). Next step: #127 (respacing, branch feat/respace), then release 0.12.
-* PR #122 (word count by tokens, control room) is the owner's to merge; It will conflict in `scripts/wordcount.py` limits (changed by #129, #130, #127): re-measure on merge.
+* 0.12 "Cleanup" done (v0.12.0; review confirmed by `reviewer`). No decided milestone left: milestone meeting #139 prepared (`meetings/2026-11-23-milestone-next.md`); the shift stops for it.
+* PR #122 (word count by tokens, control room) is the owner's to merge; It will conflict in `scripts/wordcount.py` limits (now docs 5991, src 7320, ext 1534; #127 raised src/ext for respacing): re-measure on merge.
 * #61 and #55 parked.
 
 ## Open pull requests and blockers

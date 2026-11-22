@@ -116,8 +116,8 @@ program.command('get <ref> [key]').description('print a parameter; e.g. get PRT-
 
 // CO-03.3, CL-01.1
 program.command('list <field> [args...]').description('list field entries; e.g. list links PRT-1').action((field, args: string[] = []) => {
-  const repo=openRepo(),item=args[0]?.includes(':')?undefined:args.shift(),
-    matches = list(repo,field,item,args.map((f)=>f.split(/:(.*)/))),
+  const repo = openRepo(), item = args[0]?.includes(':') ? undefined : args.shift(),
+    matches = list(repo, field, item, args.map((f) => f.split(/:(.*)/))),
     lines = matches.map((m) => `${label(named(repo, m.source))} ${Object.entries(m).slice(1).map((e) => e.join(':')).join(' ')}`);
   output(lines.join('\n'), matches);
 });
@@ -166,33 +166,33 @@ program.command('new <type> <title>').description('create item; e.g. new part Cl
 });
 
 // CL-01.6
-const splitLine=(line: string)=>[...line.matchAll(/"[^"]*"|'[^']*'|\S+/g)].map((m)=>m[0].replace(/^['"]|['"]$/g,'')),
-  errorKeys=(repo: Repo)=>validate(repo).filter((f)=>f.severity==='error').map((f)=>`${f.file}:${f.code}:${f.message}`);
+const splitLine = (line: string) => [...line.matchAll(/"[^"]*"|'[^']*'|\S+/g)].map((m) => m[0].replace(/^['"]|['"]$/g, '')),
+  errorKeys = (repo: Repo) => validate(repo).filter((f) => f.severity === 'error').map((f) => `${f.file}:${f.code}:${f.message}`);
 
-program.command('apply <file>').description('run commands all or nothing; e.g. apply plan.yaml').option('--dry-run', 'preview').action((file,options)=>{
-    const root=workingFolder(),json=program.opts().format==='json',
-      lines=parseYaml(readFileSync(file,'utf8')) as string[],before=errorKeys(openRepo()),ids:string[]=[],texts:string[]=[];
+program.command('apply <file>').description('run commands all or nothing; e.g. apply plan.yaml').option('--dry-run', 'preview').action((file, options) => {
+    const root = workingFolder(), json = program.opts().format === 'json',
+      lines = parseYaml(readFileSync(file, 'utf8')) as string[], before = errorKeys(openRepo()), ids: string[] = [], texts: string[] = [];
     journalOn();
     try {
-      for(const raw of lines) {
-        const line=raw.replace(/\$(\d+)/g,(m: string,n: string)=>ids[+n-1]??m),args=splitLine(line),log=console.log,cerr=console.error;
-        let text='';
-        console.log=console.error=(s: string)=>{text+=`${s}\n`;};
-        exitCode=0;
+      for (const raw of lines) {
+        const line = raw.replace(/\$(\d+)/g, (m: string, n: string) => ids[+n - 1] ?? m), args = splitLine(line), log = console.log, cerr = console.error;
+        let text = '';
+        console.log = console.error = (s: string) => { text += `${s}\n`; };
+        exitCode = 0;
         try {
-          if(!['new','set','link','confirm'].includes(args[0])) throw new UsageError(args[0]);
-          program.parse(['-C',root,...args],{from:'user'});
-        } catch(e) {exitCode=1;text+=`${String(e)}\n`;}
-        console.log=log;console.error=cerr;
+          if (!['new', 'set', 'link', 'confirm'].includes(args[0])) throw new UsageError(args[0]);
+          program.parse(['-C', root, ...args], { from: 'user' });
+        } catch (e) { exitCode = 1; text += `${String(e)}\n`; }
+        console.log = log; console.error = cerr;
         texts.push(`${line}\n${text}`.trimEnd());
         ids.push(text.split('\n')[0]);
-        if(exitCode||errorKeys(openRepo()).some((e)=>!before.includes(e))) {exitCode=1;break;}
+        if (exitCode || errorKeys(openRepo()).some((e) => !before.includes(e))) { exitCode = 1; break; }
       }
     } finally {
-      const written=journalFiles();
-      if(exitCode||options.dryRun) rollback(root);
+      const written = journalFiles();
+      if (exitCode || options.dryRun) rollback(root);
       journalOff();
-      output([...texts,`files: ${written.join(' ')}`].join('\n'),{commands:texts,files:written},json);
+      output([...texts, `files: ${written.join(' ')}`].join('\n'), { commands: texts, files: written }, json);
     }
   });
 

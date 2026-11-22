@@ -64,4 +64,4 @@ export const hasSuspect = (states: LinkState[], id: string) => states.some((s) =
 
 // VS-06.2
 export const testCasesByOwner = (repo: Repo) =>
-  Map.groupBy([...repo.entries.values()].filter((found)=>typeOf(repo,found.item.data.type)==='test-case'), (found) => innermostItem(repo, dirname(found.path)));
+  Map.groupBy([...repo.entries.values()].filter((found) => typeOf(repo, found.item.data.type) === 'test-case'), (found) => innermostItem(repo, dirname(found.path)));

@@ -32,16 +32,16 @@ export function readYaml<T>(root: string, path: string) {
 }
 
 // CL-01.6: rollback journal
-let journal:{path:string;original?:string}[]|undefined,created:string[];
-export const journalOn=()=>{journal=[];created=[];},journalOff=()=>{journal=undefined;},journalFiles=()=>journal!.map((f)=>f.path);
+let journal: { path: string; original?: string }[] | undefined, created: string[];
+export const journalOn = () => { journal = []; created = []; }, journalOff = () => { journal = undefined; }, journalFiles = () => journal!.map((f) => f.path);
 export function rollback(root: string) {
-  for(const file of journal!) file.original===undefined?rmSync(join(root,file.path),{force:true}):writeFileSync(join(root,file.path),file.original);
-  for(const dir of created) rmSync(dir,{recursive:true,force:true});
+  for (const file of journal!) file.original === undefined ? rmSync(join(root, file.path), { force: true }) : writeFileSync(join(root, file.path), file.original);
+  for (const dir of created) rmSync(dir, { recursive: true, force: true });
 }
 
 export function writeYaml(root: string, file: Pick<YamlFile<unknown>, 'path' | 'doc'>) {
   const target = join(root, file.path);
-  if (journal&&!journal.some((f)=>f.path===file.path)) journal.push({path:file.path,original:existsSync(target)?readFileSync(target,'utf8'):undefined});
+  if (journal && !journal.some((f) => f.path === file.path)) journal.push({ path: file.path, original: existsSync(target) ? readFileSync(target, 'utf8') : undefined });
   const dir = mkdirSync(dirname(target), { recursive: true });
   if (journal && dir) created.push(dir);
   writeFileSync(target, file.doc.toString({ lineWidth: 0 }));

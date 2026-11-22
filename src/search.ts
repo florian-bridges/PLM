@@ -21,7 +21,7 @@ export function search(repo: Repo, query: string) {
 
 // CO-03.3
 export function list(repo: Repo, field: string, item: string | undefined, filters: string[][]) {
-  const scope = item && new Set(within(repo, entry(repo, item).id).map((e)=>e.id)),
+  const scope = item && new Set(within(repo, entry(repo, item).id).map((e) => e.id)),
     matches = (v: unknown, want: string) => (want ? String(v) === want : v == null || v === '');
   return [...repo.entries.values()].filter((source) => !scope || scope.has(source.id))
     // CO-01.5

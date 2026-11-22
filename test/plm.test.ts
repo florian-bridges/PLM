@@ -6,6 +6,7 @@ import { afterAll, beforeEach, expect, test } from 'vitest';
 import { changeSince, confirm, link, linkStates, recordRun, requirementsMarkdown } from '../src/links.ts';
 import { git, linksOf, loadRepo, productTree, Refused } from '../src/repo.ts';
 import { search } from '../src/search.ts';
+import { builtinTypes } from '../src/schemas.ts';
 import { validate } from '../src/validate.ts';
 import { currentVersions, versionAt } from '../src/version.ts';
 
@@ -498,4 +499,17 @@ test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
   expect(plm(root, 'search', 'L:bo').stdout).toBe('L (Bolt)\n');
   link(repo, 'L', 'satisfies', 'R');
   expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {}, links: [{ target: 'R' }] }]);
+});
+
+// CL-08.1, CL-08.2
+test('CL-08.1–CL-08.2: --help points to the setup guide; every command and option gives an example; topics', () => {
+  expect(plm(root, '--help').stdout).toContain('docs/setup.md');
+  expect(plm(root, 'help', 'nope').status).toBe(2);
+  const commands = ['validate', 'show', 'link', 'types', 'set', 'get', 'list', 'search', 'confirm', 'suspects', 'impact', 'new', 'apply',
+    ['test', 'record'], ['report', 'coverage'], ['report', 'connections'], ['report', 'parts'], ['report', 'document']];
+  for (const c of commands) expect(plm(root, ...[c].flat(), '--help').stdout).toContain('e.g.');
+  for (const t of ['structure', 'interfaces', 'variants']) expect(plm(root, 'help', t).status).toBe(0);
+  const files = plm(root, 'help', 'files').stdout;
+  for (const type of Object.keys(builtinTypes)) expect(files).toContain(type);
+  for (const key of ['informative', 'parameter_states', 'released_states', 'links', 'config']) expect(files).toContain(key);
 });

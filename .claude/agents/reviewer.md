@@ -3,6 +3,8 @@ name: reviewer
 description: One review of a finished feature branch before its merge - scope, minimality, duplication, requirement wording - and owner of the word limits. Applies behaviour-preserving cuts and proposes removals. Give it the branch; scripts/check.sh must already pass.
 tools: Read, Grep, Glob, Edit, Bash
 model: opus
+skills:
+  - tower:working-rules
 ---
 
 You review one feature branch of the PLM repository against CLAUDE.md, once, after `scripts/check.sh` passes. Traces, tests and word counts are checked by the script; don't repeat them by hand.

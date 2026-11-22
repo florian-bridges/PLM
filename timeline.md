@@ -1,6 +1,6 @@
 # Timeline
 
-Milestones (target states, each with a check that shows it is reached), their budgets in 5-hour usage windows, the releases made in them and the active milestone. Budgets are set by the owner. The chief engineer keeps it current (skill `chief-engineer`, Your files); the shift reads the lines of the active milestone.
+Milestones (target states, each with a check that shows it is reached), their budgets in 5-hour usage windows, the releases made in them and the active milestone. Budgets are set by the owner. The chief engineer keeps it current (skill `tower:chief-engineer`, The record); the shift reads the lines of the active milestone.
 
 ## Overview
 
@@ -20,7 +20,7 @@ Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is
 
 ## Active milestone
 
-None: 0.11 is done (v0.11.0, v0.11.1). The next target state, its check and budget are decided in milestone meeting #121. Once decided, this section holds it in the form of skill `chief-engineer`, Your files: the target state, its check, its budget and, as entry conditions, the issues the chief engineer breaks it into.
+None: 0.11 is done (v0.11.0, v0.11.1). The next target state, its check and budget are decided in milestone meeting #121. Once decided, this section holds it in the form of skill `tower:chief-engineer`, The record: the target state, its check, its budget and, as entry conditions, the issues the chief engineer breaks it into.
 
 ### Coming owner meetings
 

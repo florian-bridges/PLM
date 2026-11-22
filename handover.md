@@ -1,6 +1,6 @@
 # Handover
 
-What the next session needs to start. Current state only; history in git. The chief engineer keeps it current (skill `chief-engineer`, Your files).
+What the next session needs to start. Current state only; history in git. The chief engineer keeps it current (skill `tower:chief-engineer`, The record).
 
 Latest release: 0.11.1 (2026-11-21). Milestones and entry conditions: `timeline.md`.
 

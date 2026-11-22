@@ -16,7 +16,7 @@ import { currentVersions, snapshotAt } from './version.ts';
 const program = new Command('plm')
     .version(createRequire(import.meta.url)('../package.json').version)
     .option('-C, --repo <dir>', 'repo; e.g. -C ../widget', '.')
-    .option('--format <format>', 'text/json; e.g. --format json', 'text')
+    .option('--format <format>', 'text/json/mermaid; e.g. --format json', 'text')
     .option('--config <config>', 'variant; e.g. --config duty=long')
     .addHelpText('afterAll', '\nSetup: see docs/setup.md.')
     .exitOverride(),
@@ -52,7 +52,7 @@ function mermaid(repo: Repo, ids: Set<string>) {
 // CL-05.2
 let exitCode = 0;
 
-program.command('validate').description('check the repository; e.g. validate').action(() => {
+program.command('validate').description('check the repository').action(() => {
   const findings = validate(openRepo()),
     lines = findings.map((finding) => `${finding.file}:${finding.line}:${finding.col} ${finding.severity} ${finding.code}: ${finding.message}`);
   output(lines.join('\n'), findings);
@@ -81,11 +81,11 @@ program.command('show <id>').description('show an item; e.g. show PRT-1')
   });
 
 program.command('link <source> <type> <target>').description('add a link; e.g. link PRT-1 satisfies REQ-2')
-  .option('--remove', 'remove; e.g. --remove')
+  .option('--remove', 'remove')
   .action((source, type, target, options) => link(openRepo(), source, type, target, options.remove));
 
 // CL-05.4
-program.command('types').description('print types and links; e.g. types').action(() => {
+program.command('types').description('print types and links').action(() => {
   const repo = openRepo(), types = Object.fromEntries(Object.entries(repo.types).filter(([name]) => name !== 'meta')),
     links = allowedLinks(repo),
     lines = [
@@ -120,7 +120,6 @@ program.command('list <field> [args...]').description('list field entries; e.g. 
     matches = list(repo,field,item,args.map((f)=>f.split(/:(.*)/))),
     lines = matches.map((m) => `${label(named(repo, m.source))} ${Object.entries(m).slice(1).map((e) => e.join(':')).join(' ')}`);
   output(lines.join('\n'), matches);
-  exitCode=matches.length&&1;
 });
 
 // CO-03.2
@@ -170,7 +169,7 @@ program.command('new <type> <title>').description('create item; e.g. new part Cl
 const splitLine=(line: string)=>[...line.matchAll(/"[^"]*"|'[^']*'|\S+/g)].map((m)=>m[0].replace(/^['"]|['"]$/g,'')),
   errorKeys=(repo: Repo)=>validate(repo).filter((f)=>f.severity==='error').map((f)=>`${f.file}:${f.code}:${f.message}`);
 
-program.command('apply <file>').description('run commands all or nothing; e.g. apply plan.yaml').option('--dry-run', 'preview; e.g. --dry-run').action((file,options)=>{
+program.command('apply <file>').description('run commands all or nothing; e.g. apply plan.yaml').option('--dry-run', 'preview').action((file,options)=>{
     const root=workingFolder(),json=program.opts().format==='json',
       lines=parseYaml(readFileSync(file,'utf8')) as string[],before=errorKeys(openRepo()),ids:string[]=[],texts:string[]=[];
     journalOn();
@@ -209,9 +208,9 @@ program.command('test').command('record <test-case...>').description('record a t
 
 // TE-06.2, TE-06.4, TE-06.5
 const report = program.command('report');
-report.command('coverage [item]').description('report verification coverage; e.g. report coverage')
+report.command('coverage [item]').description('report verification coverage; e.g. report coverage PRT-1')
   .option('--by <field>', 'group by; e.g. --by owner')
-  .option('--allocation', 'allocation; e.g. --allocation')
+  .option('--allocation', 'allocation')
   .option('--link <type>', 'unreached; e.g. --link verifies')
   .action((item, options) => {
     const state = scoped(item);
@@ -240,7 +239,7 @@ report.command('coverage [item]').description('report verification coverage; e.g
   });
 
 // TE-06.6
-report.command('connections [item]').description('report bad ports/connections; e.g. report connections')
+report.command('connections [item]').description('report bad ports/connections; e.g. report connections PRT-1')
   .action((item) => {
     const rows = connections(...scoped(item));
     exitCode = rows.length && 1;
@@ -248,7 +247,7 @@ report.command('connections [item]').description('report bad ports/connections; 
   });
 
 // CO-03.4, CO-01.6
-report.command('parts [item]').description('report item totals; e.g. report parts').action((item) => {
+report.command('parts [item]').description('report item totals; e.g. report parts PRT-1').action((item) => {
   const repo = openRepo();
   setConfig(repo, program.opts().config);
   const rows = partsOf(repo, item && entry(repo, item).id);
@@ -256,10 +255,10 @@ report.command('parts [item]').description('report item totals; e.g. report part
 });
 
 // CL-01.8
-report.command('document [item]').description('print requirements document; e.g. report document').action((item) => {
+report.command('document [item]').description('print requirements document; e.g. report document PRT-1').action((item) => {
   const [repo, states, id] = scoped(item), findings = validate(repo);
   const text = (id ? [id] : productTree(repo).map((found) => found.id))
-    .map((root) => requirementsMarkdown(repo, root, (found) => found.item.path, states, coverage(repo, states, root), suspects(repo, states, root), findings)).join('\n');
+    .map((root) => requirementsMarkdown(repo, root, (found) => found.item.path, states, findings)).join('\n');
   output(text, text);
 });
 

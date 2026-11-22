@@ -1,7 +1,7 @@
 // VS-01–VS-06: editor logic without the vscode API, for tests.
 import { dirname } from 'node:path';
 import type { LinkState } from '../../src/links.ts';
-import { entry, innermostItem, list, parentOf, targetId, useEntries, type Entry, type Link, type Repo } from '../../src/repo.ts';
+import { entry, innermostItem, list, parentOf, targetId, typeOf, useEntries, type Entry, type Link, type Repo } from '../../src/repo.ts';
 import { itemSchema, type Finding } from '../../src/validate.ts';
 
 export { productTree } from '../../src/repo.ts';
@@ -64,4 +64,4 @@ export const hasSuspect = (states: LinkState[], id: string) => states.some((s) =
 
 // VS-06.2
 export const testCasesByOwner = (repo: Repo) =>
-  Map.groupBy([...repo.entries.values()].filter((found) => found.item.data.type === 'test-case'), (found) => innermostItem(repo, dirname(found.path)));
+  Map.groupBy([...repo.entries.values()].filter((found)=>typeOf(repo,found.item.data.type)==='test-case'), (found) => innermostItem(repo, dirname(found.path)));

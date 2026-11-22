@@ -6,7 +6,7 @@ Starting a product repository means three decisions: how to lay out items, wheth
 
 A repository holds `plm.yaml` at its root and one or more top-level items, each a folder with an `item.yaml`; items nest below their parent to mirror the product's subsystems, each holding its own `requirements/` and `tests/`.
 
-* **One top-level item**, e.g. `widget/item.yaml` nesting `widget/control/` and `widget/housing/`: one `uses` tree shows the whole product, and `plm report parts`/`coverage` with no argument total it.
+* **One top-level item**, e.g. `widget/item.yaml` nesting `widget/control/` and `widget/housing/`: one tree shows the whole product, and `plm report parts`/`coverage` with no argument total it.
 * **Several top-level items**, e.g. `control/item.yaml` and `housing/item.yaml` with no common parent: subsystems own disjoint folders, but nothing above them ties totals or requirements together.
 
 **Recommendation:** nest subsystems under one top-level item; reach for several top-level items only when a subsystem is released and reused on its own, pulled in elsewhere by `uses`.

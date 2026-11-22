@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, w
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, beforeEach, expect, test } from 'vitest';
-import { changeSince, confirm, link, linkStates, recordRun, requirementsMarkdown } from '../src/links.ts';
+import { changeSince, confirm, link, linkStates, recordRun } from '../src/links.ts';
 import { git, linksOf, loadRepo, productTree, Refused } from '../src/repo.ts';
 import { search } from '../src/search.ts';
 import { builtinTypes } from '../src/schemas.ts';
@@ -173,6 +173,9 @@ test('CL-01.1,CO-02.1,CO-02.8:remove',()=>{
   expect(plm(root,'link','P','derives-from','L','--remove').status).toBe(0);
   expect(linksOf(loadRepo(root).entries.get('P')!)).toEqual([]);
   expect(loadRepo(root).entries.get('P')!.meta.data.confirmed?.L).toBeUndefined();
+  plm(root,'link','L','derives-from','A');
+  plm(root,'link','L','derives-from','A','--remove');
+  expect(existsSync(join(root,'meta/L.yaml'))).toBe(false);
 });
 
 test('CO-02.2, CO-02.9, CL-01.1, CL-05.4, TE-06.5: declared links', () => {
@@ -243,7 +246,7 @@ test('CL-01.8, CL-01.9: document', () => {
   expect(doc).toMatch(/derives X\n- unconfirmed \[P\].*\n\n\n### 1\.1 \[P\].*\n\n\n### 1\.2 \[L\]/);
 });
 
-test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
+test('CL-01.2, TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
   let repo = loadRepo(root);
   confirm(repo, currentVersions(repo), [], 'P');
   const got = () => linkStates(loadRepo(root), new Map())[0].link;
@@ -286,7 +289,7 @@ test('TE-01.1, TE-03.1, CO-02.7, CO-03.3, CL-01.1, CL-01.3–CL-01.4: parameter'
   });
   setLoad(root, 'findings: [{item: A, state: open, severity: major}]\n', 3);
   confirm(loadRepo(root), currentVersions(loadRepo(root)), [], 'P');
-  expect(plm(root, 'list', 'findings', 'severity:major').stdout).toBe('R (Load) item:A state:open severity:major\n');
+  expect(plm(root, 'list', 'findings', 'A', 'severity:major').stdout).toBe('R (Load) item:A state:open severity:major\n');
   expect(plm(root, 'list', 'findings', 'severity:minor').stdout).toBe('\n');
   expect(json(root, 'list', 'parameters')).toEqual([{ source: 'A', name: 'span', value: 3, unit: 'm' }]);
   expect(plm(root, 'list', 'parameters', 'A').stdout).toBe('A (Frame) name:span value:3 unit:m\n');
@@ -504,8 +507,8 @@ test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
 test('CL-08.1: help', () => {
   const check = (command: string[]): void => {
     const [head, commands] = plm(root, ...command, '--help').stdout.split('Commands:');
-    for (const line of head.split('\n').filter((l) => /^ +-/.test(l) && !/-[hV],/.test(l))) expect(line).toContain('e.g.');
-    if (!commands) return void expect(head.split('\n')[2]).toContain('e.g.');
+    for (const line of head.split('\n').filter((l) => /^ +-/.test(l) && !/-[hV],/.test(l)))/<.+?>/.test(line)&&expect(line).toContain('e.g.');
+    if (!commands) return void(/<|\[(?!options\])/.test(head.split('\n')[0])&&expect(head.split('\n')[2]).toContain('e.g.'));
     for (const [, name] of commands.matchAll(/^  (\w+)/gm)) if (name !== 'help') check([...command, name]);
   };
   check([]);

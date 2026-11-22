@@ -1,7 +1,5 @@
 # Low-Level Requirements
 
-Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.md](components.md).
-
 ## Core library
 
 **CO-01.1** The core shall read `plm.yaml` (repository settings), requirements as `<name>.yaml` and other items as `<name>/item.yaml`, in their type's home folder (CO-02.8), if it has one, or its subfolders; a home folder sits in the parent item, test runs' at the root, and a top-level item has none; and `meta/<ID>.yaml`, all with the `yaml` package, keeping comments, formatting and line width when writing back. A folder with no `item.yaml` shall be transparent, hidden folders excepted: items under it belong to the nearest enclosing item, or are top-level if none.
@@ -113,7 +111,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 
 ## CLI
 
-**CL-01.1** The CLI shall be a Node.js 22 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]`, `apply <file>`, `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]`, `report connections [<item>]`, `report parts [<item>]` and `report document [<item>]`, finding the repository by searching upward for `plm.yaml`; each command shall have a one-line description.
+**CL-01.1** The CLI shall be a Node.js 22.18 program `plm` built with Commander, with `--version` (`plm`'s `package.json` version) and commands `validate`, `search`, `show`, `link <source> <type> <target>` (`<target>` an ID or `<ID>:<name>`; a type CO-02.2 disallows prints `<source type> <type> <target type>` as a usage error, writing nothing; `--remove` deletes that link and its target's `confirmed` entry, if any; an unknown link is a usage error), `confirm`, `set`, `get`, `list <field> [<item>] [<key>:<value>...]`, `suspects [<item>]`, `impact <base>[..<head>]`, `apply <file>`, `report coverage [<item>] [--by <field>] [--allocation] [--link <type>]`, `report connections [<item>]`, `report parts [<item>]` and `report document [<item>]`, finding the repository by searching upward for `plm.yaml`.
 *Rationale:* Searching upward works from any subfolder; `--version` lets CI check pins; a typo fails where made.
 
 **CL-01.2** `confirm <source> [<target>]` shall confirm the source item's link to the target, or all its links.
@@ -167,7 +165,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-05.4** `plm types` shall print each type (CO-02.8) with its base, prefix, home folder, fields and required fields, and each link type (CO-02.9) with its source and target types.
 *Rationale:* An agent or script looks the schema up instead of guessing it.
 
-**CL-08.1** Every command's and option's description shall explain and exemplify it; `--help` shall end with a line to `docs/setup.md`. `plm help <topic>` shall print a fixed text per `structure` (CO-01.6, CO-03.4), `interfaces` (CO-02.5, CO-02.10, TE-06.6), `variants` (CO-01.6, CO-02.12) and `files`, the last naming every built-in type (CO-02.5), type file key (CO-02.8) and `plm.yaml` key, or else fall back to that command's help. A test shall fail when a command or option lacks an example, or a key is missing from its topic.
+**CL-08.1** Every command's and option's description shall explain, and exemplify if it takes a value; `--help` shall end with a line to `docs/setup.md`. `plm help <topic>` shall print a fixed text per `structure` (CO-01.6, CO-03.4), `interfaces` (CO-02.5, CO-02.10, TE-06.6), `variants` (CO-01.6, CO-02.12) and `files`, the last naming every built-in type (CO-02.5), type file key (CO-02.8) and `plm.yaml` key, or else fall back to that command's help. A test shall fail when a description lacks its explanation or required example, or a key is missing from its topic.
 *Rationale:* Topics explain what spans several commands; a code check catches a text left behind when a command or key changes.
 
 ## VS Code extension

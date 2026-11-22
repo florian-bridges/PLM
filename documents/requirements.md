@@ -1,7 +1,5 @@
 # Requirements
 
-Each requirement cites the scenario (US) it serves.
-
 **CR-01 — Engineering definition**
 The tool shall represent the complete definition of a product, including its structure, software and requirements. (US-1, US-2)
 *Rationale:* Disciplines kept in separate tools hide the dependencies between them.

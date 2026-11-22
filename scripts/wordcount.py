@@ -68,22 +68,10 @@ def main():
     parser.add_argument("--src-dir", default="src")
     parser.add_argument("--test-dir", default="test")
     parser.add_argument("--ext-dir", default="extension")
-    # The limits are kept by the chief engineer (owner, #71); 0.4 raise: feature review #71.
-    # 0.5 raise (#58), measured after cuts: feature review #78.
-    # 0.6 raise: US-2, CR-10, TE-06 for ports and connections, meeting #85.
-    # #63 (show walk), measured after review cuts: feature review #78.
-    # #63 narrow fix (walk scope), reviewer-directed: measured after cuts.
-    # #57 (apply), measured after review cuts (-10 src).
-    # #57 narrow fix (apply rollback in finally), reviewer-directed: measured after cuts.
-    # #29 (ports, connections, type-file files), meeting #85 estimate +90/+110: measured after review cuts (-11 src, -2 docs).
-    # #31 (report connections, role), meeting #85 estimate +80/+130: +73/+114 measured after review cuts (-5 docs, -62 src).
-    # #113 (Mermaid graph, CL-01.10, quote escaping): +73 src measured after review cuts (-10 src, -9 docs).
-    # #113 after merging #111: +17 docs, the part of its +39 that #111 left no spare for, measured after review cuts (-11 docs).
-    # #112 (CL-01.9 counts) after #111, #113: +31 docs (its measured net, the spare it used now taken by #113), +39 src after review cuts (-5 docs, -8 src).
-    # #129 (CL-08 help as reference: an example per command and option, four topics, completeness test): +156 docs, +293 src after review cuts (-5 docs, -21 src).
-    parser.add_argument("--max-docs", type=int, default=6034, help="word limit for the documents directory")
-    parser.add_argument("--max-src", type=int, default=7208, help="word limit for the source and test directories")
-    parser.add_argument("--max-ext", type=int, default=1540, help="word limit for the extension directory")
+    # Only the reviewer raises a limit, giving the reason in the commit message (CLAUDE.md).
+    parser.add_argument("--max-docs", type=int, default=5991, help="word limit for the documents directory")
+    parser.add_argument("--max-src", type=int, default=7203, help="word limit for the source and test directories")
+    parser.add_argument("--max-ext", type=int, default=1531, help="word limit for the extension directory")
     parser.add_argument("-u", "--include-untracked", action="store_true",
                         help="also count untracked files that are not git-ignored")
     parser.add_argument("-v", "--verbose", action="store_true", help="list per-file counts")

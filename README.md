@@ -7,7 +7,7 @@
 Requires Node.js 22.18 or later and Git. Install the package of a [release](https://github.com/florian-bridges/PLM/releases):
 
 ```sh
-npm install -g https://github.com/florian-bridges/PLM/releases/download/v0.3.0/plm-0.3.0.tgz
+npm install -g https://github.com/florian-bridges/PLM/releases/download/v0.11.1/plm-0.11.1.tgz
 ```
 
 ## Quickstart
@@ -15,13 +15,13 @@ npm install -g https://github.com/florian-bridges/PLM/releases/download/v0.3.0/p
 ```sh
 git init product && cd product
 touch plm.yaml
-SYS=$(plm new assembly "Drone") && cd drone      # plm new prints the new ID
-REQ=$(plm new requirement "Takeoff mass")        # drone/requirements/takeoff-mass.yaml
-plm set $REQ text "The drone shall have a takeoff mass of at most 2 kg."
-PRT=$(plm new part "Frame")                      # drone/frame/item.yaml
+SYS=$(plm new assembly "Widget") && cd widget    # plm new prints the new ID
+REQ=$(plm new requirement "Mass")                # widget/requirements/mass.yaml
+plm set $REQ text "The widget shall have a mass of at most 2 kg."
+PRT=$(plm new part "Frame")                      # widget/frame/item.yaml
 plm link $PRT satisfies $REQ && plm suspects     # unconfirmed
-plm confirm $PRT && plm validate && git add -A && git commit -m "Drone"
-plm set $REQ text "The drone shall have a takeoff mass of at most 1.8 kg."
+plm confirm $PRT && plm validate && git add -A && git commit -m "Widget"
+plm set $REQ text "The widget shall have a mass of at most 1.8 kg."
 plm suspects; plm show $PRT                      # suspect until confirmed again
 ```
 

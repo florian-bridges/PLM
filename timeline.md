@@ -1,6 +1,6 @@
 # Timeline
 
-Milestones (usually releases), their budgets in 5-hour usage windows and the active milestone. Budgets are set by the owner. The chief engineer keeps it current (skill `chief-engineer`, Your files); the shift reads the lines of the active milestone.
+Milestones (target states, each with a check that shows it is reached), their budgets in 5-hour usage windows, the releases made in them and the active milestone. Budgets are set by the owner. The chief engineer keeps it current (skill `chief-engineer`, Your files); the shift reads the lines of the active milestone.
 
 ## Overview
 
@@ -20,26 +20,11 @@ Roadmap set by the owner in the backlog cleanup of 2026-11-14; each milestone is
 
 ## Active milestone
 
-**Next milestone: 0.11.** Change, status and graph.
-
-Budget: 2 windows.
-
-Scope decided in release meeting #110 (2026-11-21, `meetings/2026-11-21-release-0.10.md`).
-
-### Entry conditions
-
-- [x] #111 Structure diff in `impact`. *Done when:* TE-05.4 is implemented and tested; `scripts/check.sh` passes.
-- [x] #112 Status counts in the requirements document. *Done when:* CL-01.9 is implemented and tested; `scripts/check.sh` passes.
-- [x] #113 Mermaid graph of `show --down/--up`. *Done when:* CL-01.10 and the US-2 clause are in place, implemented and tested; `scripts/check.sh` passes.
-
-### Active topics
-
-* #111 (PR #115), #112 (PR #117), #113 (PR #116) merged; v0.11.0 released (PR #118); #67 closed.
-* #114 (owner bug) fixed (PR #119), v0.11.1 released (PR #120).
+None: 0.11 is done (v0.11.0, v0.11.1). The next target state, its check and budget are decided in milestone meeting #121. Once decided, this section holds it in the form of skill `chief-engineer`, Your files: the target state, its check, its budget and, as entry conditions, the issues the chief engineer breaks it into.
 
 ### Coming owner meetings
 
-* Release meeting #121 (`meetings/2026-11-21-release-0.11.md`): next milestone (tidy-up, #55, #61 or pause) and budget.
+* Milestone meeting #121 (`meetings/2026-11-22-milestone-next.md`): the next target state (directions: real product, agents as tools, requirements exchange, 1.0), its check and budget.
 
 ## Planned milestones
 

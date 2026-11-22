@@ -16,7 +16,7 @@ import { currentVersions, snapshotAt } from './version.ts';
 const program = new Command('plm')
     .version(createRequire(import.meta.url)('../package.json').version)
     .option('-C, --repo <dir>', 'repo; e.g. -C ../widget', '.')
-    .option('--format <format>', 'text/json; e.g. --format json', 'text')
+    .option('--format <format>', 'text/json/mermaid; e.g. --format json', 'text')
     .option('--config <config>', 'variant; e.g. --config duty=long')
     .addHelpText('afterAll', '\nSetup: see docs/setup.md.')
     .exitOverride(),
@@ -259,7 +259,7 @@ report.command('parts [item]').description('report item totals; e.g. report part
 report.command('document [item]').description('print requirements document; e.g. report document').action((item) => {
   const [repo, states, id] = scoped(item), findings = validate(repo);
   const text = (id ? [id] : productTree(repo).map((found) => found.id))
-    .map((root) => requirementsMarkdown(repo, root, (found) => found.item.path, states, coverage(repo, states, root), suspects(repo, states, root), findings)).join('\n');
+    .map((root) => requirementsMarkdown(repo, root, (found) => found.item.path, states, findings)).join('\n');
   output(text, text);
 });
 

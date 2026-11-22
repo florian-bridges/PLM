@@ -116,7 +116,7 @@ export const suspects = (repo: Repo, states: LinkState[], root?: string) => {
   return states.filter((state) => state.state !== 'current' && !fromRun(repo, state) && ids.includes(state.source));
 };
 
-export interface Coverage {
+interface Coverage {
   requirement: string; title: string; state: 'verified' | 'pending' | 'unverified' | 'allocated' | 'retained' | 'unallocated';
   tests: { testCase: Named; run?: Named; result?: string; outdated?: boolean }[];
 }
@@ -168,13 +168,13 @@ export function unreached(repo: Repo, states: LinkState[], type: string, root?: 
 }
 
 // CL-01.8, VS-03.5
-export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry) => string, states: LinkState[], rows: Coverage[], suspects: LinkState[], findings: Finding[]): string {
+export function requirementsMarkdown(repo: Repo, id: string, link: (found: Entry) => string, states: LinkState[], findings: Finding[]): string {
   const ref = (id: string) => { const found = repo.entries.get(id); return found ? `[${id}](${link(found)}) ${found.item.data.title}` : id; };
   // CL-01.9
-  const items = within(repo, id), tally = (xs: unknown[]) => [...new Set(xs)].map((x) => `${x} ${xs.filter((y) => y === x).length}`).join(', ');
+  const items = within(repo, id), rows = coverage(repo, states, id), tally = (xs: unknown[]) => [...new Set(xs)].map((x) => `${x} ${xs.filter((y) => y === x).length}`).join(', ');
   const status = (found: Entry) => (found.meta.data.status ? ` *${found.meta.data.status}*` : '');
   const linkLine = (state: LinkState) => `- ${state.state} ${ref(state.source)} ${state.link.type} ${ref(state.link.target)}\n`;
-  const summary = rows.map((row) => `- ${row.state} ${ref(row.requirement)}\n`).join('') + suspects.map(linkLine).join('');
+  const summary = rows.map((row) => `- ${row.state} ${ref(row.requirement)}\n`).join('') + suspects(repo, states, id).map(linkLine).join('');
   const seen = new Set<string>();
   const section = (itemId: string, number: string): string => {
     seen.add(itemId);

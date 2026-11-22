@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, w
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, beforeEach, expect, test } from 'vitest';
-import { changeSince, confirm, link, linkStates, recordRun, requirementsMarkdown } from '../src/links.ts';
+import { changeSince, confirm, link, linkStates, recordRun } from '../src/links.ts';
 import { git, linksOf, loadRepo, productTree, Refused } from '../src/repo.ts';
 import { search } from '../src/search.ts';
 import { builtinTypes } from '../src/schemas.ts';
@@ -243,7 +243,7 @@ test('CL-01.8, CL-01.9: document', () => {
   expect(doc).toMatch(/derives X\n- unconfirmed \[P\].*\n\n\n### 1\.1 \[P\].*\n\n\n### 1\.2 \[L\]/);
 });
 
-test('TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
+test('CL-01.2, TE-02.1–TE-02.2, TE-03.1–TE-03.2: suspects', () => {
   let repo = loadRepo(root);
   confirm(repo, currentVersions(repo), [], 'P');
   const got = () => linkStates(loadRepo(root), new Map())[0].link;

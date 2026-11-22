@@ -27,7 +27,7 @@ Check: the six issues closed; one whole-project review by `reviewer` with no blo
 Budget: 3 windows.
 ### Entry conditions
 - [x] #125 Mermaid graph shows nesting: done when CL-01.10 names nesting edges, output and test match
-- [ ] #126 report document: one validate run, no empty findings line: done when CL-01.9 code and test match
+- [x] #126 report document: one validate run, no empty findings line: done when CL-01.9 code and test match
 - [x] #128 report connections rows without detail: done when TE-06.6, code and test drop `detail`
 - [x] #123 Requirements document links render in VS Code Markdown Preview: done when links are workspace-relative and tested
 - [ ] #129 PLM documented for agents: done when the help is the complete reference, `docs/setup.md` exists, README is short and `check.sh` fails on missing help text

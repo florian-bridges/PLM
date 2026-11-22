@@ -49,7 +49,7 @@ test('VS-01.3, VS-01.5: diagnostics group by file; item types for "New item" exc
 });
 
 test('VS-03.5', () => {
-  expect(logic.docLink('a')).toBe('/a');
+  expect(logic.docLink('sub/a b')).toBe('/sub/a%20b');
 });
 
 test('VS-04.3: hover', () => {

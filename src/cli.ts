@@ -40,7 +40,7 @@ const record = (repo: Repo, found: Entry) => ({ ...found.item.data, text: expand
 // CL-01.10
 const stateColor = { current: 'green', suspect: 'orange', unconfirmed: 'red' };
 function mermaid(repo: Repo, ids: Set<string>) {
-  const edges = [...ids].flatMap((i) => usesOf(repo.entries.get(i)?.item.data).map((u) => [i, 'uses', u]))
+  const edges = [...ids].flatMap((i) => usesOf(repo.entries.get(i)?.item.data).map((u) => [i, 'uses', u]).concat([[parentOf(repo,i),'nesting',i]]))
     .concat(linkStates(repo, currentVersions(repo)).map((s) => [s.source, s.link.type, targetId(s.link.target), stateColor[s.state]]))
     .filter(([a, , b]) => ids.has(a) && ids.has(b));
   return ['graph TD', ...[...ids].map((i) => `  ${i}["${label(named(repo, i)).replaceAll('"', '#quot;')}"]`), ...edges.map(([a, t, b]) => `  ${a} -->|${t}| ${b}`),

@@ -87,7 +87,7 @@ test('CL-01.5, CL-01.10: show walk', () => {
   ]));
   expect(json(root, 'show', 'L', '--up', '1')).toEqual([{ id: 'A', title: 'Frame', depth: 1, via: 'uses' }]);
   expect(plm(root, 'show', 'R', '--down', '1').stdout).toBe('1 satisfies P (Rod)\n');
-  expect(plm(root, 'show', 'A', '--down', '2', '--format', 'mermaid').stdout).toMatch(/A -->\|uses\| L[^]*stroke:red/);
+  expect(plm(root, 'show', 'A', '--down', '2', '--format', 'mermaid').stdout).toMatch(/uses\| L[^]*nesting\| P[^]*stroke:red/);
 });
 
 test('CL-01.6: apply', () => {

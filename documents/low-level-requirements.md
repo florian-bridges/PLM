@@ -134,7 +134,7 @@ Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.
 **CL-01.8** `report document [<item>]` shall print, for the item or each top-level item, a section per item of its subtree (TE-06.2) once, numbered and headed by depth (1, 1.1, 1.1.1); it shall begin with each requirement's coverage state and the output of `plm suspects <item>`, then list each requirement with title in bold, ID, status, coverage state, rendered text, its links and the links to it with state per TE-03.1, and each verifying test case's latest run per TE-06.1; as Markdown, IDs linking to their files.
 *Rationale:* VS Code is not always available.
 
-**CL-01.9** `report document` shall call `validate` once and begin each section, within its printed subtree, with item counts by `status`, then finding counts by code if any.
+**CL-01.9** `report document` shall call `validate` once and begin with counts, within the printed subtree, of its findings by code, if any, and of items by `status`.
 *Rationale:* The counts show the product's state without repeated validation.
 
 **CL-01.10** `show --down`/`--up --format mermaid` shall print a Mermaid graph of the items' nesting, `uses` and links, coloured by state per TE-03.1.

@@ -30,7 +30,7 @@ Budget: 3 windows.
 - [x] #126 report document: one validate run, no empty findings line: done when CL-01.9 code and test match
 - [x] #128 report connections rows without detail: done when TE-06.6, code and test drop `detail`
 - [x] #123 Requirements document links render in VS Code Markdown Preview: done when links are workspace-relative and tested
-- [ ] #129 PLM documented for agents: done when the help is the complete reference, `docs/setup.md` exists, README is short and `check.sh` fails on missing help text
+- [x] #129 PLM documented for agents: done when the help is the complete reference, `docs/setup.md` exists, README is short and `check.sh` fails on missing help text
 - [ ] #127 Normal spacing for squashed lines in src/cli.ts: done when no squashed lines remain (after PR #122)
 - [ ] #130 Whole-project check and cleanup: done when `reviewer` reviewed the whole project and no blocking findings are left
 - [ ] Release 0.12: done when released with `check.sh` passing

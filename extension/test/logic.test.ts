@@ -30,7 +30,8 @@ test('VS-04.5: incoming and outgoing links of an ID', () => {
 });
 
 test('VS-06.2: test cases grouped by the item owning their tests folder', () => {
-  const repo = fakeRepo({ id: 'A', path: 'a' }, { id: 'T', path: 'a/tests/T', item: { data: { type: 'test-case', title: 't' } } });
+  const repo = fakeRepo({ id: 'A', path: 'a' }, { id: 'T', path: 'a/tests/T', item: { data: { type: 'manual', title: 't' } } });
+  repo.types.manual={base:'test-case'};
   expect([...logic.testCasesByOwner(repo)]).toEqual([['A', [repo.entries.get('T')]]]);
 });
 

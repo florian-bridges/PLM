@@ -76,7 +76,7 @@ export function link(repo: Repo, source: string, type: string, target: string, r
   if (bad) throw new UsageError(bad);
   if (!remove) item.doc.setIn(['links', links.length], { type, target });
   else if (at < 0) throw new UsageError(target);
-  else item.doc.deleteIn(['links', at]), meta.doc.has('confirmed')&&meta.doc.deleteIn(['confirmed', target]), writeYaml(repo.root, meta);
+  else item.doc.deleteIn(['links', at]), meta.doc.has('confirmed')&&meta.doc.deleteIn(['confirmed', target])&&writeYaml(repo.root, meta);
   writeYaml(repo.root, item);
 }
 
@@ -106,7 +106,7 @@ export function changeSince(repo: Repo, link: Link) {
 }
 
 // TE-03.1, TE-06.2
-const within = (repo: Repo, root?: string, type?: string) => {
+export const within = (repo: Repo, root?: string, type?: string) => {
   const items = root && new Set(walk(repo, root, true, Infinity, false).map((w) => w.id));
   return [...repo.entries.values()].filter((e) => (!items || items.has(e.id)) && (!type || typeOf(repo, e.item.data.type) === type));
 };

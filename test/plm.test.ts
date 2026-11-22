@@ -501,7 +501,7 @@ test('CO-03.1–CO-03.2, CL-01.1, CL-05.3: search', () => {
   expect(json(root, 'search', 'bo')).toMatchObject([{ path: 'bolt', meta: {}, links: [{ target: 'R' }] }]);
 });
 
-test('CL-08.1–CL-08.2: help', () => {
+test('CL-08.1: help', () => {
   const check = (command: string[]): void => {
     const [head, commands] = plm(root, ...command, '--help').stdout.split('Commands:');
     for (const line of head.split('\n').filter((l) => /^ +-/.test(l) && !/-[hV],/.test(l))) expect(line).toContain('e.g.');
@@ -511,6 +511,7 @@ test('CL-08.1–CL-08.2: help', () => {
   check([]);
   expect(plm(root, '--help').stdout).toContain('docs/setup.md');
   expect(plm(root, 'help', 'nope').status).toBe(2);
+  expect(plm(root, 'help', 'show').stdout).toBe(plm(root, 'show', '--help').stdout);
   for (const t of ['structure', 'interfaces', 'variants']) expect(plm(root, 'help', t).status).toBe(0);
   const files = plm(root, 'help', 'files').stdout;
   for (const key of [...Object.keys(builtinTypes), 'informative', 'parameter_states', 'released_states', 'links', 'config']) expect(files).toContain(key);

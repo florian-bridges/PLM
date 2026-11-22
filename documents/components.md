@@ -1,7 +1,5 @@
 # Component Requirements
 
-Each requirement traces to top-level requirements (CR) and user scenarios (US).
-
 ## Core library (CO)
 
 **CO-01** The core shall load items, artifacts and links from a repository, selecting used items by configuration if given. (CR-01–CR-03; US-2)

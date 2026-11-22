@@ -1,7 +1,5 @@
 # Low-Level Requirements
 
-Each requirement `XX-nn.m` refines component requirement `XX-nn` in [components.md](components.md).
-
 ## Core library
 
 **CO-01.1** The core shall read `plm.yaml` (repository settings), requirements as `<name>.yaml` and other items as `<name>/item.yaml`, in their type's home folder (CO-02.8), if it has one, or its subfolders; a home folder sits in the parent item, test runs' at the root, and a top-level item has none; and `meta/<ID>.yaml`, all with the `yaml` package, keeping comments, formatting and line width when writing back. A folder with no `item.yaml` shall be transparent, hidden folders excepted: items under it belong to the nearest enclosing item, or are top-level if none.

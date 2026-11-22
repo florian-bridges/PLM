@@ -229,7 +229,7 @@ test('CO-02.5, CO-02.6, CO-02.8, CO-02.10, TE-06.6: ports', () => {
     'frame/connections/f/item.yaml': 'id: CF\ntype: connection\ntitle: F\nlinks: [{type: connects, target: PA}, {type: connects, target: PB}]\n',
   });
   expect(validate(loadRepo(root)).map((f) => f.code).sort()).toEqual(['missing-file', 'missing-file', 'schema']);
-  expect(plm(root, 'report', 'connections')).toMatchObject({ status: 1, stdout: 'open PE (E)\nfew CA (C) 1\nsenders CF (F) 2\n' });
+  expect(plm(root, 'report', 'connections')).toMatchObject({ status: 1, stdout: 'open PE (E)\nfew CA (C)\nsenders CF (F)\n' });
 });
 
 test('CL-01.8, CL-01.9: document', () => {

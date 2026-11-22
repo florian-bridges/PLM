@@ -2,8 +2,7 @@
 import { dirname } from 'node:path';
 import type { LinkState } from '../../src/links.ts';
 import { entry, innermostItem, list, parentOf, targetId, useEntries, type Entry, type Link, type Repo } from '../../src/repo.ts';
-import { itemSchema } from '../../src/validate.ts';
-import type { Finding } from '../../src/validate.ts';
+import { itemSchema, type Finding } from '../../src/validate.ts';
 
 export { productTree } from '../../src/repo.ts';
 

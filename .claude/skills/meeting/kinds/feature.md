@@ -1,6 +1,6 @@
 # Feature review
 
-The owner decides target states in milestone or kickoff meetings; the chief engineer breaks them into features. A feature review is held only for a real architecture change.
+The chief engineer plans milestones within `goal.md` and breaks them into features. A feature review is held only for a real architecture change.
 
 ## When
 
@@ -23,5 +23,5 @@ A feature changes the architecture when it adds a new storage, a new public inte
 
 ## Outcome
 
-* Go: the approved US, CR and component requirements into `documents/` (chief engineer, one commit naming the meeting); one `type:feature` issue per part, each naming the meeting; the entry conditions in `timeline.md` as decided.
+* Go: the approved US, CR and component requirements into `documents/` (chief engineer, one commit naming the meeting); one `type:feature` issue per part, each naming the meeting; each in the milestone as decided.
 * No-go: the issue closed as `won't do` with the reason, or moved to `type:backlog`.

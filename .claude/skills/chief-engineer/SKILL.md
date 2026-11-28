@@ -5,7 +5,7 @@ description: PLM's additions to the base skill `tower:chief-engineer` - features
 
 # Chief engineer: PLM
 
-These rules add to the base `tower:chief-engineer` and to `CLAUDE.md` (traceability, word governance, scope, agents), and win where they differ. The project is `PLM`; `timeline.md` also lists, per milestone, the releases made in it.
+These rules add to the base `tower:chief-engineer` and to `CLAUDE.md` (traceability, word governance, scope, agents), and win where they differ. The project is `PLM`.
 
 ## Features
 
@@ -27,6 +27,6 @@ Releases are not milestones. Release whenever something useful is merged and `sc
 2. `gh pr create --base main --head develop --title "Release <version>"`, then `gh pr merge <n> --merge`.
 3. `git fetch origin main`, `git tag v<version> origin/main`, `git push origin v<version>`.
 4. `npm pack`, then `gh release create v<version> plm-<version>.tgz --title "plm <version>" --notes "<the CHANGELOG entry>"`; remove the `.tgz`.
-5. Note the release in `timeline.md` (Overview) and `handover.md`.
+5. Note the release in `handover.md`.
 
-A done milestone is marked `done (v<version>)`; close its GitHub milestone with `gh api -X PATCH repos/{owner}/{repo}/milestones/<number> -f state=closed` (the number from `gh api repos/{owner}/{repo}/milestones`).
+When a milestone's check passes, close its GitHub milestone with `gh api -X PATCH repos/{owner}/{repo}/milestones/<number> -f state=closed` (the number from `gh api repos/{owner}/{repo}/milestones`).

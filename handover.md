@@ -1,19 +1,29 @@
 # Handover
 
-What the next session needs to start. Current state only; history in git. The chief engineer keeps it current (skill `tower:chief-engineer`, The record).
-
-Latest release: 0.12.0 (2026-11-23). Milestones and entry conditions: `timeline.md`.
+Latest release: 0.12.0 (2026-11-23). No open milestone: the direction meeting #150 sets the goal and the next one.
 
 ## Active topics
 
-* 0.12 "Cleanup" done (v0.12.0; review confirmed by `reviewer`). No decided milestone left: milestone meeting #139 prepared (`meetings/2026-11-23-milestone-next.md`); the shift stops for it.
-* PR #122 (word count by tokens, control room) is the owner's to merge; It will conflict in `scripts/wordcount.py` limits (now docs 5991, src 7320, ext 1534; #127 raised src/ext for respacing): re-measure on merge.
-* #61 and #55 parked.
+* #150 direction meeting (`meetings/2026-11-28-direction.md`): next step, after `Meeting closed`, record it, confirm `goal.md`, plan the milestones in GitHub as decided.
+* pathfinder-uav requests #140 to #147 and weight and balance #148: wait for #150.
+* PR #122 (word count by tokens) is the owner's to merge; on merge re-measure the limits in `scripts/wordcount.py` (now documents 5991, src+test 7320, extension 1534).
+* #55 and #61 parked (`type:backlog`).
 
-## Open pull requests and blockers
+## Blockers
 
-* #122 (owner's). No blockers.
+* No Node.js in the container (#151): `scripts/check.sh` cannot run locally. CI job `check` runs it on every push and pull request into `develop` and `main`; use its result until #151 is fixed.
 
 ## Owner directions
 
-* See `decisions.md`; the entries of 2026-11-14 apply to every feature: product data only (#64), agent use (#54). Since #71: the chief engineer governs the word limits; ask the owner only for key design decisions. Since #80: one owner meeting per milestone decides scope, budget and each feature; a separate feature review only for an architecture change. Since #91: context before each decision. Since #124 (2026-11-22): a milestone is a target state with a check, defined by the owner in a milestone meeting; you break it down, adjust the breakdown, approve every requirement inside it and release whenever something is ready; only blocking review findings stop a merge; over budget is a notice, not a stop.
+`decisions.md`; the entries of 2026-11-14 apply to every feature: product data only (#64), agent use (#54). Word limits are the chief engineer's (#71); ask the owner only for key design decisions; architecture changes get a feature review (#80). The milestone entries of #80 and #124 are superseded by #149, pending #150.
+
+## Next issue
+
+None until #150 is closed.
+
+## From the review (2026-11-28)
+
+* **Direction:** the base method replaces `timeline.md` and milestone meetings (#149). The `goal.md` draft makes pathfinder-uav's daily use the proof and 1.0 the end. Proposed: 0.13 "Fit for daily use" (#140 to #147), 0.14 "Weight and balance" (#148), 1.0 "Stable".
+* **Do:** generalise each pathfinder-uav request before building it (`CLAUDE.md`, Scope); one feature review for the link-version changes #142, #144, #146; run the gate in CI while #151 is open.
+* **Stop doing:** keeping `timeline.md`; per-milestone owner meetings.
+* **Next issues, in order** (once #150 decides): the small requests #143, #145, #147, #141, #140; the link-version feature review (#142, #144, #146); then #148.
